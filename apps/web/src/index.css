@@ -43,6 +43,8 @@
   --color-emerald-500: #3f9577;
   --color-emerald-600: #2f7d63;
 
+  --color-yunlan-cinnabar: #c04851;
+
   /* 字重：中文在 300 细体下笔画发虚，light 统一按常规字重渲染 */
   --font-weight-light: 400;
 
