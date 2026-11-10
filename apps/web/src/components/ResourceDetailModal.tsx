@@ -231,7 +231,7 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
                 <FolderTree className="w-4 h-4 text-cyan-500" />
                 <span>包含文件清单明细</span>
               </span>
-              <span className="text-[11px] text-slate-400">
+              <span className="text-xs text-slate-400">
                 文件转存前可在此核对完整性
               </span>
             </div>

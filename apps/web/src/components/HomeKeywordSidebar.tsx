@@ -138,11 +138,11 @@ export const HomeKeywordSidebar: React.FC<HomeKeywordSidebarProps> = ({
     >
       <div className="lg:sticky lg:top-24 rounded-[2px] border border-yunlan-hairline bg-yunlan-surface/95 backdrop-blur-sm shadow-yunlan-card overflow-hidden">
         <header className="px-4 pt-3 pb-2.5 sm:pt-4 sm:pb-3 border-b border-yunlan-hairline">
-          <p className="text-[10px] font-sans tracking-[0.28em] text-yunlan-muted">INDEX</p>
-          <h2 className="mt-1 font-yunlan-serif text-sm font-medium tracking-[0.08em] text-yunlan-ink">
+          <p className="text-[11px] font-sans tracking-[0.28em] text-yunlan-muted">INDEX</p>
+          <h2 className="mt-1 font-yunlan-serif text-base font-medium tracking-[0.08em] text-yunlan-ink">
             资源索引
           </h2>
-          <p className="mt-1 text-[11px] font-light leading-relaxed text-yunlan-muted hidden sm:block">
+          <p className="mt-1 text-xs font-light leading-relaxed text-yunlan-muted hidden sm:block">
             精选分类与示例检索词
           </p>
         </header>
@@ -192,14 +192,14 @@ export const HomeKeywordSidebar: React.FC<HomeKeywordSidebarProps> = ({
             <div key={section.title}>
               <div className="flex items-center gap-2 px-1 py-2.5">
                 <span className="text-yunlan-cinnabar/80">{section.icon}</span>
-                <span className="text-[11px] font-sans font-medium tracking-wide text-yunlan-ink">
+                <span className="text-xs font-sans font-medium tracking-wide text-yunlan-ink">
                   {section.title}
                 </span>
               </div>
               <ul className="space-y-2.5 pb-3">
                 {section.groups.map((g) => (
                   <li key={g.label} className="pl-1">
-                    <p className="text-[10px] font-sans font-medium tracking-wide text-yunlan-muted mb-1">
+                    <p className="text-xs font-sans font-medium tracking-wide text-slate-600 mb-1">
                       {g.label}
                     </p>
                     <div className="flex flex-col gap-0.5 border-l border-yunlan-hairline pl-2.5 ml-0.5">
@@ -208,7 +208,7 @@ export const HomeKeywordSidebar: React.FC<HomeKeywordSidebarProps> = ({
                           key={kw}
                           type="button"
                           onClick={() => onPickKeyword(kw, section.category)}
-                          className="text-left text-[11px] font-light text-yunlan-muted hover:text-yunlan-stone truncate transition-colors focus:outline-none focus-visible:text-yunlan-stone"
+                          className="text-left text-[13px] leading-6 text-yunlan-ink/80 hover:text-yunlan-stone truncate transition-colors focus:outline-none focus-visible:text-yunlan-stone"
                           title={kw}
                         >
                           {kw}

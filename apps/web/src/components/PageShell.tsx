@@ -25,7 +25,7 @@ export const PageShell: React.FC<PageShellProps> = ({
   return (
     <div className={`w-full ${maxClass} mx-auto py-5 sm:py-10 ${className}`}>
       <header className="mb-5 sm:mb-10">
-        <p className="text-[10px] font-sans font-normal tracking-[0.28em] text-yunlan-muted mb-2 sm:mb-3">
+        <p className="text-[11px] font-sans font-normal tracking-[0.28em] text-yunlan-muted mb-2 sm:mb-3">
           YUNLAN
         </p>
         <h1 className="font-yunlan-serif text-lg sm:text-2xl font-medium tracking-[0.08em] sm:tracking-[0.12em] text-yunlan-ink">

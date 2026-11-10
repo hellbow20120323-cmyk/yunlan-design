@@ -24,7 +24,7 @@ function ProviderMark({ id }: { id: DiskProviderId }) {
   const p = DISK_PROVIDERS[id];
   return (
     <span
-      className="w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-bold text-white shrink-0"
+      className="w-5 h-5 rounded-md flex items-center justify-center text-[11px] font-bold text-white shrink-0"
       style={{ backgroundColor: p.color }}
       aria-hidden
     >
@@ -97,7 +97,7 @@ export const SearchRefinePanel: React.FC<SearchRefinePanelProps> = ({
                 <ProviderMark id={id} />
                 <span className="truncate">{provider.shortName}</span>
                 {count !== undefined && count > 0 && (
-                  <span className="ml-auto text-[10px] tabular-nums text-[#9a7b4f]">{count}</span>
+                  <span className="ml-auto text-[11px] tabular-nums text-[#9a7b4f]">{count}</span>
                 )}
               </button>
             );

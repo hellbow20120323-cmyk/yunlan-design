@@ -30,15 +30,15 @@ export const UsageGuide: React.FC = () => {
           <div className="space-y-2 text-xs font-mono">
             <div className={codeBlock}>
               <span className="text-[#9a7b4f] font-semibold">流浪地球 4K HDR</span>
-              <span className="text-slate-500 font-sans block text-[11px] mt-0.5">多关键词空格隔开，自动取交集</span>
+              <span className="text-slate-500 font-sans block text-xs mt-0.5">多关键词空格隔开，自动取交集</span>
             </div>
             <div className={codeBlock}>
               <span className="text-[#9a7b4f] font-semibold">Python 教程 -广告</span>
-              <span className="text-slate-500 font-sans block text-[11px] mt-0.5">减号代表排除包含特定干扰词的资源</span>
+              <span className="text-slate-500 font-sans block text-xs mt-0.5">减号代表排除包含特定干扰词的资源</span>
             </div>
             <div className={codeBlock}>
               <span className="text-[#9a7b4f] font-semibold">考研数学 ext:pdf</span>
-              <span className="text-slate-500 font-sans block text-[11px] mt-0.5">限制目标格式只看 PDF 文档或 MKV 视频</span>
+              <span className="text-slate-500 font-sans block text-xs mt-0.5">限制目标格式只看 PDF 文档或 MKV 视频</span>
             </div>
           </div>
         </div>
@@ -55,19 +55,19 @@ export const UsageGuide: React.FC = () => {
           <div className="space-y-2 text-xs">
             <div className={`flex items-center justify-between p-2 ${codeBlock}`}>
               <span className="text-[#5c564e]">聚焦搜索框</span>
-              <kbd className="px-2 py-0.5 font-mono text-[11px] bg-[#fffcf8] border border-yunlan-hairline rounded shadow-xs">
+              <kbd className="px-2 py-0.5 font-mono text-xs bg-[#fffcf8] border border-yunlan-hairline rounded shadow-xs">
                 / 或 Ctrl+K
               </kbd>
             </div>
             <div className={`flex items-center justify-between p-2 ${codeBlock}`}>
               <span className="text-[#5c564e]">提交搜索 / 执行检索</span>
-              <kbd className="px-2 py-0.5 font-mono text-[11px] bg-[#fffcf8] border border-yunlan-hairline rounded shadow-xs">
+              <kbd className="px-2 py-0.5 font-mono text-xs bg-[#fffcf8] border border-yunlan-hairline rounded shadow-xs">
                 Enter
               </kbd>
             </div>
             <div className={`flex items-center justify-between p-2 ${codeBlock}`}>
               <span className="text-[#5c564e]">关闭详情弹窗 / 清空搜索历史</span>
-              <kbd className="px-2 py-0.5 font-mono text-[11px] bg-[#fffcf8] border border-yunlan-hairline rounded shadow-xs">
+              <kbd className="px-2 py-0.5 font-mono text-xs bg-[#fffcf8] border border-yunlan-hairline rounded shadow-xs">
                 Esc
               </kbd>
             </div>

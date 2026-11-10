@@ -44,7 +44,7 @@ export const DiskNavigationGrid: React.FC<DiskNavigationGridProps> = ({
                   </div>
 
                   {/* Speed Badge */}
-                  <div className="flex items-center gap-1 text-[11px] font-medium text-[#8a9a6e]">
+                  <div className="flex items-center gap-1 text-xs font-medium text-[#8a9a6e]">
                     <Zap className="w-3 h-3" />
                     <span>转存{p.speedRating}</span>
                   </div>
@@ -66,7 +66,7 @@ export const DiskNavigationGrid: React.FC<DiskNavigationGridProps> = ({
                 </div>
 
                 {/* Formats */}
-                <div className="flex items-center gap-1.5 text-[11px] text-slate-500 mb-5 flex-wrap">
+                <div className="flex items-center gap-1.5 text-xs text-slate-500 mb-5 flex-wrap">
                   <span className="text-slate-400">常用格式:</span>
                   {p.supportedFormats.map((fmt, i) => (
                     <span key={i} className="font-mono text-slate-600 dark:text-slate-400">

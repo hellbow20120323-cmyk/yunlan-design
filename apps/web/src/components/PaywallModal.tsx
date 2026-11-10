@@ -144,7 +144,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({
                   className="relative text-left p-4 min-h-[5.5rem] rounded-xl border-2 border-slate-200 dark:border-slate-700 hover:border-yunlan-cinnabar/50 transition-colors"
                 >
                   {plan.badge && (
-                    <span className="absolute -top-2 right-2 text-[10px] px-2 py-0.5 rounded-full bg-cyan-600 text-white font-bold">
+                    <span className="absolute -top-2 right-2 text-[11px] px-2 py-0.5 rounded-full bg-cyan-600 text-white font-bold">
                       {plan.badge}
                     </span>
                   )}
@@ -152,7 +152,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({
                   <p className="text-2xl font-extrabold text-yunlan-cinnabar mt-1">
                     ¥{plan.priceCny}
                   </p>
-                  <p className="text-[11px] text-slate-500 mt-1">{plan.durationDays} 天 VIP</p>
+                  <p className="text-xs text-slate-500 mt-1">{plan.durationDays} 天 VIP</p>
                   {busyPlan === plan.id && (
                     <Loader2 className="w-4 h-4 animate-spin absolute bottom-3 right-3 text-cyan-500" />
                   )}
@@ -171,7 +171,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({
               {payment.contact && (
                 <p className="text-xs text-cyan-700 dark:text-cyan-300">联系开通：{payment.contact}</p>
               )}
-              <p className="text-[11px] text-slate-500">
+              <p className="text-xs text-slate-500">
                 支持：{payment.methods.join(' / ')}。支付完成后请保留订单号，我们会为你开通会员。
               </p>
               {mockPayEnabled && (

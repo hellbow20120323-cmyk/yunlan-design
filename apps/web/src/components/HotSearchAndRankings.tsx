@@ -102,12 +102,12 @@ export const HotSearchAndRankings: React.FC<HotSearchAndRankingsProps> = ({
                     <p className="font-medium text-slate-800 dark:text-slate-200 group-hover:text-yunlan-stone line-clamp-2">
                       {r.title}
                     </p>
-                    <span className="text-[11px] text-slate-400">
+                    <span className="text-xs text-slate-400">
                       来源: {r.provider}
                     </span>
                   </div>
                 </div>
-                <span className="font-mono tabular-nums text-slate-400 text-[11px] shrink-0">
+                <span className="font-mono tabular-nums text-slate-400 text-xs shrink-0">
                   {(r.heat / 1000).toFixed(1)}k
                 </span>
               </div>
@@ -139,12 +139,12 @@ export const HotSearchAndRankings: React.FC<HotSearchAndRankingsProps> = ({
                     <p className="font-medium text-slate-800 dark:text-slate-200 group-hover:text-yunlan-stone line-clamp-2">
                       {r.title}
                     </p>
-                    <span className="text-[11px] text-slate-400">
+                    <span className="text-xs text-slate-400">
                       来源: {r.provider}
                     </span>
                   </div>
                 </div>
-                <span className="font-mono tabular-nums text-slate-400 text-[11px] shrink-0">
+                <span className="font-mono tabular-nums text-slate-400 text-xs shrink-0">
                   {(r.heat / 1000).toFixed(1)}k
                 </span>
               </div>
@@ -176,12 +176,12 @@ export const HotSearchAndRankings: React.FC<HotSearchAndRankingsProps> = ({
                     <p className="font-medium text-slate-800 dark:text-slate-200 group-hover:text-yunlan-stone line-clamp-2">
                       {r.title}
                     </p>
-                    <span className="text-[11px] text-slate-400">
+                    <span className="text-xs text-slate-400">
                       来源: {r.provider}
                     </span>
                   </div>
                 </div>
-                <span className="font-mono tabular-nums text-slate-400 text-[11px] shrink-0">
+                <span className="font-mono tabular-nums text-slate-400 text-xs shrink-0">
                   {(r.heat / 1000).toFixed(1)}k
                 </span>
               </div>

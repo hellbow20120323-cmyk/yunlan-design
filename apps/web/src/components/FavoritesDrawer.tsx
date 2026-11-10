@@ -62,7 +62,7 @@ export const FavoritesDrawer: React.FC<FavoritesDrawerProps> = ({
             <div className="h-full flex flex-col items-center justify-center text-center p-6 text-slate-400">
               <Bookmark className="w-10 h-10 stroke-[1.5] mb-2 opacity-30" />
               <p className="text-xs">暂无收藏的网盘资源</p>
-              <p className="text-[11px] text-slate-400 mt-1">在搜索结果中点击书签按钮即可快速收藏</p>
+              <p className="text-xs text-slate-400 mt-1">在搜索结果中点击书签按钮即可快速收藏</p>
             </div>
           ) : (
             favorites.map((item) => {
@@ -74,7 +74,7 @@ export const FavoritesDrawer: React.FC<FavoritesDrawerProps> = ({
                   className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40 hover:border-slate-300 dark:hover:border-slate-700 transition-all text-xs"
                 >
                   <div className="flex items-start justify-between gap-2 mb-1.5">
-                    <span className="flex items-center gap-1.5 font-medium text-slate-700 dark:text-slate-300 text-[11px]">
+                    <span className="flex items-center gap-1.5 font-medium text-slate-700 dark:text-slate-300 text-xs">
                       <span 
                         className="w-2 h-2 rounded-full" 
                         style={{ backgroundColor: provider?.color || '#3b82f6' }} 
@@ -104,7 +104,7 @@ export const FavoritesDrawer: React.FC<FavoritesDrawerProps> = ({
                   </h4>
 
                   <div className="mt-2.5 pt-2 border-t border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between">
-                    <div className="font-mono text-[11px] text-slate-500">
+                    <div className="font-mono text-xs text-slate-500">
                       {item.extractCode ? `提取码: ${item.extractCode}` : '免提取密码'}
                     </div>
 
@@ -117,7 +117,7 @@ export const FavoritesDrawer: React.FC<FavoritesDrawerProps> = ({
                           navigator.clipboard.writeText(text);
                           onShowToast('链接已复制！');
                         }}
-                        className="flex items-center gap-1 text-[11px] text-slate-600 dark:text-slate-300 hover:text-cyan-600"
+                        className="flex items-center gap-1 text-xs text-slate-600 dark:text-slate-300 hover:text-cyan-600"
                       >
                         <Copy className="w-3 h-3" />
                         <span>复制</span>
@@ -127,7 +127,7 @@ export const FavoritesDrawer: React.FC<FavoritesDrawerProps> = ({
                         href={safeHref(item.shareUrl)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-1 text-[11px] text-cyan-600 hover:underline"
+                        className="flex items-center gap-1 text-xs text-cyan-600 hover:underline"
                       >
                         <span>转存</span>
                         <ExternalLink className="w-3 h-3" />

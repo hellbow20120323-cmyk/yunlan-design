@@ -41,7 +41,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
               key={tab.id}
               type="button"
               onClick={() => onNavigate(tab.id)}
-              className={`flex flex-col items-center justify-center gap-0.5 text-[11px] tracking-wide transition-colors ${
+              className={`flex flex-col items-center justify-center gap-0.5 text-xs tracking-wide transition-colors ${
                 active ? 'text-yunlan-cinnabar font-medium' : 'text-yunlan-muted'
               }`}
             >

@@ -56,23 +56,23 @@ export const TrendPosterCard: React.FC<{
           className="absolute inset-0 h-full w-full object-cover object-top"
         />
         {showKindTag && tag && (
-          <span className="absolute top-1 left-1 px-1 py-px text-[8px] font-sans tracking-wide bg-yunlan-paper/90 text-yunlan-muted">
+          <span className="absolute top-1 left-1 px-1 py-px text-[10px] font-sans tracking-wide bg-yunlan-paper/90 text-yunlan-muted">
             {tag}
           </span>
         )}
       </div>
       {!posterOnly && !compact && (
         <>
-          <p className="mt-3 text-[11px] font-sans font-normal tracking-wide text-yunlan-ink line-clamp-2 group-hover:text-yunlan-stone transition-colors">
+          <p className="mt-2.5 text-[13px] leading-snug font-sans font-medium text-yunlan-ink line-clamp-2 group-hover:text-yunlan-stone transition-colors">
             {item.keyword}
           </p>
           {sub ? (
-            <p className="text-[10px] font-sans font-light text-yunlan-muted line-clamp-1 mt-0.5">{sub}</p>
+            <p className="text-xs font-sans text-yunlan-muted line-clamp-1 mt-1">{sub}</p>
           ) : null}
         </>
       )}
       {!posterOnly && compact && (
-        <p className="mt-2.5 w-full text-[10px] leading-snug font-sans font-light text-yunlan-muted line-clamp-2 text-center group-hover:text-yunlan-ink transition-colors">
+        <p className="mt-2 w-full text-xs leading-snug font-sans text-slate-600 line-clamp-2 text-center group-hover:text-yunlan-stone transition-colors">
           {item.keyword}
         </p>
       )}

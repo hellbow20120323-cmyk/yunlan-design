@@ -93,7 +93,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
               {getCategoryIcon(cat.icon)}
               <span>{cat.label}</span>
               {count !== undefined && count > 0 && (
-                <span className={`text-[10px] tabular-nums px-1.5 py-0.2 rounded-full ${
+                <span className={`text-[11px] tabular-nums px-1.5 py-0.2 rounded-full ${
                   isActive 
                     ? 'bg-[#f3f0ea] text-[#9a7b4f]' 
                     : 'bg-[#ebe6de] text-yunlan-muted'

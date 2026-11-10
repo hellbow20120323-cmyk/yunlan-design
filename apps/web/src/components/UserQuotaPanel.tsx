@@ -61,7 +61,7 @@ export const UserQuotaPanel: React.FC<UserQuotaPanelProps> = ({
               </p>
               <p className="text-slate-500 mt-0.5">今日免费体验额度</p>
             </div>
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[11px] font-bold">
               <Sparkles className="w-3 h-3" />
               VIP {points?.vipLabel || '免费体验'}
             </span>
@@ -79,13 +79,13 @@ export const UserQuotaPanel: React.FC<UserQuotaPanelProps> = ({
                 style={{ width: `${100 - pct}%` }}
               />
             </div>
-            <p className="text-[10px] text-slate-500 mt-1.5">
+            <p className="text-xs text-slate-500 mt-1.5">
               已使用 {used} 点 · 每次搜索 {points?.costPerSearch ?? 10} 点 · 明日 00:00（{points?.timezone || 'Asia/Shanghai'}）重置
             </p>
           </div>
 
           {vip && points?.subscription?.activeUntil && (
-            <p className="text-[10px] text-emerald-600 dark:text-emerald-400 mb-2">
+            <p className="text-xs text-emerald-600 dark:text-emerald-400 mb-2">
               VIP 至 {new Date(points.subscription.activeUntil).toLocaleDateString('zh-CN')}
             </p>
           )}

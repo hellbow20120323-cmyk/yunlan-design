@@ -48,12 +48,12 @@ export const Header: React.FC<HeaderProps> = ({
           <BrandLogo className="w-8 h-8 md:w-9 md:h-9 group-hover:shadow-ink-wash transition-shadow" />
           <div className="flex flex-col">
             <span className="font-yunlan-serif text-[15px] md:text-base font-medium tracking-[0.15em] text-yunlan-ink whitespace-nowrap shrink-0 flex items-center gap-2">
-              云览 <span className="hidden sm:inline font-sans text-[10px] font-normal tracking-[0.22em] text-yunlan-muted">YUNLAN</span>
+              云览 <span className="hidden sm:inline font-sans text-[11px] font-normal tracking-[0.22em] text-yunlan-muted">YUNLAN</span>
             </span>
           </div>
         </button>
 
-        <nav className="hidden md:flex items-center gap-8 text-[13px] font-light">
+        <nav className="hidden md:flex items-center gap-8 text-sm">
           <button
             onClick={() => setActiveTab('search')}
             className={`flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0 ${
@@ -112,7 +112,7 @@ export const Header: React.FC<HeaderProps> = ({
             >
               <Bookmark className="w-4 h-4" />
               {favoritesCount > 0 && (
-                <span className="absolute top-1 right-1 min-w-4 h-4 px-0.5 text-[10px] font-bold text-white bg-yunlan-cta rounded-sm flex items-center justify-center">
+                <span className="absolute top-1 right-1 min-w-4 h-4 px-0.5 text-[11px] font-bold text-white bg-yunlan-cta rounded-sm flex items-center justify-center">
                   {favoritesCount > 9 ? '9+' : favoritesCount}
                 </span>
               )}
@@ -137,7 +137,7 @@ export const Header: React.FC<HeaderProps> = ({
               >
                 <Crown className="w-3.5 h-3.5" />
                 <span>开通 VIP</span>
-                <span className="text-[10px] font-semibold opacity-90">¥3起</span>
+                <span className="text-[11px] font-semibold opacity-90">¥3起</span>
               </button>
             </>
           )}

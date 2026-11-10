@@ -22,7 +22,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigateToTab }) => {
             <div className="flex items-center gap-2.5 mb-1.5">
               <BrandLogo className="w-8 h-8" />
               <span className="font-semibold text-[#3d3832] text-sm">云览 Yunlan</span>
-              <span className="text-[11px] text-[#a88858]">· 专业多网盘聚合资源搜索</span>
+              <span className="text-xs text-[#a88858]">· 专业多网盘聚合资源搜索</span>
             </div>
             <p className="text-xs text-yunlan-muted max-w-lg leading-relaxed font-light">
               本站仅提供公开云盘分享链接的第三方索引与转存跳转服务，不直接存储、上传或修改任何文件。
@@ -58,7 +58,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigateToTab }) => {
         </div>
 
         {/* Supported providers quick links */}
-        <div className="py-4 flex items-center justify-between gap-4 flex-wrap text-[11px] text-slate-400">
+        <div className="py-4 flex items-center justify-between gap-4 flex-wrap text-xs text-slate-400">
           <div className="flex items-center gap-2 flex-wrap">
             <span>支持网盘：</span>
             {ALL_PROVIDER_IDS.map((id) => (

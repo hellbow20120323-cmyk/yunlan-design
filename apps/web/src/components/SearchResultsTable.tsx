@@ -56,13 +56,13 @@ function ProviderBadge({ item }: { item: ResourceItem }) {
   return (
     <div className="flex items-center gap-2 min-w-[72px]">
       <span
-        className="w-7 h-7 rounded-lg flex items-center justify-center text-[10px] font-bold text-white shrink-0 shadow-sm"
+        className="w-7 h-7 rounded-lg flex items-center justify-center text-[11px] font-bold text-white shrink-0 shadow-sm"
         style={{ backgroundColor: p?.color || '#64748b' }}
         title={p?.name}
       >
         {p?.shortName?.slice(0, 2) || '?'}
       </span>
-      <span className="hidden lg:inline text-[11px] text-slate-600 font-medium truncate max-w-[56px]">
+      <span className="hidden lg:inline text-xs text-slate-600 font-medium truncate max-w-[56px]">
         {p?.shortName || item.diskProvider}
       </span>
     </div>
@@ -159,7 +159,7 @@ export const SearchResultsTable: React.FC<SearchResultsTableProps> = ({
     <button
       type="button"
       onClick={() => toggleColSort(col)}
-      className="inline-flex items-center gap-1 text-left text-[11px] font-semibold text-slate-600 hover:text-yunlan-stone transition-colors"
+      className="inline-flex items-center gap-1 text-left text-xs font-semibold text-slate-600 hover:text-yunlan-stone transition-colors"
     >
       {label}
       <ArrowUpDown className="w-3 h-3 opacity-60" />
@@ -186,7 +186,7 @@ export const SearchResultsTable: React.FC<SearchResultsTableProps> = ({
             {query.trim() ? `${query.trim()} 网盘资源` : '搜索结果'}
           </h1>
         </div>
-        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0 text-[10px] text-slate-500">
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0 text-xs text-slate-500">
           <span className="tabular-nums">
             <strong className="text-slate-800">{total}</strong> 条
             <span className="hidden sm:inline"> · {tookMs}ms</span>
@@ -248,13 +248,13 @@ export const SearchResultsTable: React.FC<SearchResultsTableProps> = ({
       </div>
 
       <div className="hidden md:block overflow-x-auto">
-        <table className="w-full min-w-[720px] text-xs border-collapse">
+        <table className="w-full min-w-[720px] text-[13px] border-collapse">
           <thead>
-            <tr className="border-b border-yunlan-hairline text-yunlan-muted bg-yunlan-paper/90">
+            <tr className="border-b border-yunlan-hairline text-yunlan-muted bg-yunlan-paper/90 text-xs font-medium">
               <th className="px-3 py-2.5 text-left">
                 <SortHead label="分享名称" col="title" />
               </th>
-              <th className="px-3 py-2.5 text-center w-20">
+              <th className="px-3 py-2.5 text-center w-24">
                 <SortHead label="有效性" col="valid" />
               </th>
               <th className="px-3 py-2.5 text-right w-24">
@@ -282,7 +282,7 @@ export const SearchResultsTable: React.FC<SearchResultsTableProps> = ({
                           onClick={() => onOpenDetail(item)}
                           className="text-left min-w-0 flex-1"
                         >
-                          <span className="font-semibold text-amber-700 hover:text-amber-600 line-clamp-2 leading-snug">
+                          <span className="font-medium text-yunlan-ink hover:text-yunlan-stone line-clamp-2 leading-snug transition-colors">
                             {item.title}
                           </span>
                         </button>
@@ -290,17 +290,23 @@ export const SearchResultsTable: React.FC<SearchResultsTableProps> = ({
                     </td>
                     <td className="px-3 py-3 align-middle text-center">
                       {valid ? (
-                        <CheckCircle2 className="w-5 h-5 text-emerald-500 mx-auto" aria-label="有效" />
+                        <span className="inline-flex items-center gap-1 text-xs text-emerald-700">
+                          <CheckCircle2 className="w-4 h-4" aria-hidden />
+                          有效
+                        </span>
                       ) : (
-                        <AlertCircle className="w-5 h-5 text-slate-300 mx-auto" aria-label="未验证" />
+                        <span className="inline-flex items-center gap-1 text-xs text-slate-500">
+                          <AlertCircle className="w-4 h-4" aria-hidden />
+                          未验证
+                        </span>
                       )}
                     </td>
-                    <td className="px-3 py-3 align-middle text-right tabular-nums text-slate-600">
+                    <td className="px-3 py-3 align-middle text-right tabular-nums text-slate-700">
                       {item.totalFiles > 0
                         ? `${item.metaPartial ? '≥' : ''}${item.totalFiles}`
                         : '—'}
                     </td>
-                    <td className="px-3 py-3 align-middle text-right tabular-nums text-slate-800 font-medium">
+                    <td className="px-3 py-3 align-middle text-right tabular-nums text-yunlan-ink font-medium">
                       {item.sizeFormatted && item.sizeFormatted !== '—'
                         ? `${item.metaPartial ? '约 ' : ''}${item.sizeFormatted}`
                         : '—'}
@@ -317,7 +323,7 @@ export const SearchResultsTable: React.FC<SearchResultsTableProps> = ({
                     {menuId === item.id && (
                       <div
                         ref={menuRef}
-                        className="absolute right-2 top-full z-20 mt-1 w-40 rounded-xl border border-slate-200 bg-white shadow-lg py-1 text-[11px]"
+                        className="absolute right-2 top-full z-20 mt-1 w-40 rounded-xl border border-slate-200 bg-white shadow-lg py-1 text-xs"
                       >
                         <button
                           type="button"
@@ -362,7 +368,7 @@ export const SearchResultsTable: React.FC<SearchResultsTableProps> = ({
                     )}
                     </td>
                   </tr>
-                  <tr className="border-b border-slate-200/90 bg-slate-50/60">
+                  <tr className="border-b border-yunlan-hairline bg-yunlan-mist/35">
                     <td colSpan={5} className="px-3 py-2">
                       <ResultMetaStrip
                         item={item}
@@ -385,7 +391,7 @@ export const SearchResultsTable: React.FC<SearchResultsTableProps> = ({
       </div>
 
       {sortBy === 'relevance' && (
-        <p className="hidden md:block px-4 py-2 text-[10px] text-slate-500 border-t border-slate-100">
+        <p className="hidden md:block px-4 py-2 text-xs text-slate-500 border-t border-yunlan-hairline">
           点击表头可排序；每条下方灰色条为扩展信息（来源、链接、提取码等）。综合排序仍按 API 匹配度，表内排序仅当前页。
         </p>
       )}
@@ -424,7 +430,7 @@ function MobileResultCard({
     <article className="px-3 py-3.5 bg-yunlan-surface">
       <div className="flex items-start gap-3">
         <span
-          className="w-9 h-9 rounded-[2px] flex items-center justify-center text-[11px] font-bold text-white shrink-0"
+          className="w-9 h-9 rounded-[2px] flex items-center justify-center text-xs font-bold text-white shrink-0"
           style={{ backgroundColor: p?.color || '#64748b' }}
         >
           {p?.shortName?.slice(0, 2) || '?'}
@@ -439,7 +445,7 @@ function MobileResultCard({
               {item.title}
             </h3>
           </button>
-          <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-yunlan-muted">
+          <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-yunlan-muted">
             <span>{p?.shortName || item.diskProvider}</span>
             <span aria-hidden>·</span>
             <span className={valid ? 'text-emerald-700' : 'text-yunlan-muted'}>
@@ -518,17 +524,17 @@ function MobileResultCard({
           <button
             type="button"
             onClick={onCopyCode}
-            className="min-h-10 px-3 rounded-sm text-[12px] font-mono text-amber-900 bg-amber-50 border border-amber-200"
+            className="min-h-10 px-3 rounded-sm text-[13px] font-mono text-amber-900 bg-amber-50 border border-amber-200"
           >
             提取码 {item.extractCode}
           </button>
         ) : (
-          <span className="text-[11px] text-emerald-700 px-1">免提取码</span>
+          <span className="text-[13px] text-emerald-700 px-1">免提取码</span>
         )}
         <button
           type="button"
           onClick={onCopy}
-          className="min-h-10 px-3 rounded-sm text-[12px] text-yunlan-stone border border-yunlan-hairline bg-yunlan-paper"
+          className="min-h-10 px-3 rounded-sm text-[13px] text-yunlan-stone border border-yunlan-hairline bg-yunlan-paper"
         >
           复制
         </button>
@@ -536,7 +542,7 @@ function MobileResultCard({
           href={safeHref(item.shareUrl)}
           target="_blank"
           rel="noopener noreferrer"
-          className="ml-auto min-h-10 px-3.5 inline-flex items-center rounded-sm text-[12px] font-medium text-white bg-yunlan-cta"
+          className="ml-auto min-h-10 px-3.5 inline-flex items-center rounded-sm text-[13px] font-medium text-white bg-yunlan-cta"
         >
           打开
         </a>
@@ -547,7 +553,7 @@ function MobileResultCard({
 
 function MetaItem({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <span className="inline-flex items-center gap-1 text-[10px] text-slate-600">
+    <span className="inline-flex items-center gap-1 text-xs text-slate-600">
       <span className="text-slate-400 shrink-0">{label}</span>
       <span className="text-slate-700">{children}</span>
     </span>
@@ -573,19 +579,19 @@ function ResultMetaStrip({
       <MetaItem label="类型">{cat}</MetaItem>
       <MetaItem label="来源">{formatSource(item)}</MetaItem>
       {sourceFull && sourceFull !== formatSource(item) ? (
-        <span className="hidden md:inline text-[10px] text-slate-400 truncate max-w-[200px]" title={sourceFull}>
+        <span className="hidden md:inline text-xs text-slate-400 truncate max-w-[200px]" title={sourceFull}>
           {sourceFull}
         </span>
       ) : null}
       <MetaItem label="更新">{item.updatedAt || '—'}</MetaItem>
       <MetaItem label="匹配度">{item.healthScore}</MetaItem>
       {item.note && item.note !== item.title ? (
-        <span className="text-[10px] text-slate-500 line-clamp-1 flex-1 min-w-[120px]" title={item.note}>
+        <span className="text-xs text-slate-500 line-clamp-1 flex-1 min-w-[120px]" title={item.note}>
           备注：{item.note}
         </span>
       ) : null}
       <span
-        className="text-[10px] font-mono text-slate-500 truncate max-w-full sm:max-w-[240px]"
+        className="text-xs font-mono text-slate-500 truncate max-w-full sm:max-w-[240px]"
         title={item.shareUrl}
       >
         链接：{truncateUrl(item.shareUrl, 56)}
@@ -594,7 +600,7 @@ function ResultMetaStrip({
         <button
           type="button"
           onClick={onCopyCode}
-          className="inline-flex items-center gap-1 text-[10px] text-amber-800 bg-amber-50 border border-amber-200 rounded px-1.5 py-0.5 hover:bg-amber-100"
+          className="inline-flex items-center gap-1 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded px-1.5 py-0.5 hover:bg-amber-100"
         >
           提取码 {item.extractCode}
         </button>
@@ -602,12 +608,12 @@ function ResultMetaStrip({
       <button
         type="button"
         onClick={onCopyLink}
-        className="text-[10px] text-cyan-700 hover:underline"
+        className="text-xs text-cyan-700 hover:underline"
       >
         复制分享
       </button>
       {extraTags.map((t) => (
-        <span key={t} className="px-1.5 py-0.5 rounded bg-[#f3f0ea] text-[#7a6545] text-[10px]">
+        <span key={t} className="px-1.5 py-0.5 rounded bg-[#f3f0ea] text-[#7a6545] text-xs">
           {t}
         </span>
       ))}

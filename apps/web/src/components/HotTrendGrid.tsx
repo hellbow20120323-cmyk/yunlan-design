@@ -112,8 +112,8 @@ export const HotTrendGrid: React.FC<HotTrendGridProps> = ({
           </h2>
         ) : (
           <h2
-            className={`font-yunlan-serif font-medium tracking-[0.28em] text-yunlan-ink ${
-              singleRow ? 'text-xs text-yunlan-muted' : 'text-sm'
+            className={`font-yunlan-serif font-medium tracking-[0.16em] text-yunlan-ink ${
+              singleRow ? 'text-sm text-slate-600' : 'text-base'
             }`}
           >
             {title}

@@ -54,7 +54,7 @@ export const HeroSearch: React.FC<HeroSearchProps> = ({
   return (
     <div className={`w-full max-w-3xl mx-auto ${compact ? 'pt-3 pb-2 md:pt-10 md:pb-5' : 'pt-8 pb-3 sm:pt-12 sm:pb-5'}`}>
       <div className={`${compact ? 'hidden md:block' : ''} text-center mb-7 sm:mb-12`}>
-        <p className="text-[10px] sm:text-[11px] font-sans font-normal tracking-[0.35em] text-yunlan-muted mb-4 sm:mb-5">
+        <p className="text-[11px] sm:text-xs font-sans font-normal tracking-[0.35em] text-yunlan-muted mb-4 sm:mb-5">
           云览 · YUNLAN
         </p>
         <h1
@@ -63,7 +63,7 @@ export const HeroSearch: React.FC<HeroSearchProps> = ({
         >
           万象云盘，一览尽搜
         </h1>
-        <p className="mt-3 sm:mt-5 text-xs sm:text-[13px] font-sans font-light text-yunlan-muted max-w-md mx-auto leading-[1.85] tracking-wide px-2">
+        <p className="mt-3 sm:mt-5 text-[13px] sm:text-sm font-sans text-yunlan-muted max-w-md mx-auto leading-[1.85] tracking-wide px-2">
           收录海量文件索引 · 十大云盘协同 · 智能排重与有效性标注
         </p>
       </div>
@@ -93,7 +93,7 @@ export const HeroSearch: React.FC<HeroSearchProps> = ({
               onChange={(e) => onQueryChange(e.target.value)}
               onFocus={() => setIsFocused(true)}
               placeholder="搜索剧集、资料、软件、音乐…"
-              className="w-full text-base sm:text-[15px] font-sans font-light text-yunlan-ink placeholder:text-[#b0ada8] bg-transparent focus:outline-none min-h-11"
+              className="w-full text-base sm:text-[15px] font-sans font-light text-yunlan-ink placeholder:text-[#8f8b85] bg-transparent focus:outline-none min-h-11"
             />
             {query && (
               <button
