@@ -1,11 +1,16 @@
 import fs from "node:fs";
 import path from "node:path";
 import { DATA_DIR } from "../paths.js";
+import { fetchDoubanHotTv } from "./douban-tv-hot.js";
+import { posterProxyPath, rememberDoubanCovers } from "./douban-poster.js";
 
 const CACHE_PATH = path.join(DATA_DIR, "trending-hot.json");
 const LEGACY_CACHE_PATH = path.join(DATA_DIR, "subhd-hot.json");
 const TZ = process.env.POINTS_TZ || "Asia/Shanghai";
-const CACHE_VERSION = 5;
+const CACHE_VERSION = 8;
+/** 每日定时刷新时刻（与 POINTS_TZ 一致，默认上海 09:00） */
+const DAILY_REFRESH_HOUR = Number(process.env.HOT_REFRESH_HOUR ?? 9);
+const DAILY_REFRESH_MINUTE = Number(process.env.HOT_REFRESH_MINUTE ?? 0);
 const SOURCE_PAGES = [
   { id: "home", url: "https://subhd.tv/" },
   { id: "toptv", url: "https://subhd.tv/sub/toptv" },
@@ -204,7 +209,7 @@ function toPublicItem(item) {
     id: item.id,
     title: item.title,
     keyword: item.keyword,
-    imageUrl: item.imageUrl,
+    imageUrl: posterProxyPath(item),
     kind: item.kind,
   };
 }
@@ -217,6 +222,46 @@ function toPublicHotListItem(item) {
     imageUrl: item.imageUrl,
     releases: item.releases,
   };
+}
+
+/** 合并键：同一豆瓣 id 或相同搜索关键词视为同一作品 */
+function tvDedupeKey(item) {
+  const fromId = String(item?.id || "")
+    .replace(/^douban-/, "")
+    .match(/^\d{5,}$/)?.[0];
+  const fromImg = String(item?.imageUrl || "").match(/douban\/(\d{5,})/)?.[1];
+  const doubanId = fromId || fromImg;
+  if (doubanId) return `d:${doubanId}`;
+  const kw = String(item?.keyword || item?.title || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "");
+  return kw ? `k:${kw}` : `id:${item?.id || Math.random()}`;
+}
+
+/**
+ * 豆瓣 + SubHD 剧集去重合并，再 Fisher–Yates 随机打乱（每日刷新时固定一种顺序）。
+ * @param {Array<{id:string,title:string,keyword:string,imageUrl:string,kind?:string,source?:string}>} doubanRows
+ * @param {Array<{id:string,title:string,keyword:string,imageUrl:string,kind?:string,source?:string}>} subhdRows
+ * @param {number} [limit]
+ */
+export function mergeShuffleTvLists(doubanRows, subhdRows, limit = 20) {
+  /** @type {Map<string, typeof doubanRows[0]>} */
+  const map = new Map();
+  const put = (row, preferNew) => {
+    const key = tvDedupeKey(row);
+    const prev = map.get(key);
+    if (!prev) map.set(key, row);
+    else if (preferNew) map.set(key, row);
+  };
+  for (const row of subhdRows || []) put({ ...row, kind: "tv" }, false);
+  for (const row of doubanRows || []) put({ ...row, kind: "tv" }, true);
+  const merged = [...map.values()];
+  for (let i = merged.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [merged[i], merged[j]] = [merged[j], merged[i]];
+  }
+  return merged.slice(0, limit);
 }
 
 async function scrapeSubhdHot() {
@@ -260,11 +305,39 @@ async function scrapeSubhdHot() {
     errors.push(`topmv: ${err instanceof Error ? err.message : String(err)}`);
   }
 
-  try {
-    const tvHtml = await fetchPage("https://subhd.tv/sub/toptv");
-    tv = parsePosters(tvHtml, "toptv");
-  } catch (err) {
-    errors.push(`toptv: ${err instanceof Error ? err.message : String(err)}`);
+  let doubanTv = [];
+  let subhdTv = [];
+  const [doubanSettled, subhdSettled] = await Promise.allSettled([
+    fetchDoubanHotTv(50),
+    fetchPage("https://subhd.tv/sub/toptv").then((html) => parsePosters(html, "toptv")),
+  ]);
+  if (doubanSettled.status === "fulfilled") {
+    doubanTv = doubanSettled.value.map((row) => ({
+      id: row.id,
+      title: row.title,
+      keyword: row.keyword,
+      imageUrl: row.imageUrl,
+      coverUpstream: row.coverUpstream,
+      source: "douban",
+      kind: "tv",
+    }));
+    rememberDoubanCovers(doubanTv);
+  } else {
+    errors.push(`douban-tv: ${doubanSettled.reason?.message || doubanSettled.reason}`);
+  }
+  if (subhdSettled.status === "fulfilled") {
+    subhdTv = subhdSettled.value;
+  } else {
+    errors.push(`toptv: ${subhdSettled.reason?.message || subhdSettled.reason}`);
+  }
+
+  const parts = [];
+  if (doubanTv.length) parts.push("douban");
+  if (subhdTv.length) parts.push("subhd");
+  const tvSource = parts.length ? parts.join("+") : "none";
+  tv = mergeShuffleTvLists(doubanTv, subhdTv, 50);
+  if (!tv.length) {
+    errors.push("剧集：豆瓣与 SubHD 均无数据");
   }
 
   const itemsFromList = hotList.map((h) => ({
@@ -293,6 +366,7 @@ async function scrapeSubhdHot() {
     latest: (latest.length ? latest : items.slice(0, 12)).map(toPublicItem),
     movies: movies.map(toPublicItem),
     tv: tv.map(toPublicItem),
+    tvSource,
     errors,
   };
 }
@@ -339,10 +413,64 @@ export async function getSubhdHotCached(force = false) {
 
 let refreshing = false;
 
+/** 今天在配置时区下的年月日 + 当前时分（用于判断「今日是否已过 9:00」） */
+function nowPartsInTz() {
+  const now = new Date();
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: TZ,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(now);
+  const get = (t) => parts.find((p) => p.type === t)?.value;
+  return {
+    dayKey: `${get("year")}-${get("month")}-${get("day")}`,
+    hour: Number(get("hour")),
+    minute: Number(get("minute")),
+  };
+}
+
+function msUntilNextDailyRefresh() {
+  const { hour, minute } = nowPartsInTz();
+  const now = new Date();
+  const afterToday =
+    hour > DAILY_REFRESH_HOUR ||
+    (hour === DAILY_REFRESH_HOUR && minute >= DAILY_REFRESH_MINUTE);
+  const target = new Date(now);
+  if (afterToday) target.setDate(target.getDate() + 1);
+  // 用上海 +08:00 锚点计算下一次刷新（POINTS_TZ 默认同为 Asia/Shanghai）
+  const y = new Intl.DateTimeFormat("en-CA", { timeZone: TZ }).format(target);
+  const next = new Date(
+    `${y}T${String(DAILY_REFRESH_HOUR).padStart(2, "0")}:${String(DAILY_REFRESH_MINUTE).padStart(2, "0")}:00+08:00`
+  );
+  return Math.max(1000, next.getTime() - now.getTime());
+}
+
+/**
+ * 启动时：若今日尚未在 9:00 后刷新过，则立即拉取；否则等到下一次 9:00。
+ * 豆瓣剧集与 SubHD 电影/榜单合并写入同一份 trending-hot.json。
+ */
 export async function refreshSubhdHotIfNeeded() {
-  const day = todayKey();
+  const { dayKey, hour, minute } = nowPartsInTz();
   const cached = readCache();
-  if (cached?.dayKey === day && cached.items?.length) return cached;
+  const pastRefreshTime =
+    hour > DAILY_REFRESH_HOUR ||
+    (hour === DAILY_REFRESH_HOUR && minute >= DAILY_REFRESH_MINUTE);
+  const refreshAnchor = new Date(
+    `${dayKey}T${String(DAILY_REFRESH_HOUR).padStart(2, "0")}:${String(DAILY_REFRESH_MINUTE).padStart(2, "0")}:00+08:00`
+  ).getTime();
+
+  // 9:00 之前不抢先刷新，继续展示上一版（全新部署无缓存时仍拉一次）
+  if (!pastRefreshTime) {
+    if (cached?.items?.length) return cached;
+  } else if (cached?.cacheVersion === CACHE_VERSION && cached?.fetchedAt && cached.items?.length) {
+    const fetchedAt = new Date(cached.fetchedAt).getTime();
+    if (fetchedAt >= refreshAnchor) return cached;
+  }
+
   if (refreshing) return cached;
   refreshing = true;
   try {
@@ -352,14 +480,33 @@ export async function refreshSubhdHotIfNeeded() {
   }
 }
 
-/** 每小时检查一次，跨日后自动抓取（等价于每日早间更新） */
+async function runScheduledHotRefresh() {
+  try {
+    await getSubhdHotCached(true);
+    console.log(
+      `[hot] 每日热榜已更新（剧集=豆瓣，${TZ} ${String(DAILY_REFRESH_HOUR).padStart(2, "0")}:${String(DAILY_REFRESH_MINUTE).padStart(2, "0")}）`
+    );
+  } catch (err) {
+    console.warn("[hot] 定时热榜更新失败:", err instanceof Error ? err.message : err);
+  }
+}
+
+function scheduleNextDailyRefresh() {
+  const wait = msUntilNextDailyRefresh();
+  const t = setTimeout(() => {
+    runScheduledHotRefresh().finally(() => scheduleNextDailyRefresh());
+  }, wait);
+  t.unref?.();
+}
+
+/** 每天 9:00（Asia/Shanghai，可用 HOT_REFRESH_HOUR 覆盖）全量刷新热榜 */
 export function scheduleSubhdHotDaily() {
   refreshSubhdHotIfNeeded().catch((err) => {
-    console.warn("[subhd-hot] initial refresh failed:", err.message || err);
+    console.warn("[hot] 启动热榜刷新失败:", err instanceof Error ? err.message : err);
   });
-  setInterval(() => {
-    refreshSubhdHotIfNeeded().catch((err) => {
-      console.warn("[subhd-hot] scheduled refresh failed:", err.message || err);
-    });
-  }, 60 * 60 * 1000).unref?.();
+  scheduleNextDailyRefresh();
+  const waitMin = Math.round(msUntilNextDailyRefresh() / 60000);
+  console.log(
+    `[hot] 下次热榜刷新约 ${waitMin} 分钟后（${TZ} ${String(DAILY_REFRESH_HOUR).padStart(2, "0")}:${String(DAILY_REFRESH_MINUTE).padStart(2, "0")}，剧集来源豆瓣）`
+  );
 }

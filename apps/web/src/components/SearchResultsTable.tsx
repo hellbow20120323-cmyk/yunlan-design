@@ -182,12 +182,9 @@ export const SearchResultsTable: React.FC<SearchResultsTableProps> = ({
       <div className="flex items-center justify-between gap-2 px-3 sm:px-4 py-3 border-b border-yunlan-hairline bg-yunlan-mist/60">
         <div className="flex items-center gap-2 min-w-0">
           <Search className="w-4 h-4 text-[#b8956b] shrink-0" />
-          <h2 className="text-sm font-bold text-slate-900 truncate">搜索结果</h2>
-          {query && (
-            <span className="text-[11px] text-slate-500 truncate hidden sm:inline">
-              「{query}」
-            </span>
-          )}
+          <h1 className="text-sm font-bold text-slate-900 truncate">
+            {query.trim() ? `${query.trim()} 网盘资源` : '搜索结果'}
+          </h1>
         </div>
         <div className="flex items-center gap-1.5 sm:gap-3 shrink-0 text-[10px] text-slate-500">
           <span className="tabular-nums">

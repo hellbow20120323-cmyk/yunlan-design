@@ -32,6 +32,8 @@ export interface TrendingHotResponse {
   latest: TrendingHotItem[];
   movies: TrendingHotItem[];
   tv: TrendingHotItem[];
+  /** 剧集来源标记，如 douban+subhd */
+  tvSource?: string;
   stale?: boolean;
   refreshError?: string;
 }

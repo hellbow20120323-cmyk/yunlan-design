@@ -23,6 +23,7 @@ import { ResourceItem, DiskProviderId, ResourceCategory } from './types';
 import { SearchX, ArrowDown } from 'lucide-react';
 import { useAuth } from './hooks/useAuth';
 import { useVisualViewportKeyboard } from './hooks/useVisualViewportKeyboard';
+import { usePageSeo } from './hooks/usePageSeo';
 import { STORAGE_KEYS } from './utils/storage';
 import { useTrendingHot } from './hooks/useTrendingHot';
 import { shuffleCopy } from './utils/shuffle';
@@ -55,15 +56,14 @@ export default function App() {
     });
   }, [trendingHot.data]);
 
-  /** 底部海报墙：每次拉取到热门数据后随机打乱 */
-  const bottomMoviesShuffled = useMemo(
-    () => shuffleCopy(trendingHot.data?.movies ?? []),
-    [trendingHot.data?.fetchedAt, trendingHot.data?.movies],
-  );
-  const bottomTvShuffled = useMemo(
-    () => shuffleCopy(trendingHot.data?.tv ?? []),
-    [trendingHot.data?.fetchedAt, trendingHot.data?.tv],
-  );
+  /** 底部海报墙：随机打乱后两边取相同条数，避免剧集明显少于电影 */
+  const { bottomMoviesShuffled, bottomTvShuffled } = useMemo(() => {
+    const movies = shuffleCopy(trendingHot.data?.movies ?? []);
+    const tv = shuffleCopy(trendingHot.data?.tv ?? []);
+    const n = Math.min(movies.length, tv.length);
+    if (!n) return { bottomMoviesShuffled: movies, bottomTvShuffled: tv };
+    return { bottomMoviesShuffled: movies.slice(0, n), bottomTvShuffled: tv.slice(0, n) };
+  }, [trendingHot.data?.fetchedAt, trendingHot.data?.movies, trendingHot.data?.tv]);
 
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isPaywallOpen, setIsPaywallOpen] = useState(false);
@@ -109,6 +109,8 @@ export default function App() {
     setPaywallReason(msg);
     setIsPaywallOpen(true);
   });
+
+  usePageSeo(filter.query, response && filter.query.trim() ? response.total : null);
 
   // Modals & Drawers state
   const [detailItem, setDetailItem] = useState<ResourceItem | null>(null);

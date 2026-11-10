@@ -32,6 +32,8 @@ import { consumeSearchPoint, getQuotaStatus } from "./points/quota.js";
 import { getVersionInfo, getVersionSummary } from "./version.js";
 import { resolveShareMetaBatch } from "./share-meta.js";
 import { getSubhdHotCached, scheduleSubhdHotDaily } from "./sources/subhd-hot.js";
+import { getDoubanPosterBytes, normalizeDoubanId } from "./sources/douban-poster.js";
+import { buildSitemapXml, sendSeoIndex } from "./seo.js";
 
 const PORT = Number(process.env.PORT || 8787);
 const ENGINE_URL = (process.env.ENGINE_URL || "").trim();
@@ -94,6 +96,22 @@ async function handleTrendingHot(req, res) {
 const hotLimiter = rateLimit({ windowMs: 60_000, max: 60 });
 app.get("/api/hot/trending", hotLimiter, handleTrendingHot);
 app.get("/api/hot/subhd", hotLimiter, handleTrendingHot);
+
+const posterLimiter = rateLimit({ windowMs: 60_000, max: 120 });
+app.get("/api/hot/poster/:doubanId", posterLimiter, async (req, res) => {
+  const id = normalizeDoubanId(req.params.doubanId);
+  if (!id) return res.status(400).send("invalid id");
+  try {
+    const hit = await getDoubanPosterBytes(id);
+    if (!hit) return res.status(404).send("poster not found");
+    res.setHeader("Content-Type", hit.contentType);
+    res.setHeader("Cache-Control", "public, max-age=86400, stale-while-revalidate=604800");
+    res.send(hit.buffer);
+  } catch (err) {
+    console.warn("[hot/poster] 失败:", id, err instanceof Error ? err.message : err);
+    res.status(502).send("poster fetch failed");
+  }
+});
 
 const shareMetaLimiter = rateLimit({ windowMs: 60_000, max: 30 });
 app.post("/api/share-meta/batch", shareMetaLimiter, async (req, res) => {
@@ -390,11 +408,29 @@ app.use("/api", (_req, res) => {
   res.status(404).json({ ok: false, error: "接口不存在" });
 });
 
+app.get("/sitemap.xml", async (_req, res) => {
+  try {
+    const hot = await getSubhdHotCached(false).catch(() => null);
+    const keywords = [...(hot?.movies || []), ...(hot?.tv || []), ...(hot?.items || [])];
+    res.setHeader("Content-Type", "application/xml; charset=utf-8");
+    res.setHeader("Cache-Control", "public, max-age=3600");
+    res.send(buildSitemapXml(keywords));
+  } catch (err) {
+    console.warn("[seo] sitemap 失败:", err instanceof Error ? err.message : err);
+    res.status(500).type("text/plain").send("sitemap unavailable");
+  }
+});
+
 app.get("*", (req, res) => {
-  res.setHeader("Cache-Control", "no-cache");
-  res.sendFile(path.join(WEB_DIST, "index.html"), (err) => {
-    if (err && !res.headersSent) {
-      res.status(404).json({ error: "Web UI 未构建，请先 npm run build 或分别启动 gateway/web" });
+  sendSeoIndex(req, res).catch((err) => {
+    console.warn("[seo] 首页渲染失败:", err instanceof Error ? err.message : err);
+    if (!res.headersSent) {
+      res.setHeader("Cache-Control", "no-cache");
+      res.sendFile(path.join(WEB_DIST, "index.html"), (fileErr) => {
+        if (fileErr && !res.headersSent) {
+          res.status(404).json({ error: "Web UI 未构建，请先 npm run build 或分别启动 gateway/web" });
+        }
+      });
     }
   });
 });

@@ -57,7 +57,9 @@ ENGINE_URL=http://127.0.0.1:8888 npm run dev # 网关 :8787 + Web :5173
 | `COOKIE_SECURE` | `1/0` 强制 Cookie 的 Secure 标记；默认按 `X-Forwarded-Proto` / `CF-Visitor` 自动判断 | 自动 |
 | `POINTS_ANON_IP_DAILY` | 匿名访客按 IP 的日积分上限（防清 Cookie 刷额度） | 单人额度 ×4 |
 | `SEARCH_CACHE_TTL_MS` | 网关搜索结果短缓存（相同关键词合并上游请求，`0` 关闭） | `90000` |
+| `HOT_REFRESH_HOUR` / `HOT_REFRESH_MINUTE` | 首页热门影视（含豆瓣热播剧集）每日刷新时刻，时区同 `POINTS_TZ` | `9` / `0` |
 | `BILLING_MOCK` | `1` 开启模拟支付（任何登录用户可免费开通会员，**切勿在生产开启**） | `0` |
+| `PUBLIC_ORIGIN` | 站点正式地址（canonical / sitemap / OG 图） | `https://panso.hellbow.xyz` |
 | `POINTS_SEARCH_COST` 等 | 积分规则，见 `apps/gateway/src/points/quota.js` | |
 
 引擎变量见 `engine/README.md`。
@@ -66,7 +68,9 @@ ENGINE_URL=http://127.0.0.1:8888 npm run dev # 网关 :8787 + Web :5173
 
 - `GET /api/health`：`liveReady`、`modeLabel`、`engineConfigured`、`engineOk`（引擎地址、插件、微博细节仅管理员可见）
 - `GET|POST /api/search`：`kw`、`cloud_types=quark,baidu,...`、`refresh=1`（跳过引擎缓存）
-- 前端深链：`/?q=三体`
+- 前端深链：`/?q=三体`（搜索结果页标题为「关键词 - N条网盘资源 | 云览」；爬虫访问时服务端预渲染列表，不扣积分）
+- `GET /sitemap.xml`：首页 + 热门电影/剧集关键词
+- `GET /robots.txt`
 
 ## 部署
 
