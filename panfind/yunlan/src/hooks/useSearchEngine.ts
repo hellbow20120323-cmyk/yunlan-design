@@ -12,9 +12,10 @@ import {
   ResourceCategory,
   SortOption,
   TimeRangeOption,
-  SearchHistoryItem
+  SearchHistoryItem,
+  SearchExecuteOptions,
 } from '../types';
-import { ALL_PROVIDER_IDS } from '../constants/providers';
+import { PANFIND_SEARCH_PROVIDER_IDS } from '../constants/providers';
 import { SearchService } from '../services/searchService';
 import { fetchShareMetadata } from '../services/panfindAdapter';
 import { PointsStatus } from '../types/auth';
@@ -49,7 +50,7 @@ export function useSearchEngine(
     const onlyValid = params.get('valid') === '1';
     
     const provParam = params.get('providers');
-    let selectedProviders: DiskProviderId[] = ALL_PROVIDER_IDS;
+    let selectedProviders: DiskProviderId[] = [...PANFIND_SEARCH_PROVIDER_IDS];
     if (provParam) {
       const parsed = provParam.split(',') as DiskProviderId[];
       if (parsed.length > 0) {
@@ -107,7 +108,10 @@ export function useSearchEngine(
     if (currentFilter.sortBy !== 'relevance') params.set('sort', currentFilter.sortBy);
     if (currentFilter.timeRange !== 'all') params.set('time', currentFilter.timeRange);
     if (currentFilter.onlyValid) params.set('valid', '1');
-    if (currentFilter.selectedProviders.length > 0 && currentFilter.selectedProviders.length < ALL_PROVIDER_IDS.length) {
+    if (
+      currentFilter.selectedProviders.length > 0 &&
+      currentFilter.selectedProviders.length < PANFIND_SEARCH_PROVIDER_IDS.length
+    ) {
       params.set('providers', currentFilter.selectedProviders.join(','));
     }
 
@@ -116,14 +120,20 @@ export function useSearchEngine(
   }, []);
 
   // Perform search
-  const triggerSearch = useCallback(async (customFilter?: SearchFilter, targetPage = 1, append = false) => {
+  const triggerSearch = useCallback(
+    async (
+      customFilter?: SearchFilter,
+      targetPage = 1,
+      append = false,
+      executeOptions?: SearchExecuteOptions
+    ) => {
     const currentFilter = customFilter || filter;
     setLoading(true);
     setError(null);
     syncToURL(currentFilter);
 
     try {
-      const res = await SearchService.executeSearch(currentFilter, targetPage, 10);
+      const res = await SearchService.executeSearch(currentFilter, targetPage, 10, executeOptions);
       if (res.points && onPointsUpdate) onPointsUpdate(res.points);
 
       if (append && response) {
@@ -196,7 +206,9 @@ export function useSearchEngine(
     } finally {
       setLoading(false);
     }
-  }, [filter, response, syncToURL]);
+  },
+    [filter, response, syncToURL, onPointsUpdate, onPaywall]
+  );
 
   // 深链带关键词时自动检索；空关键词不请求 PanFind 网关
   useEffect(() => {
@@ -214,12 +226,22 @@ export function useSearchEngine(
     });
   }, []);
 
-  const handleSearchSubmit = useCallback((q?: string) => {
-    const targetQ = q !== undefined ? q : filter.query;
-    const nextFilter = { ...filter, query: targetQ };
-    setFilter(nextFilter);
+  const handleSearchSubmit = useCallback(
+    (q?: string, executeOptions?: SearchExecuteOptions) => {
+      const targetQ = q !== undefined ? q : filter.query;
+      if (!targetQ.trim()) return;
+      const nextFilter = { ...filter, query: targetQ };
+      setFilter(nextFilter);
+      setSelectedItemIds(new Set());
+      triggerSearch(nextFilter, 1, false, executeOptions);
+    },
+    [filter, triggerSearch]
+  );
+
+  const handleForceRefreshSearch = useCallback(() => {
+    if (!filter.query.trim()) return;
     setSelectedItemIds(new Set());
-    triggerSearch(nextFilter, 1, false);
+    triggerSearch(filter, 1, false, { forceRefresh: true });
   }, [filter, triggerSearch]);
 
   const toggleProvider = useCallback((providerId: DiskProviderId) => {
@@ -243,7 +265,7 @@ export function useSearchEngine(
 
   const selectAllProviders = useCallback(() => {
     setFilter(prev => {
-      const next = { ...prev, selectedProviders: ALL_PROVIDER_IDS };
+      const next = { ...prev, selectedProviders: [...PANFIND_SEARCH_PROVIDER_IDS] };
       triggerSearch(next, 1, false);
       return next;
     });
@@ -251,8 +273,11 @@ export function useSearchEngine(
 
   const invertProviders = useCallback(() => {
     setFilter(prev => {
-      const inverted = ALL_PROVIDER_IDS.filter(p => !prev.selectedProviders.includes(p));
-      const next = { ...prev, selectedProviders: inverted.length > 0 ? inverted : ALL_PROVIDER_IDS };
+      const inverted = PANFIND_SEARCH_PROVIDER_IDS.filter((p) => !prev.selectedProviders.includes(p));
+      const next = {
+        ...prev,
+        selectedProviders: inverted.length > 0 ? inverted : [...PANFIND_SEARCH_PROVIDER_IDS],
+      };
       triggerSearch(next, 1, false);
       return next;
     });
@@ -379,6 +404,7 @@ export function useSearchEngine(
     filter,
     setQuery,
     handleSearchSubmit,
+    handleForceRefreshSearch,
     toggleProvider,
     selectAllProviders,
     invertProviders,
@@ -405,6 +431,6 @@ export function useSearchEngine(
     toggleSelectItem,
     selectAllVisible,
     clearSelection,
-    refreshSearch: () => triggerSearch(filter, 1, false),
+    refreshSearch: handleForceRefreshSearch,
   };
 }

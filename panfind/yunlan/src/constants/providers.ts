@@ -104,6 +104,20 @@ export const DISK_PROVIDERS: Record<DiskProviderId, DiskProviderInfo> = {
     supportedFormats: ['4K原盘', 'BDMV', 'ISO', '分卷RAR'],
     speedRating: '极速',
   },
+  magnet: {
+    id: 'magnet',
+    name: '磁力链接',
+    shortName: '磁力',
+    color: '#16a34a',
+    badgeBg: 'bg-green-500/10 dark:bg-green-500/20',
+    badgeText: 'text-green-600 dark:text-green-400',
+    borderColor: 'border-green-500/30',
+    officialUrl: 'magnet:',
+    description: 'BitTorrent 磁力链接，可用迅雷、qBittorrent 等客户端下载',
+    features: ['P2P 下载', '无网盘转存', '资源种类多'],
+    supportedFormats: ['MKV', 'MP4', 'ISO', 'ZIP'],
+    speedRating: '标准',
+  },
   uc: {
     id: 'uc',
     name: 'UC网盘',
@@ -149,6 +163,9 @@ export const DISK_PROVIDERS: Record<DiskProviderId, DiskProviderInfo> = {
 };
 
 export const ALL_PROVIDER_IDS = Object.keys(DISK_PROVIDERS) as DiskProviderId[];
+
+/** PanFind 网关实际检索/筛选的网盘与磁力类型（与导航矩阵一致，含磁力） */
+export const PANFIND_SEARCH_PROVIDER_IDS: DiskProviderId[] = [...ALL_PROVIDER_IDS];
 
 export const CATEGORIES: { id: ResourceCategory; label: string; icon: string }[] = [
   { id: 'all', label: '全部资源', icon: 'Layers' },

@@ -5,7 +5,7 @@
 
 import React from 'react';
 import { DiskProviderId } from '../types';
-import { DISK_PROVIDERS, ALL_PROVIDER_IDS } from '../constants/providers';
+import { DISK_PROVIDERS, PANFIND_SEARCH_PROVIDER_IDS } from '../constants/providers';
 
 interface SearchRefinePanelProps {
   selectedProviders: DiskProviderId[];
@@ -53,11 +53,11 @@ export const SearchRefinePanel: React.FC<SearchRefinePanelProps> = ({
         : String(Math.round(maxSizeGb * 1024));
 
   return (
-    <div className="rounded-2xl border border-emerald-900/35 bg-[#071418]/90 dark:bg-[#071418]/95 backdrop-blur-sm p-4 sm:p-5 space-y-4 shadow-inner shadow-emerald-950/20">
+    <div className="rounded-2xl border border-yunlan-hairline bg-[#fffcf8] p-4 sm:p-5 space-y-4 shadow-yunlan-card">
       <div>
-        <p className="text-xs font-semibold text-emerald-100/90 mb-2.5">云盘</p>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-          {ALL_PROVIDER_IDS.map((id) => {
+        <p className="text-xs font-semibold tracking-wide text-[#8a8278] mb-2.5">来源类型</p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-2">
+          {PANFIND_SEARCH_PROVIDER_IDS.map((id) => {
             const provider = DISK_PROVIDERS[id];
             const selected = selectedProviders.includes(id);
             const count = providersCount?.[id];
@@ -68,14 +68,14 @@ export const SearchRefinePanel: React.FC<SearchRefinePanelProps> = ({
                 onClick={() => onToggleProvider(id)}
                 className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium border transition-all ${
                   selected
-                    ? 'border-emerald-500/55 bg-emerald-950/40 text-emerald-50'
-                    : 'border-slate-700/60 bg-slate-900/30 text-slate-400 hover:border-emerald-800/50 hover:text-slate-200'
+                    ? 'border-[#d4c4a8] bg-[#f3f0ea] text-[#4a4540]'
+                    : 'border-yunlan-hairline bg-[#faf8f5] text-yunlan-muted hover:border-[#d8cbb8] hover:text-[#5c564e]'
                 }`}
               >
                 <ProviderMark id={id} />
                 <span className="truncate">{provider.shortName}</span>
                 {count !== undefined && count > 0 && (
-                  <span className="ml-auto text-[10px] tabular-nums text-emerald-400/80">{count}</span>
+                  <span className="ml-auto text-[10px] tabular-nums text-[#9a7b4f]">{count}</span>
                 )}
               </button>
             );
@@ -84,9 +84,9 @@ export const SearchRefinePanel: React.FC<SearchRefinePanelProps> = ({
       </div>
 
       <div>
-        <p className="text-xs font-semibold text-emerald-100/90 mb-2.5">大小</p>
-        <div className="flex flex-wrap items-center gap-2 text-xs text-slate-300">
-          <div className="flex items-center rounded-xl border border-slate-700/70 bg-slate-950/50 overflow-hidden">
+        <p className="text-xs font-semibold tracking-wide text-[#8a8278] mb-2.5">大小</p>
+        <div className="flex flex-wrap items-center gap-2 text-xs text-[#5c564e]">
+          <div className="flex items-center rounded-xl border border-yunlan-hairline bg-[#faf8f5] overflow-hidden">
             <input
               type="number"
               min={0}
@@ -103,14 +103,14 @@ export const SearchRefinePanel: React.FC<SearchRefinePanelProps> = ({
             <select
               value={minUnit}
               onChange={(e) => onMinSizeChange(minSizeMb, e.target.value as 'MB' | 'GB')}
-              className="bg-slate-900/80 border-l border-slate-700/70 px-1.5 py-2 text-slate-400 focus:outline-none cursor-pointer"
+              className="bg-[#f3f0ea] border-l border-yunlan-hairline px-1.5 py-2 text-yunlan-muted focus:outline-none cursor-pointer"
             >
               <option value="MB">MB</option>
               <option value="GB">GB</option>
             </select>
           </div>
-          <span className="text-slate-500">~</span>
-          <div className="flex items-center rounded-xl border border-slate-700/70 bg-slate-950/50 overflow-hidden">
+          <span className="text-yunlan-muted">~</span>
+          <div className="flex items-center rounded-xl border border-yunlan-hairline bg-[#faf8f5] overflow-hidden">
             <input
               type="text"
               inputMode="decimal"
@@ -133,7 +133,7 @@ export const SearchRefinePanel: React.FC<SearchRefinePanelProps> = ({
               onChange={(e) =>
                 onMaxSizeChange(maxSizeGb, e.target.value as 'MB' | 'GB')
               }
-              className="bg-slate-900/80 border-l border-slate-700/70 px-1.5 py-2 text-slate-400 focus:outline-none cursor-pointer"
+              className="bg-[#f3f0ea] border-l border-yunlan-hairline px-1.5 py-2 text-yunlan-muted focus:outline-none cursor-pointer"
             >
               <option value="MB">MB</option>
               <option value="GB">GB</option>

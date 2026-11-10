@@ -7,26 +7,22 @@ import React from 'react';
 import { ALL_PROVIDER_IDS, DISK_PROVIDERS } from '../constants/providers';
 
 interface FooterProps {
-  onOpenBackendConfig: () => void;
   onNavigateToTab: (tab: 'search' | 'providers' | 'rankings' | 'guide') => void;
 }
 
-export const Footer: React.FC<FooterProps> = ({
-  onOpenBackendConfig,
-  onNavigateToTab,
-}) => {
+export const Footer: React.FC<FooterProps> = ({ onNavigateToTab }) => {
   return (
-    <footer className="w-full border-t border-slate-200 dark:border-slate-800/80 bg-white/50 dark:bg-slate-950/40 text-xs text-slate-500 dark:text-slate-400 mt-20 transition-colors">
+    <footer className="w-full border-t border-yunlan-hairline bg-yunlan-paper/80 text-xs text-yunlan-muted mt-20 transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         
         {/* Main Footer Row */}
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 pb-8 border-b border-slate-200/80 dark:border-slate-800/80">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 pb-8 border-b border-yunlan-hairline">
           <div>
             <div className="flex items-center gap-2 mb-1.5">
-              <span className="font-bold text-slate-900 dark:text-white text-sm">云览 YUNLAN</span>
-              <span className="text-[11px] text-slate-400">· 专业多网盘聚合资源搜索</span>
+              <span className="font-semibold text-[#3d3832] text-sm">云览 Yunlan</span>
+              <span className="text-[11px] text-[#a88858]">· 专业多网盘聚合资源搜索</span>
             </div>
-            <p className="text-xs text-slate-500 max-w-lg leading-relaxed">
+            <p className="text-xs text-yunlan-muted max-w-lg leading-relaxed font-light">
               本站仅提供公开云盘分享链接的第三方索引与转存跳转服务，不直接存储、上传或修改任何文件。
             </p>
           </div>
@@ -34,33 +30,27 @@ export const Footer: React.FC<FooterProps> = ({
           <div className="flex items-center gap-6 flex-wrap text-xs">
             <button
               onClick={() => onNavigateToTab('search')}
-              className="hover:text-slate-900 dark:hover:text-white transition-colors"
+              className="hover:text-[#9a7b4f] transition-colors"
             >
               发现资源
             </button>
             <button
               onClick={() => onNavigateToTab('providers')}
-              className="hover:text-slate-900 dark:hover:text-white transition-colors"
+              className="hover:text-[#9a7b4f] transition-colors"
             >
               网盘导航
             </button>
             <button
               onClick={() => onNavigateToTab('rankings')}
-              className="hover:text-slate-900 dark:hover:text-white transition-colors"
+              className="hover:text-[#9a7b4f] transition-colors"
             >
               全网风云榜
             </button>
             <button
               onClick={() => onNavigateToTab('guide')}
-              className="hover:text-slate-900 dark:hover:text-white transition-colors"
+              className="hover:text-[#9a7b4f] transition-colors"
             >
               使用指南
-            </button>
-            <button
-              onClick={onOpenBackendConfig}
-              className="text-cyan-600 dark:text-cyan-400 hover:underline font-medium"
-            >
-              配置后端接口
             </button>
           </div>
         </div>

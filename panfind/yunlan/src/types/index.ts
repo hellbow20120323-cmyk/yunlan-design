@@ -13,7 +13,8 @@ export type DiskProviderId =
   | 'pan115'    // 115网盘
   | 'uc'        // UC网盘
   | 'mobile'    // 移动云盘
-  | 'lanzou';   // 蓝奏云
+  | 'lanzou'    // 蓝奏云
+  | 'magnet';   // 磁力链接
 
 export interface DiskProviderInfo {
   id: DiskProviderId;
@@ -83,6 +84,10 @@ export interface ResourceItem {
   viewsCount: number;
   savesCount: number;
   uploader?: string;
+  /** 聚合来源标识，如 pansou 插件 / tg:频道 */
+  source?: string;
+  /** 上游备注或资源说明 */
+  note?: string;
 }
 
 export interface SearchFilter {
@@ -94,6 +99,12 @@ export interface SearchFilter {
   onlyValid: boolean;
   minSizeMb?: number;
   maxSizeMb?: number;
+}
+
+/** 单次检索选项（不写入 URL / filter 持久态） */
+export interface SearchExecuteOptions {
+  /** 跳过 PanSou 等上游磁盘/内存缓存，重新聚合 */
+  forceRefresh?: boolean;
 }
 
 export interface SearchResultResponse {

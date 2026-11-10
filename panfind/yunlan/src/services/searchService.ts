@@ -4,7 +4,8 @@
  */
 
 import { 
-  SearchFilter, 
+  SearchFilter,
+  SearchExecuteOptions,
   SearchResultResponse, 
   ResourceItem, 
   DiskProviderId, 
@@ -69,9 +70,10 @@ export class SearchService {
    * 核心搜索入口：根据配置决定是调用用户后续提供的后端逻辑还是前端聚合模拟引擎
    */
   public static async executeSearch(
-    filter: SearchFilter, 
-    page: number = 1, 
-    pageSize: number = 10
+    filter: SearchFilter,
+    page: number = 1,
+    pageSize: number = 10,
+    options?: SearchExecuteOptions
   ): Promise<SearchResultResponse> {
     const config = this.getConfig();
     const query = filter.query.trim();
@@ -83,7 +85,12 @@ export class SearchService {
     if (config.useCustomBackend && config.endpointUrl) {
       try {
         if (isPanfindEndpoint(config.endpointUrl)) {
-          const raw = await fetchPanfindSearch(config.endpointUrl, filter, config.timeoutMs);
+          const timeout = options?.forceRefresh
+            ? Math.max(config.timeoutMs, 60_000)
+            : config.timeoutMs;
+          const raw = await fetchPanfindSearch(config.endpointUrl, filter, timeout, {
+            forceRefresh: options?.forceRefresh,
+          });
           const adapted = adaptPanfindResponse(raw, filter, page, pageSize);
           return { ...adapted, points: raw.points, modeLabel: raw.modeLabel, demoMode: raw.demoMode };
         }

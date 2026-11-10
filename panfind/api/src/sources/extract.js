@@ -8,6 +8,13 @@ const PATTERNS = {
   quark: /https?:\/\/pan\.quark\.cn\/s\/[a-zA-Z0-9]+(?:\?[^\s"'<>]*)?/gi,
   xunlei: /https?:\/\/pan\.xunlei\.com\/s\/[a-zA-Z0-9_-]+(?:\?[^\s"'<>]*)?/gi,
   uc: /https?:\/\/(?:drive|pan)\.uc\.cn\/s\/[a-zA-Z0-9_-]+(?:\?[^\s"'<>]*)?/gi,
+  aliyun: /https?:\/\/(?:www\.)?alipan\.com\/s\/[a-zA-Z0-9]+(?:\?[^\s"'<>]*)?/gi,
+  pan123: /https?:\/\/(?:www\.)?123pan\.com\/s\/[a-zA-Z0-9_-]+(?:\?[^\s"'<>]*)?/gi,
+  tianyi: /https?:\/\/cloud\.189\.cn\/(?:web\/share|t)\/[a-zA-Z0-9_-]+(?:\?[^\s"'<>]*)?/gi,
+  pan115: /https?:\/\/(?:www\.)?115\.com\/[a-zA-Z0-9/_-]+(?:\?[^\s"'<>]*)?/gi,
+  mobile: /https?:\/\/yun\.139\.com\/(?:shareweb|wap)\/[a-zA-Z0-9/#?&=_-]+/gi,
+  lanzou: /https?:\/\/[a-z0-9-]+\.lanzou[a-z]*\.com\/[a-zA-Z0-9]+(?:\?[^\s"'<>]*)?/gi,
+  magnet: /magnet:\?xt=urn:btih:[a-zA-Z0-9]+[^\s"'<>]*/gi,
 };
 
 /** Hosts that identify a cloud type without needing /s/ path (for ori_url variants) */
@@ -16,6 +23,12 @@ const HOST_TYPE = [
   { re: /pan\.quark\.cn/i, type: "quark" },
   { re: /pan\.xunlei\.com/i, type: "xunlei" },
   { re: /(?:drive|pan)\.uc\.cn/i, type: "uc" },
+  { re: /alipan\.com|aliyundrive\.com/i, type: "aliyun" },
+  { re: /123pan\.com|123684\.com/i, type: "pan123" },
+  { re: /cloud\.189\.cn/i, type: "tianyi" },
+  { re: /115\.com|115cdn\.com/i, type: "pan115" },
+  { re: /yun\.139\.com/i, type: "mobile" },
+  { re: /lanzou[a-z]*\.com|lanoss\.com/i, type: "lanzou" },
 ];
 
 const PWD_RE =

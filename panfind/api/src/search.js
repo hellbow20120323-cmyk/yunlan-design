@@ -1,10 +1,23 @@
 import { DEMO_SHARES } from "./fixtures.js";
+import { inferSizeBytes } from "./size.js";
 import { keywordMatch, scoreItem } from "./rank.js";
 
-/** @typedef {'baidu'|'quark'|'xunlei'|'uc'} CloudType */
+/** @typedef {'quark'|'aliyun'|'baidu'|'xunlei'|'pan123'|'tianyi'|'pan115'|'uc'|'mobile'|'lanzou'|'magnet'} CloudType */
 
 /** All supported pan types (empty selection / omitted param → this set). */
-export const ALL_CLOUD_TYPES = /** @type {CloudType[]} */ (["baidu", "quark", "xunlei", "uc"]);
+export const ALL_CLOUD_TYPES = /** @type {CloudType[]} */ ([
+  "quark",
+  "aliyun",
+  "baidu",
+  "xunlei",
+  "pan123",
+  "tianyi",
+  "pan115",
+  "uc",
+  "mobile",
+  "lanzou",
+  "magnet",
+]);
 
 const ALLOWED = new Set(ALL_CLOUD_TYPES);
 
@@ -24,6 +37,27 @@ const TYPE_ALIASES = {
   uc: "uc",
   ucpan: "uc",
   uck: "uc",
+  aliyun: "aliyun",
+  alipan: "aliyun",
+  ali: "aliyun",
+  aly: "aliyun",
+  pan123: "pan123",
+  "123": "pan123",
+  "123pan": "pan123",
+  tianyi: "tianyi",
+  "189": "tianyi",
+  tyy: "tianyi",
+  pan115: "pan115",
+  "115": "pan115",
+  mobile: "mobile",
+  "139": "mobile",
+  yidong: "mobile",
+  cmcc: "mobile",
+  lanzou: "lanzou",
+  lanoss: "lanzou",
+  lz: "lanzou",
+  magnet: "magnet",
+  bt: "magnet",
 };
 
 /**
@@ -45,6 +79,13 @@ export function coerceCloudType(raw, url = "") {
   if (/pan\.quark\.cn/.test(u)) return "quark";
   if (/pan\.xunlei\.com/.test(u)) return "xunlei";
   if (/(?:drive|pan)\.uc\.cn/.test(u)) return "uc";
+  if (/(?:www\.)?alipan\.com|aliyundrive\.com/.test(u)) return "aliyun";
+  if (/123pan\.com|123684\.com|123pan\.cn|123865\.com/.test(u)) return "pan123";
+  if (/cloud\.189\.cn/.test(u)) return "tianyi";
+  if (/(?:www\.)?115\.com|115cdn\.com|anxia\.com/.test(u)) return "pan115";
+  if (/yun\.139\.com|caiyun\.139\.com/.test(u)) return "mobile";
+  if (/lanzou[a-z]*\.com|lanoss\.com|wwi\.lanzou|wwp\.lanzou/.test(u)) return "lanzou";
+  if (u.startsWith("magnet:")) return "magnet";
   return "";
 }
 
@@ -210,7 +251,7 @@ export async function fetchPansouHealth(baseUrl, timeoutMs = 2500) {
  * @param {number} timeoutMs
  * @returns {Promise<{ hits: import('./types.js').SearchHit[], meta: object }>}
  */
-export async function searchUpstream(baseUrl, kw, cloudTypes, timeoutMs = 45000) {
+export async function searchUpstream(baseUrl, kw, cloudTypes, timeoutMs = 45000, forceRefresh = false) {
   const root = baseUrl.replace(/\/$/, "");
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -226,6 +267,7 @@ export async function searchUpstream(baseUrl, kw, cloudTypes, timeoutMs = 45000)
         kw,
         res: "merge",
         src: "all",
+        ...(forceRefresh ? { refresh: true } : {}),
         // Always ask upstream for all product types we support; local filter still applies
         cloud_types: cloudTypes?.length ? cloudTypes : ALL_CLOUD_TYPES,
       }),
@@ -320,10 +362,14 @@ export function normalizeUpstream(data, kw, cloudTypes) {
     }
     if (!url) return;
     if (/\/s\/1?demo/i.test(url) || /demoBaidu|demoQuark|demoXunlei|demoUc/i.test(url)) return;
-    const dedupeKey = `${cloudType}|${url.replace(/[?#].*$/, "")}`;
+    const dedupeKey = `${cloudType}|${
+      /^magnet:/i.test(url) ? url : url.replace(/[?#].*$/, "")
+    }`;
     if (seen.has(dedupeKey)) return;
     seen.add(dedupeKey);
-    const item = { title, note: title, source, datetime, keywords: [] };
+    const noteText = link?.note || title;
+    const item = { title, note: noteText, source, datetime, keywords: [] };
+    const sizeBytes = inferSizeBytes({ url, title, note: noteText, link });
     hits.push({
       id: `live-${cloudType}-${hash(url)}`,
       title,
@@ -333,7 +379,8 @@ export function normalizeUpstream(data, kw, cloudTypes) {
       score: scoreItem(item, kw),
       source,
       datetime: datetime || "",
-      note: title,
+      note: noteText,
+      sizeBytes,
     });
   };
 

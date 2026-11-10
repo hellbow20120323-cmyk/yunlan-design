@@ -3,35 +3,136 @@
 
 @layer base {
   :root {
-    --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    --yunlan-paper: #f7f7f6;
+    --yunlan-mist: #eae8e3;
+    --yunlan-surface: #fafaf9;
+    --yunlan-ink: #2a2826;
+    --yunlan-ink-muted: #6d6a65;
+    --yunlan-ink-faint: #9c9892;
+    --yunlan-cinnabar: #c04851;
+    --yunlan-stone: #1661ab;
+    --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+      'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+    --font-serif: 'Noto Serif SC', 'Songti SC', 'STSong', serif;
     --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   }
-  
+
   body {
     font-family: var(--font-sans);
+    background-color: var(--yunlan-paper);
+    color: var(--yunlan-ink);
+    overflow-x: hidden;
+  }
+
+  .dark body {
     background-color: #0b0f17;
     color: #e2e8f0;
-    overflow-x: hidden;
   }
 }
 
-/* Custom smooth scrollbar */
+@layer utilities {
+  .font-yunlan-serif {
+    font-family: var(--font-serif);
+  }
+
+  .bg-yunlan-ivory,
+  .bg-yunlan-paper {
+    background-color: var(--yunlan-paper);
+  }
+
+  .bg-yunlan-mist {
+    background-color: var(--yunlan-mist);
+  }
+
+  .bg-yunlan-surface {
+    background-color: var(--yunlan-surface);
+  }
+
+  .text-yunlan-ink {
+    color: var(--yunlan-ink);
+  }
+
+  .text-yunlan-muted {
+    color: var(--yunlan-ink-muted);
+  }
+
+  .text-yunlan-stone {
+    color: var(--yunlan-stone);
+  }
+
+  .text-yunlan-cinnabar {
+    color: var(--yunlan-cinnabar);
+  }
+
+  .border-yunlan-hairline {
+    border-color: rgba(42, 40, 38, 0.1);
+  }
+
+  .border-yunlan-ink-wash {
+    border-color: rgba(42, 40, 38, 0.16);
+  }
+
+  /** 常态：几乎贴纸；悬停：水墨晕染 */
+  .shadow-yunlan-card {
+    box-shadow: 0 1px 0 rgba(42, 40, 38, 0.04);
+  }
+
+  .shadow-yunlan-feather {
+    box-shadow: 0 2px 12px -6px rgba(42, 40, 38, 0.06);
+  }
+
+  .shadow-ink-wash {
+    box-shadow:
+      0 8px 28px -6px rgba(42, 40, 38, 0.14),
+      0 2px 8px -2px rgba(42, 40, 38, 0.08);
+  }
+
+  .bg-yunlan-cta {
+    background-color: var(--yunlan-cinnabar);
+    color: #fff;
+  }
+
+  .bg-yunlan-cta:hover {
+    background-color: #a83d45;
+  }
+
+  /** @deprecated 保留兼容，映射朱砂 */
+  .bg-yunlan-champagne {
+    background-color: var(--yunlan-cinnabar);
+    color: #fff;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.6);
+  background: var(--yunlan-mist);
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(51, 65, 85, 0.8);
+  background: rgba(42, 40, 38, 0.22);
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(71, 85, 105, 1);
+  background: rgba(42, 40, 38, 0.35);
 }
 
-/* Tabular figures for data, file sizes, counts */
+.dark ::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.6);
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(51, 65, 85, 0.8);
+}
+
 .tabular-nums {
   font-variant-numeric: tabular-nums;
 }

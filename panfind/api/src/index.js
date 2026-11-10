@@ -19,6 +19,7 @@ import { createBillingRouter } from "./billing/routes.js";
 import { consumeSearchPoint, getQuotaStatus } from "./points/quota.js";
 import { getVersionInfo, getVersionSummary } from "./version.js";
 import { resolveShareMetaBatch } from "./share-meta.js";
+import { getSubhdHotCached, scheduleSubhdHotDaily } from "./sources/subhd-hot.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "../..");
@@ -26,6 +27,9 @@ const PORT = Number(process.env.PORT || 8787);
 const PANSOU_URL = (process.env.PANSOU_URL || "").trim();
 const FORCE_DEMO = ["1", "true", "yes"].includes(String(process.env.DEMO_MODE || "").toLowerCase());
 const ENABLE_EXT = !["0", "false", "no"].includes(String(process.env.ENABLE_EXT_SOURCES ?? "1").toLowerCase());
+const PANSOU_FORCE_REFRESH = ["1", "true", "yes"].includes(
+  String(process.env.PANSOU_FORCE_REFRESH || "").toLowerCase()
+);
 const VERSION = getVersionSummary();
 
 const app = express();
@@ -43,6 +47,22 @@ app.get("/api/points", (req, res) => {
     points: getQuotaStatus({ userId: session?.uid, clientId }),
   });
 });
+
+async function handleTrendingHot(req, res) {
+  try {
+    const force = ["1", "true", "yes"].includes(String(req.query.refresh || "").toLowerCase());
+    const data = await getSubhdHotCached(force);
+    res.json({ ok: true, ...data });
+  } catch (err) {
+    res.status(502).json({
+      ok: false,
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+}
+
+app.get("/api/hot/trending", handleTrendingHot);
+app.get("/api/hot/subhd", handleTrendingHot);
 
 app.post("/api/share-meta/batch", async (req, res) => {
   try {
@@ -253,19 +273,25 @@ async function handleSearch(req, res) {
       ? resolvedWeibo.enabled
       : !["0", "false", "no"].includes(String(body.enable_weibo).toLowerCase());
 
-  const { results, demoMode, modeLabel, sourceStats } = await searchMulti({
+  const forceRefresh =
+    PANSOU_FORCE_REFRESH ||
+    ["1", "true", "yes"].includes(String(body.refresh || body.force_refresh || "").toLowerCase());
+
+  const { results, demoMode, modeLabel, sourceStats, queryHint } = await searchMulti({
     kw,
     cloudTypes,
     pansouUrl: PANSOU_URL,
     forceDemo: FORCE_DEMO,
     enableExt,
     enableWeibo,
+    forceRefresh,
   });
 
   res.json({
     query: kw,
     demoMode,
-    modeLabel,
+    modeLabel: queryHint ? `${modeLabel} · ${queryHint}` : modeLabel,
+    queryHint,
     total: results.length,
     results,
     cloudTypes,
@@ -297,6 +323,7 @@ app.get("*", (req, res, next) => {
 });
 
 app.listen(PORT, "0.0.0.0", () => {
+  scheduleSubhdHotDaily();
   const w = resolveWeiboConfig();
   console.log(`[盘搜] API http://0.0.0.0:${PORT} v${VERSION.version} (${VERSION.buildTime})`);
   console.log(

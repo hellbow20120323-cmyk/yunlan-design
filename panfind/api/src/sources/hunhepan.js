@@ -2,7 +2,7 @@
  * Extra aggregation source: 混合盘系公开 API（与 pansou hunhepan 插件同源）。
  * MIT 自研适配器，不依赖 PanHub 等非商用许可前端。
  */
-import { countByCloudType, missingRequestedTypes } from "../search.js";
+import { ALL_CLOUD_TYPES, countByCloudType, missingRequestedTypes } from "../search.js";
 import { scoreItem } from "../rank.js";
 
 const ENDPOINTS = [
@@ -31,11 +31,25 @@ const TYPE_MAP = {
   uc: "uc",
   ucpan: "uc",
   uck: "uc",
-  // Aliyun etc. mapped but filtered out unless product adds chip
   aliyun: "aliyun",
   alipan: "aliyun",
   ali: "aliyun",
   aly: "aliyun",
+  pan123: "pan123",
+  "123": "pan123",
+  "123pan": "pan123",
+  tianyi: "tianyi",
+  "189": "tianyi",
+  tyy: "tianyi",
+  pan115: "pan115",
+  "115": "pan115",
+  mobile: "mobile",
+  "139": "mobile",
+  yidong: "mobile",
+  cmcc: "mobile",
+  lanzou: "lanzou",
+  lanoss: "lanzou",
+  lz: "lanzou",
 };
 
 /**
@@ -54,6 +68,12 @@ export function mapDiskType(raw, url = "") {
   if (u.includes("pan.xunlei.com") || u.includes("xunlei.com")) return "xunlei";
   if (u.includes("drive.uc.cn") || u.includes("pan.uc.cn")) return "uc";
   if (u.includes("aliyundrive.com") || u.includes("alipan.com")) return "aliyun";
+  if (/123pan\.com|123684\.com|123pan\.cn|123865\.com/.test(u)) return "pan123";
+  if (u.includes("cloud.189.cn")) return "tianyi";
+  if (/115\.com|115cdn\.com|anxia\.com/.test(u)) return "pan115";
+  if (/yun\.139\.com|caiyun\.139\.com/.test(u)) return "mobile";
+  if (/lanzou|lanoss/.test(u)) return "lanzou";
+  if (u.startsWith("magnet:")) return "magnet";
   return t;
 }
 
@@ -160,7 +180,7 @@ async function searchEndpoint(ep, kw, signal) {
 export async function searchHunhepanFamily(kw, cloudTypes, timeoutMs = 12000) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
-  const typeSet = new Set(cloudTypes?.length ? cloudTypes : ["baidu", "quark", "xunlei", "uc"]);
+  const typeSet = new Set(cloudTypes?.length ? cloudTypes : [...ALL_CLOUD_TYPES]);
   /** @type {Record<string, number>} */
   const perSource = {};
   /** @type {Record<string, number>} */

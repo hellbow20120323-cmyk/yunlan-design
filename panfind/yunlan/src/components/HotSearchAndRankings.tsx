@@ -5,8 +5,9 @@
 
 import React from 'react';
 import { HOT_KEYWORDS } from '../constants/providers';
-import { Flame, Film, BookOpen, Cpu, ArrowUpRight } from 'lucide-react';
+import { Film, BookOpen, Cpu, ArrowUpRight } from 'lucide-react';
 import { ResourceCategory } from '../types';
+import { PageShell, yunlanCardClass } from './PageShell';
 
 interface HotSearchAndRankingsProps {
   onSelectKeyword: (keyword: string, category?: ResourceCategory) => void;
@@ -40,21 +41,13 @@ export const HotSearchAndRankings: React.FC<HotSearchAndRankingsProps> = ({
   ];
 
   return (
-    <div className="w-full max-w-6xl mx-auto py-8 space-y-8">
-      <div>
-        <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-          全网资源风云榜单
-        </h2>
-        <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-          基于全网近 24 小时真实检索与转存频次动态加权统计，发现当季最受欢迎的学习与娱乐资源
-        </p>
-      </div>
-
-      {/* Top Keywords Heat Strip */}
-      <div className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-        <div className="flex items-center gap-2 mb-4">
-          <Flame className="w-4 h-4 text-red-500 fill-red-500" />
-          <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+    <PageShell
+      title="全网资源风云榜单"
+      subtitle="基于近 24 小时检索与转存频次统计，发现当季热门学习与娱乐资源"
+    >
+      <div className={`${yunlanCardClass()} p-5 sm:p-6 mb-8`}>
+        <div className="mb-4">
+          <h3 className="text-sm font-semibold tracking-wide text-[#4a4540]">
             今日全网热搜词 Top 10
           </h3>
         </div>
@@ -64,7 +57,7 @@ export const HotSearchAndRankings: React.FC<HotSearchAndRankingsProps> = ({
             <button
               key={item.keyword}
               onClick={() => onSelectKeyword(item.keyword, item.category)}
-              className="flex items-center justify-between p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 hover:border-cyan-500/40 bg-slate-50/70 dark:bg-slate-800/40 hover:bg-cyan-500/5 transition-all text-left group"
+              className="flex items-center justify-between p-2.5 rounded-xl border border-yunlan-hairline hover:border-[#d8cbb8] bg-[#faf8f5] hover:bg-[#f3f0ea] transition-all text-left group"
             >
               <div className="flex items-center gap-2 min-w-0">
                 <span className={`text-xs font-bold tabular-nums w-4 shrink-0 ${
@@ -72,11 +65,11 @@ export const HotSearchAndRankings: React.FC<HotSearchAndRankingsProps> = ({
                 }`}>
                   {idx + 1}
                 </span>
-                <span className="text-xs text-slate-800 dark:text-slate-200 group-hover:text-cyan-600 dark:group-hover:text-cyan-400 font-medium truncate">
+                <span className="text-xs text-[#4a4540] group-hover:text-[#9a7b4f] font-medium truncate">
                   {item.keyword}
                 </span>
               </div>
-              <ArrowUpRight className="w-3 h-3 text-slate-400 group-hover:text-cyan-600 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <ArrowUpRight className="w-3 h-3 text-yunlan-muted group-hover:text-[#9a7b4f] shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
             </button>
           ))}
         </div>
@@ -86,7 +79,7 @@ export const HotSearchAndRankings: React.FC<HotSearchAndRankingsProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         
         {/* Column 1: Video */}
-        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5">
+        <div className={`${yunlanCardClass()} p-5`}>
           <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-100 dark:border-slate-800">
             <Film className="w-4 h-4 text-blue-500" />
             <h3 className="text-sm font-bold text-slate-900 dark:text-white">
@@ -123,7 +116,7 @@ export const HotSearchAndRankings: React.FC<HotSearchAndRankingsProps> = ({
         </div>
 
         {/* Column 2: Document */}
-        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5">
+        <div className={`${yunlanCardClass()} p-5`}>
           <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-100 dark:border-slate-800">
             <BookOpen className="w-4 h-4 text-emerald-500" />
             <h3 className="text-sm font-bold text-slate-900 dark:text-white">
@@ -160,7 +153,7 @@ export const HotSearchAndRankings: React.FC<HotSearchAndRankingsProps> = ({
         </div>
 
         {/* Column 3: Software */}
-        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5">
+        <div className={`${yunlanCardClass()} p-5`}>
           <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-100 dark:border-slate-800">
             <Cpu className="w-4 h-4 text-amber-500" />
             <h3 className="text-sm font-bold text-slate-900 dark:text-white">
@@ -197,6 +190,6 @@ export const HotSearchAndRankings: React.FC<HotSearchAndRankingsProps> = ({
         </div>
 
       </div>
-    </div>
+    </PageShell>
   );
 };

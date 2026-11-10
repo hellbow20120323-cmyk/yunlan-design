@@ -19,7 +19,14 @@ test("coerceCloudType: aliases + URL hosts", () => {
   assert.equal(coerceCloudType("UC", ""), "uc");
   assert.equal(coerceCloudType("", "https://pan.xunlei.com/s/abc"), "xunlei");
   assert.equal(coerceCloudType("", "https://drive.uc.cn/s/abc"), "uc");
-  assert.equal(coerceCloudType("ALY", "https://www.aliyundrive.com/s/x"), "");
+  assert.equal(coerceCloudType("ALY", "https://www.aliyundrive.com/s/x"), "aliyun");
+  assert.equal(coerceCloudType("", "https://www.123pan.com/s/abc"), "pan123");
+  assert.equal(coerceCloudType("", "https://cloud.189.cn/t/abc"), "tianyi");
+  assert.equal(coerceCloudType("magnet", ""), "magnet");
+  assert.equal(
+    coerceCloudType("", "magnet:?xt=urn:btih:abc"),
+    "magnet"
+  );
 });
 
 test("mapDiskType: hunhepan UPPERCASE XUNLEI / BDY / QUARK", () => {

@@ -1,9 +1,11 @@
 import {
+  ALL_CLOUD_TYPES,
   countByCloudType,
   filterHitsByCloudTypes,
   searchDemo,
   searchUpstream,
 } from "../search.js";
+import { prepareSearchKeywords } from "../queryOptimize.js";
 import { searchHunhepanFamily } from "./hunhepan.js";
 import { searchWeibo, weiboConfigFromEnv } from "./weibo.js";
 
@@ -12,8 +14,12 @@ import { searchWeibo, weiboConfigFromEnv } from "./weibo.js";
  * @param {string} url
  */
 export function canonicalUrl(url) {
+  const raw = String(url || "").trim();
+  if (/^magnet:/i.test(raw)) {
+    return raw.split("#")[0];
+  }
   try {
-    const u = new URL(url);
+    const u = new URL(raw);
     u.hash = "";
     const keep = new URLSearchParams();
     const pwd = u.searchParams.get("pwd") || u.searchParams.get("password");
@@ -21,8 +27,55 @@ export function canonicalUrl(url) {
     u.search = keep.toString() ? `?${keep}` : "";
     return `${u.origin}${u.pathname}${u.search}`.replace(/\/$/, "");
   } catch {
-    return String(url || "").split("#")[0];
+    return raw.split("#")[0];
   }
+}
+
+const MERGE_POOL_LIMIT = 240;
+const RESULT_LIMIT = 120;
+const MAGNET_BLEND_RATIO = 0.15;
+const MAGNET_BLEND_MIN = 10;
+const MAGNET_EVERY_N_PAN = 5;
+
+/**
+ * 综合搜索时为磁力预留席位，避免全被网盘高分挤掉。
+ * @param {import('../types.js').SearchHit[]} hits
+ * @param {string[]} cloudTypes
+ * @param {number} [limit]
+ */
+export function finalizeMergedHits(hits, cloudTypes, limit = RESULT_LIMIT) {
+  const sorted = [...(hits || [])].sort((a, b) => b.score - a.score);
+  const types = cloudTypes?.length ? cloudTypes : [...ALL_CLOUD_TYPES];
+  const panTypes = types.filter((t) => t !== "magnet");
+  const blend = types.includes("magnet") && panTypes.length > 0;
+
+  if (!blend) return sorted.slice(0, limit);
+
+  const magnets = sorted.filter((h) => h.cloudType === "magnet");
+  const pans = sorted.filter((h) => h.cloudType !== "magnet");
+  if (!magnets.length) return pans.slice(0, limit);
+
+  const magnetTake = Math.min(
+    magnets.length,
+    Math.max(MAGNET_BLEND_MIN, Math.floor(limit * MAGNET_BLEND_RATIO))
+  );
+  const panTake = Math.min(pans.length, Math.max(0, limit - magnetTake));
+  const m = magnets.slice(0, magnetTake);
+  const p = pans.slice(0, panTake);
+
+  /** @type {import('../types.js').SearchHit[]} */
+  const out = [];
+  let pi = 0;
+  let mi = 0;
+  while (out.length < limit && (pi < p.length || mi < m.length)) {
+    for (let i = 0; i < MAGNET_EVERY_N_PAN && pi < p.length && out.length < limit; i++) {
+      out.push(p[pi++]);
+    }
+    if (mi < m.length && out.length < limit) out.push(m[mi++]);
+  }
+  while (pi < p.length && out.length < limit) out.push(p[pi++]);
+  while (mi < m.length && out.length < limit) out.push(m[mi++]);
+  return out;
 }
 
 /**
@@ -67,9 +120,12 @@ export function mergeAndDedupe(batches, limit = 120) {
  * @param {boolean} [opts.enableExt=true]
  * @param {boolean} [opts.enableWeibo]
  */
-export async function searchMulti(opts) {
+/**
+ * @param {string} kw
+ * @param {object} opts
+ */
+async function collectSearchBatches(kw, opts) {
   const {
-    kw,
     cloudTypes,
     pansouUrl,
     forceDemo,
@@ -88,7 +144,13 @@ export async function searchMulti(opts) {
       (async () => {
         const t0 = Date.now();
         try {
-          const { hits, meta } = await searchUpstream(pansouUrl, kw, cloudTypes);
+          const { hits, meta } = await searchUpstream(
+            pansouUrl,
+            kw,
+            cloudTypes,
+            45000,
+            Boolean(opts.forceRefresh)
+          );
           const warn =
             Array.isArray(meta?.warnings) && meta.warnings.length
               ? meta.warnings.join("；")
@@ -186,9 +248,12 @@ export async function searchMulti(opts) {
   }
 
   await Promise.all(tasks);
+  return { batches, sourceStats };
+}
 
-  // Final hard filter — never surface unselected pan types after merge
-  let results = filterHitsByCloudTypes(mergeAndDedupe(batches, 120), cloudTypes);
+function finalizeSearchRun(batches, sourceStats, kw, cloudTypes, forceDemo) {
+  let merged = mergeAndDedupe(batches, MERGE_POOL_LIMIT);
+  let results = filterHitsByCloudTypes(finalizeMergedHits(merged, cloudTypes), cloudTypes);
   let demoMode = false;
   let modeLabel = "多源实时聚合";
 
@@ -197,7 +262,10 @@ export async function searchMulti(opts) {
     results = filterHitsByCloudTypes(searchDemo(kw, cloudTypes), cloudTypes);
     demoMode = true;
     modeLabel = forceDemo ? "演示模式（强制）" : "演示模式（无可用上游）";
-  } else {
+    return { results, demoMode, modeLabel, sourceStats, anyLive: false };
+  }
+
+  {
     const parts = [];
     if (sourceStats.pansou?.ok) parts.push(`PanSou ${sourceStats.pansou.count}`);
     if (sourceStats.hunhepanFamily?.ok) parts.push(`混合盘系 ${sourceStats.hunhepanFamily.count}`);
@@ -225,5 +293,43 @@ export async function searchMulti(opts) {
     }
   }
 
-  return { results, demoMode, modeLabel, sourceStats };
+  return { results, demoMode, modeLabel, sourceStats, anyLive: true };
+}
+
+export async function searchMulti(opts) {
+  const prepared = prepareSearchKeywords(opts.kw);
+  const { cloudTypes, forceDemo } = opts;
+
+  /** @type {{ results: any[], demoMode: boolean, modeLabel: string, sourceStats: object, searchTerm: string, anyLive: boolean } | null} */
+  let best = null;
+
+  for (const term of prepared.upstreamTerms) {
+    const { batches, sourceStats } = await collectSearchBatches(term, opts);
+    const pack = finalizeSearchRun(batches, sourceStats, term, cloudTypes, forceDemo);
+    best = { ...pack, searchTerm: term };
+    if (pack.anyLive && pack.results.length > 0 && !pack.demoMode) break;
+    if (pack.anyLive && pack.results.length > 0) break;
+  }
+
+  if (!best) {
+    best = finalizeSearchRun([], {}, prepared.normalized, cloudTypes, forceDemo);
+    best.searchTerm = prepared.normalized;
+  }
+
+  /** @type {string|undefined} */
+  let queryHint;
+  if (prepared.corrected) {
+    queryHint = `已自动将检索词纠正为「${prepared.normalized}」`;
+  } else if (best.searchTerm !== prepared.original && best.results.length > 0 && !best.demoMode) {
+    queryHint = `已改用「${best.searchTerm}」检索以匹配更多结果`;
+  }
+
+  return {
+    results: best.results,
+    demoMode: best.demoMode,
+    modeLabel: best.modeLabel,
+    sourceStats: best.sourceStats,
+    queryHint,
+    searchTerm: best.searchTerm,
+  };
 }

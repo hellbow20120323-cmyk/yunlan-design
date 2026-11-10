@@ -2,7 +2,7 @@
  * PanFind 网关响应 → 云览 ResourceItem 模型
  */
 
-import { ALL_PROVIDER_IDS } from '../constants/providers';
+import { ALL_PROVIDER_IDS, PANFIND_SEARCH_PROVIDER_IDS } from '../constants/providers';
 import {
   DiskProviderId,
   ResourceCategory,
@@ -14,7 +14,7 @@ import {
 } from '../types';
 
 /** PanFind API 支持的网盘类型 */
-export const PANFIND_DISK_IDS: DiskProviderId[] = ['baidu', 'quark', 'xunlei', 'uc'];
+export const PANFIND_DISK_IDS: DiskProviderId[] = [...PANFIND_SEARCH_PROVIDER_IDS];
 
 export interface PanFindSearchHit {
   id: string;
@@ -40,6 +40,7 @@ export interface PanFindSearchResponse {
   query: string;
   demoMode?: boolean;
   modeLabel?: string;
+  queryHint?: string;
   total: number;
   results: PanFindSearchHit[];
   tookMs: number;
@@ -47,9 +48,28 @@ export interface PanFindSearchResponse {
   points?: import('../types/auth').PointsStatus;
 }
 
-function mapCloudType(raw: string): DiskProviderId {
+function detectProviderFromUrl(url: string): DiskProviderId | null {
+  const u = url.toLowerCase();
+  if (/pan\.baidu\.com|yun\.baidu\.com/.test(u)) return 'baidu';
+  if (/pan\.quark\.cn/.test(u)) return 'quark';
+  if (/pan\.xunlei\.com/.test(u)) return 'xunlei';
+  if (/(?:drive|pan)\.uc\.cn/.test(u)) return 'uc';
+  if (/alipan\.com|aliyundrive\.com/.test(u)) return 'aliyun';
+  if (/123pan\.com|123684\.com|123pan\.cn/.test(u)) return 'pan123';
+  if (/cloud\.189\.cn/.test(u)) return 'tianyi';
+  if (/115\.com|115cdn\.com|anxia\.com/.test(u)) return 'pan115';
+  if (/yun\.139\.com|caiyun\.139\.com/.test(u)) return 'mobile';
+  if (/lanzou|lanoss/.test(u)) return 'lanzou';
+  if (u.startsWith('magnet:')) return 'magnet';
+  return null;
+}
+
+function mapCloudType(raw: string, url = ''): DiskProviderId {
   const id = raw as DiskProviderId;
   if (PANFIND_DISK_IDS.includes(id)) return id;
+  const fromUrl = detectProviderFromUrl(url);
+  if (fromUrl) return fromUrl;
+  if (id === 'magnet') return 'magnet';
   return 'baidu';
 }
 
@@ -65,7 +85,7 @@ function inferCategory(title: string): ResourceCategory {
 }
 
 function hitToResource(hit: PanFindSearchHit): ResourceItem {
-  const diskProvider = mapCloudType(hit.cloudType);
+  const diskProvider = mapCloudType(hit.cloudType, hit.url);
   const category = inferCategory(hit.title);
   const updatedAt = hit.datetime
     ? hit.datetime.slice(0, 10)
@@ -98,6 +118,8 @@ function hitToResource(hit: PanFindSearchHit): ResourceItem {
     viewsCount: 0,
     savesCount: Math.round(hit.score * 100),
     uploader: isWeibo ? hit.weiboNick || '微博' : hit.source,
+    source: hit.source || undefined,
+    note: hit.note && hit.note !== hit.title ? hit.note : undefined,
   };
 }
 
@@ -162,7 +184,10 @@ function sortItems(items: ResourceItem[], sortBy: SortOption): ResourceItem[] {
 function applyClientFilters(items: ResourceItem[], filter: SearchFilter): ResourceItem[] {
   let pool = items;
 
-  if (filter.selectedProviders.length > 0 && filter.selectedProviders.length < ALL_PROVIDER_IDS.length) {
+  if (
+    filter.selectedProviders.length > 0 &&
+    filter.selectedProviders.length < PANFIND_SEARCH_PROVIDER_IDS.length
+  ) {
     pool = pool.filter((i) => filter.selectedProviders.includes(i.diskProvider));
   }
 
@@ -189,13 +214,11 @@ function applyClientFilters(items: ResourceItem[], filter: SearchFilter): Resour
 }
 
 function countByProvider(items: ResourceItem[]): Record<DiskProviderId, number> {
-  return ALL_PROVIDER_IDS.reduce(
-    (acc, p) => {
-      acc[p] = items.filter((i) => i.diskProvider === p).length;
-      return acc;
-    },
-    {} as Record<DiskProviderId, number>
-  );
+  const acc = {} as Record<DiskProviderId, number>;
+  for (const p of PANFIND_SEARCH_PROVIDER_IDS) {
+    acc[p] = items.filter((i) => i.diskProvider === p).length;
+  }
+  return acc;
 }
 
 function countByCategory(items: ResourceItem[]): Record<ResourceCategory, number> {
@@ -279,7 +302,8 @@ function clientHeaders(): Record<string, string> {
 export async function fetchPanfindSearch(
   baseUrl: string,
   filter: SearchFilter,
-  timeoutMs: number
+  timeoutMs: number,
+  options?: { forceRefresh?: boolean }
 ): Promise<PanFindSearchResponse> {
   const q = filter.query.trim();
   if (!q) {
@@ -289,6 +313,7 @@ export async function fetchPanfindSearch(
   const params = new URLSearchParams({ kw: q });
   const ct = cloudTypesParam(filter.selectedProviders);
   if (ct) params.set('cloud_types', ct);
+  if (options?.forceRefresh) params.set('refresh', '1');
 
   const url = `${baseUrl.replace(/\/$/, '')}?${params}`;
   const controller = new AbortController();

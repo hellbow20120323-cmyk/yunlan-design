@@ -7,6 +7,7 @@ import React from 'react';
 import { ALL_PROVIDER_IDS, DISK_PROVIDERS } from '../constants/providers';
 import { ExternalLink, Zap, Check, Search } from 'lucide-react';
 import { DiskProviderId } from '../types';
+import { PageShell, yunlanCardClass } from './PageShell';
 
 interface DiskNavigationGridProps {
   onSearchProvider: (id: DiskProviderId) => void;
@@ -16,26 +17,18 @@ export const DiskNavigationGrid: React.FC<DiskNavigationGridProps> = ({
   onSearchProvider,
 }) => {
   return (
-    <div className="w-full max-w-6xl mx-auto py-8">
-      {/* Title */}
-      <div className="mb-8">
-        <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-          聚合云盘引擎导航与矩阵
-        </h2>
-        <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-          全面兼容国内 10 大主流云盘平台，一站式对比平台特性、限速策略及特色格式支持
-        </p>
-      </div>
-
-      {/* Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+    <PageShell
+      title="聚合云盘引擎导航与矩阵"
+      subtitle="全面兼容国内十大主流云盘，一站式对比特性、限速策略及格式支持"
+    >
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
         {ALL_PROVIDER_IDS.map((id) => {
           const p = DISK_PROVIDERS[id];
 
           return (
             <div
               key={id}
-              className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-700 transition-all shadow-xs group"
+              className={`${yunlanCardClass()} p-5 flex flex-col justify-between hover:border-[#d8cbb8]/80 transition-all group`}
             >
               <div>
                 {/* Header */}
@@ -45,28 +38,28 @@ export const DiskNavigationGrid: React.FC<DiskNavigationGridProps> = ({
                       className="w-3.5 h-3.5 rounded-full" 
                       style={{ backgroundColor: p.color }} 
                     />
-                    <h3 className="text-base font-bold text-slate-900 dark:text-white group-hover:text-cyan-600 transition-colors">
+                    <h3 className="text-base font-semibold text-[#3d3832] group-hover:text-[#9a7b4f] transition-colors">
                       {p.name}
                     </h3>
                   </div>
 
                   {/* Speed Badge */}
-                  <div className="flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+                  <div className="flex items-center gap-1 text-[11px] font-medium text-[#8a9a6e]">
                     <Zap className="w-3 h-3" />
                     <span>转存{p.speedRating}</span>
                   </div>
                 </div>
 
                 {/* Description */}
-                <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 mb-4 leading-relaxed">
+                <p className="text-xs text-yunlan-muted line-clamp-2 mb-4 leading-relaxed font-light">
                   {p.description}
                 </p>
 
                 {/* Features list */}
                 <div className="space-y-1.5 mb-4">
                   {p.features.map((feat, i) => (
-                    <div key={i} className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300">
-                      <Check className="w-3 h-3 text-cyan-500 shrink-0" />
+                    <div key={i} className="flex items-center gap-2 text-xs text-[#5c564e]">
+                      <Check className="w-3 h-3 text-[#b8956b] shrink-0" />
                       <span>{feat}</span>
                     </div>
                   ))}
@@ -84,10 +77,10 @@ export const DiskNavigationGrid: React.FC<DiskNavigationGridProps> = ({
               </div>
 
               {/* Action Buttons */}
-              <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between gap-2">
+              <div className="pt-3 border-t border-yunlan-hairline flex items-center justify-between gap-2">
                 <button
                   onClick={() => onSearchProvider(id)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-cyan-600 dark:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-cyan-950/40 rounded-lg transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#9a7b4f] hover:bg-[#f3f0ea] rounded-lg transition-colors"
                 >
                   <Search className="w-3.5 h-3.5" />
                   <span>检索该网盘</span>
@@ -97,7 +90,7 @@ export const DiskNavigationGrid: React.FC<DiskNavigationGridProps> = ({
                   href={p.officialUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1 px-3 py-1.5 text-xs text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors"
+                  className="flex items-center gap-1 px-3 py-1.5 text-xs text-yunlan-muted hover:text-[#4a4540] transition-colors"
                 >
                   <span>官网直达</span>
                   <ExternalLink className="w-3 h-3" />
@@ -107,6 +100,6 @@ export const DiskNavigationGrid: React.FC<DiskNavigationGridProps> = ({
           );
         })}
       </div>
-    </div>
+    </PageShell>
   );
 };

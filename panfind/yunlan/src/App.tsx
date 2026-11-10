@@ -3,16 +3,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useSearchEngine } from './hooks/useSearchEngine';
 import { Header } from './components/Header';
 import { HeroSearch } from './components/HeroSearch';
+import { HotTrendGrid } from './components/HotTrendGrid';
+import { HomeKeywordSidebar } from './components/HomeKeywordSidebar';
 import { FilterBar } from './components/FilterBar';
 import { SearchRefinePanel } from './components/SearchRefinePanel';
 import { SearchResultsTable } from './components/SearchResultsTable';
 import { ResourceDetailModal } from './components/ResourceDetailModal';
-import { BackendConfigModal } from './components/BackendConfigModal';
-import { WeiboConfigModal } from './components/WeiboConfigModal';
 import { FavoritesDrawer } from './components/FavoritesDrawer';
 import { DiskNavigationGrid } from './components/DiskNavigationGrid';
 import { HotSearchAndRankings } from './components/HotSearchAndRankings';
@@ -23,32 +23,44 @@ import { Toast } from './components/Toast';
 import { ResourceItem, DiskProviderId, ResourceCategory } from './types';
 import { SearchX, ArrowDown, ChevronRight } from 'lucide-react';
 import { useAuth } from './hooks/useAuth';
+import { useTrendingHot } from './hooks/useTrendingHot';
 import { AuthModal } from './components/AuthModal';
 import { PaywallModal } from './components/PaywallModal';
+import { shuffleCopy } from './utils/shuffle';
 
 export default function App() {
   const auth = useAuth();
+  const trendingHot = useTrendingHot();
+
+  const hotSpotlightPosters = useMemo(() => {
+    const movies = trendingHot.data?.movies ?? [];
+    const tv = trendingHot.data?.tv ?? [];
+    const picked = [...movies.slice(0, 5), ...tv.slice(0, 5)];
+    const seen = new Set<string>();
+    return picked.filter((item) => {
+      if (seen.has(item.id)) return false;
+      seen.add(item.id);
+      return true;
+    });
+  }, [trendingHot.data]);
+
+  /** 底部海报墙：每次拉取到热门数据后随机打乱 */
+  const bottomMoviesShuffled = useMemo(
+    () => shuffleCopy(trendingHot.data?.movies ?? []),
+    [trendingHot.data?.fetchedAt, trendingHot.data?.movies],
+  );
+  const bottomTvShuffled = useMemo(
+    () => shuffleCopy(trendingHot.data?.tv ?? []),
+    [trendingHot.data?.fetchedAt, trendingHot.data?.tv],
+  );
+
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isPaywallOpen, setIsPaywallOpen] = useState(false);
   const [paywallReason, setPaywallReason] = useState('');
-  // Theme management: default to dark
-  const [isDark, setIsDark] = useState<boolean>(() => {
-    const saved = localStorage.getItem('haisou_theme');
-    if (saved) return saved === 'dark';
-    return true; // default dark oceanic theme
-  });
-
   useEffect(() => {
-    if (isDark) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('haisou_theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('haisou_theme', 'light');
-    }
-  }, [isDark]);
-
-  const toggleTheme = () => setIsDark(prev => !prev);
+    document.documentElement.classList.remove('dark');
+    localStorage.setItem('haisou_theme', 'light');
+  }, []);
 
   // Active navigation tab
   const [activeTab, setActiveTab] = useState<'search' | 'providers' | 'rankings' | 'guide'>('search');
@@ -58,6 +70,7 @@ export default function App() {
     filter,
     setQuery,
     handleSearchSubmit,
+    handleForceRefreshSearch,
     toggleProvider,
     selectAllProviders,
     invertProviders,
@@ -81,7 +94,6 @@ export default function App() {
     toggleSelectItem,
     selectAllVisible,
     clearSelection,
-    refreshSearch,
   } = useSearchEngine(auth.applyPoints, (msg) => {
     setPaywallReason(msg);
     setIsPaywallOpen(true);
@@ -90,8 +102,6 @@ export default function App() {
   // Modals & Drawers state
   const [detailItem, setDetailItem] = useState<ResourceItem | null>(null);
   const [isFavoritesOpen, setIsFavoritesOpen] = useState(false);
-  const [isBackendConfigOpen, setIsBackendConfigOpen] = useState(false);
-  const [isWeiboConfigOpen, setIsWeiboConfigOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -116,7 +126,6 @@ export default function App() {
       if (e.key === 'Escape') {
         setDetailItem(null);
         setIsFavoritesOpen(false);
-        setIsBackendConfigOpen(false);
       }
     };
 
@@ -147,8 +156,41 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  /** 底部热门电影/剧集海报：触发检索并回到顶部搜索框 */
+  const pickTrendPosterAndSearch = useCallback(
+    (keyword: string) => {
+      setQuery(keyword);
+      handleSearchSubmit(keyword);
+      setActiveTab('search');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      window.setTimeout(() => {
+        searchInputRef.current?.focus({ preventScroll: true });
+      }, 200);
+    },
+    [setQuery, handleSearchSubmit]
+  );
+
+  const handleGoHome = () => {
+    setActiveTab('search');
+    clearSearch();
+    setDetailItem(null);
+    clearSelection();
+    setIsFavoritesOpen(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    searchInputRef.current?.blur();
+  };
+
+  const handleNavigateTab = (tab: 'search' | 'providers' | 'rankings' | 'guide') => {
+    if (tab === 'search') {
+      handleGoHome();
+      return;
+    }
+    setActiveTab(tab);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-[#0b0f17] text-slate-900 dark:text-slate-100 transition-colors duration-200">
+    <div className="min-h-screen flex flex-col bg-yunlan-ivory text-yunlan-ink transition-colors duration-200">
       
       {/* Toast Feedback */}
       <Toast message={toastMessage} onClose={() => setToastMessage(null)} />
@@ -156,10 +198,10 @@ export default function App() {
       {/* Top Bar Header */}
       <Header
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={handleNavigateTab}
+        onGoHome={handleGoHome}
         onOpenFavorites={() => setIsFavoritesOpen(true)}
-        onOpenBackendConfig={() => setIsBackendConfigOpen(true)}
-        onOpenWeiboConfig={() => setIsWeiboConfigOpen(true)}
+        favoritesCount={favorites.length}
         user={auth.user}
         points={auth.points}
         authLoading={auth.loading}
@@ -169,13 +211,6 @@ export default function App() {
           setPaywallReason('今日积分已用完，选择套餐开通 VIP 后可继续搜索');
           setIsPaywallOpen(true);
         }}
-        favoritesCount={favorites.length}
-        isDark={isDark}
-        toggleTheme={toggleTheme}
-        onFocusSearch={() => {
-          setActiveTab('search');
-          searchInputRef.current?.focus();
-        }}
       />
 
       {/* Main Viewport Content */}
@@ -184,7 +219,14 @@ export default function App() {
         {/* TAB 1: Search View */}
         {activeTab === 'search' && (
           <div className="py-2">
-            
+            <div
+              className={
+                !filter.query.trim()
+                  ? 'flex flex-col lg:flex-row lg:items-start gap-6 lg:gap-10 xl:gap-12'
+                  : ''
+              }
+            >
+              <div className="flex-1 min-w-0">
             {/* Hero Search Box */}
             <HeroSearch
               query={filter.query}
@@ -201,53 +243,78 @@ export default function App() {
               inputRef={searchInputRef}
             />
 
-            {filter.query.trim() && (
-              <div className="mt-4 space-y-3">
-                <SearchRefinePanel
-                  selectedProviders={filter.selectedProviders}
-                  onToggleProvider={toggleProvider}
-                  providersCount={response?.providersCount}
-                  minSizeMb={filter.minSizeMb ?? 0}
-                  maxSizeGb={maxSizeGb}
-                  minUnit={minSizeUnit}
-                  maxUnit={maxSizeUnit}
-                  onMinSizeChange={(mb, unit) => {
-                    setMinSizeUnit(unit);
-                    setSizeRange(mb, filter.maxSizeMb);
-                  }}
-                  onMaxSizeChange={(gbOrNull, unit) => {
-                    setMaxSizeUnit(unit);
-                    if (gbOrNull === null) {
-                      setSizeRange(filter.minSizeMb ?? 0, undefined);
-                      return;
-                    }
-                    const maxMb = Math.round(gbOrNull * 1024);
-                    setSizeRange(filter.minSizeMb ?? 0, maxMb);
-                  }}
-                />
-                <FilterBar
-                  currentCategory={filter.category}
-                  onSelectCategory={setCategory}
-                  categoriesCount={response?.categoriesCount}
-                  currentSort={filter.sortBy}
-                  onSelectSort={setSortBy}
-                  currentTimeRange={filter.timeRange}
-                  onSelectTimeRange={setTimeRange}
-                  onlyValid={filter.onlyValid}
-                  onToggleOnlyValid={setOnlyValid}
-                  viewMode="list"
-                  onChangeViewMode={() => {}}
-                  hideViewSwitcher
-                  totalResults={response?.total || 0}
-                  tookMs={response?.tookMs || 0}
-                  modeLabel={response?.modeLabel}
-                  demoMode={response?.demoMode}
-                />
-              </div>
+            {!filter.query.trim() && (
+              <HomeKeywordSidebar
+                className="mt-3 lg:hidden"
+                onPickKeyword={(keyword, category) => {
+                  setQuery(keyword);
+                  setCategory(category);
+                  handleSearchSubmit(keyword);
+                }}
+              />
             )}
 
-            {/* Results Section */}
-            <div className="space-y-3 min-h-[300px] mt-3">
+            <HotTrendGrid
+              className="mt-6 sm:mt-8"
+              singleRow
+              items={hotSpotlightPosters}
+              loading={trendingHot.loading}
+              maxItems={10}
+              title="热门精选"
+              onPickKeyword={(keyword) => {
+                setQuery(keyword);
+                handleSearchSubmit(keyword);
+              }}
+            />
+
+            {filter.query.trim() && (
+            <div className="mt-4 space-y-3">
+              <SearchRefinePanel
+                selectedProviders={filter.selectedProviders}
+                onToggleProvider={toggleProvider}
+                providersCount={response?.providersCount}
+                minSizeMb={filter.minSizeMb ?? 0}
+                maxSizeGb={maxSizeGb}
+                minUnit={minSizeUnit}
+                maxUnit={maxSizeUnit}
+                onMinSizeChange={(mb, unit) => {
+                  setMinSizeUnit(unit);
+                  setSizeRange(mb, filter.maxSizeMb);
+                }}
+                onMaxSizeChange={(gbOrNull, unit) => {
+                  setMaxSizeUnit(unit);
+                  if (gbOrNull === null) {
+                    setSizeRange(filter.minSizeMb ?? 0, undefined);
+                    return;
+                  }
+                  const maxMb = Math.round(gbOrNull * 1024);
+                  setSizeRange(filter.minSizeMb ?? 0, maxMb);
+                }}
+              />
+              <FilterBar
+                currentCategory={filter.category}
+                onSelectCategory={setCategory}
+                categoriesCount={response?.categoriesCount}
+                currentSort={filter.sortBy}
+                onSelectSort={setSortBy}
+                currentTimeRange={filter.timeRange}
+                onSelectTimeRange={setTimeRange}
+                onlyValid={filter.onlyValid}
+                onToggleOnlyValid={setOnlyValid}
+                viewMode="list"
+                onChangeViewMode={() => {}}
+                hideViewSwitcher
+                totalResults={response?.total || 0}
+                tookMs={response?.tookMs || 0}
+                modeLabel={response?.modeLabel}
+                demoMode={response?.demoMode}
+              />
+            </div>
+            )}
+
+            {/* Results Section — 无搜索词时不占位，避免中间大块空白 */}
+            {filter.query.trim() ? (
+            <div className="space-y-3 mt-3">
               
               {/* Error state */}
               {error && (
@@ -283,16 +350,27 @@ export default function App() {
                   <p className="mt-1 text-xs text-slate-500 max-w-md mx-auto">
                     建议缩减筛选条件，取消特定格式或时间限制，或尝试搜索其他通用词汇（如简写名称）。
                   </p>
-                  <button
-                    onClick={() => {
-                      selectAllProviders();
-                      setCategory('all');
-                      setOnlyValid(false);
-                    }}
-                    className="mt-4 px-4 py-2 text-xs font-semibold rounded-lg bg-cyan-600 text-white hover:bg-cyan-500 transition-colors"
-                  >
-                    重置所有筛选条件
-                  </button>
+                  <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleForceRefreshSearch}
+                      disabled={loading}
+                      className="px-4 py-2 text-xs font-medium rounded-sm text-yunlan-stone border border-yunlan-hairline bg-yunlan-surface hover:shadow-yunlan-feather transition-all disabled:opacity-50"
+                    >
+                      强制刷新本次搜索
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        selectAllProviders();
+                        setCategory('all');
+                        setOnlyValid(false);
+                      }}
+                      className="px-4 py-2 text-xs font-semibold rounded-sm bg-yunlan-cta text-white transition-colors"
+                    >
+                      重置所有筛选条件
+                    </button>
+                  </div>
                 </div>
               )}
 
@@ -314,6 +392,8 @@ export default function App() {
                   onToggleFavorite={toggleFavorite}
                   isFavorited={isFavorite}
                   onShowToast={handleShowToast}
+                  onForceRefresh={handleForceRefreshSearch}
+                  forceRefreshLoading={loading}
                 />
               )}
 
@@ -336,7 +416,55 @@ export default function App() {
               )}
 
             </div>
+            ) : null}
 
+            {(trendingHot.loading ||
+              (trendingHot.data?.movies?.length ?? 0) > 0 ||
+              (trendingHot.data?.tv?.length ?? 0) > 0) && (
+              <section className="mt-10 sm:mt-12 pt-8 pb-6 border-t border-yunlan-hairline w-full max-w-[1100px] mx-auto">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-5">
+                  <HotTrendGrid
+                    embedded
+                    dense
+                    fixedKind="movie"
+                    items={[]}
+                    movies={bottomMoviesShuffled}
+                    tv={[]}
+                    loading={trendingHot.loading}
+                    maxItems={80}
+                    title="热门电影"
+                    onPickKeyword={pickTrendPosterAndSearch}
+                  />
+                  <HotTrendGrid
+                    embedded
+                    className="md:pl-6"
+                    dense
+                    fixedKind="tv"
+                    items={[]}
+                    movies={[]}
+                    tv={bottomTvShuffled}
+                    loading={trendingHot.loading}
+                    maxItems={80}
+                    title="热门剧集"
+                    onPickKeyword={pickTrendPosterAndSearch}
+                  />
+                </div>
+              </section>
+            )}
+
+              </div>
+
+              {!filter.query.trim() && (
+                <HomeKeywordSidebar
+                  className="hidden lg:block lg:pt-4 shrink-0"
+                  onPickKeyword={(keyword, category) => {
+                    setQuery(keyword);
+                    setCategory(category);
+                    handleSearchSubmit(keyword);
+                  }}
+                />
+              )}
+            </div>
           </div>
         )}
 
@@ -378,21 +506,6 @@ export default function App() {
         onShowToast={handleShowToast}
       />
 
-      {/* Backend API Config Modal */}
-      <BackendConfigModal
-        isOpen={isBackendConfigOpen}
-        onClose={() => setIsBackendConfigOpen(false)}
-        onConfigSaved={refreshSearch}
-        onShowToast={handleShowToast}
-      />
-
-      <WeiboConfigModal
-        isOpen={isWeiboConfigOpen}
-        onClose={() => setIsWeiboConfigOpen(false)}
-        onShowToast={handleShowToast}
-        onSaved={refreshSearch}
-      />
-
       <AuthModal
         isOpen={isAuthOpen}
         onClose={() => setIsAuthOpen(false)}
@@ -421,7 +534,6 @@ export default function App() {
         }}
       />
 
-      {/* Favorites Drawer */}
       <FavoritesDrawer
         isOpen={isFavoritesOpen}
         onClose={() => setIsFavoritesOpen(false)}
@@ -431,11 +543,7 @@ export default function App() {
         onShowToast={handleShowToast}
       />
 
-      {/* Footer */}
-      <Footer
-        onOpenBackendConfig={() => setIsBackendConfigOpen(true)}
-        onNavigateToTab={setActiveTab}
-      />
+      <Footer onNavigateToTab={handleNavigateTab} />
 
     </div>
   );

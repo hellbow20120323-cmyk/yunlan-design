@@ -5,6 +5,8 @@
  * Do not score/accept via single-char or arbitrary bigram slices of that phrase.
  */
 
+import { formatTokenVariants } from "./queryOptimize.js";
+
 const SOURCE_WEIGHT = {
   "demo:tg:": 0.85,
   "demo:plugin:": 0.75,
@@ -76,7 +78,21 @@ export function keywordRelevant(text, query) {
   }
   const tokens = q.split(/\s+/).filter((tok) => tok.length >= 2);
   if (tokens.length === 0) return t.includes(q);
-  return tokens.every((tok) => t.includes(tok));
+  return tokens.every((tok) => tokenMatchesText(t, tok));
+}
+
+/**
+ * @param {string} text normalized haystack
+ * @param {string} token raw token
+ */
+function tokenMatchesText(text, token) {
+  const n = normalizeSearchText(token);
+  if (!n) return false;
+  if (text.includes(n)) return true;
+  for (const alt of formatTokenVariants(n)) {
+    if (alt !== n && text.includes(alt)) return true;
+  }
+  return false;
 }
 
 /**
@@ -100,7 +116,7 @@ export function keywordMatch(text, query) {
   if (tokens.length === 0) return 0;
   let hit = 0;
   for (const tok of tokens) {
-    if (t.includes(tok)) hit += 1;
+    if (tokenMatchesText(t, tok)) hit += 1;
   }
   const ratio = hit / tokens.length;
   return Math.min(1, ratio * 0.7);

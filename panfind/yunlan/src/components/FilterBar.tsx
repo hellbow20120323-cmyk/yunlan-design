@@ -75,7 +75,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
   return (
     <div className="w-full space-y-3.5 mb-6">
       {/* Category Tabs (Segmented control row) */}
-      <div className="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-xl overflow-x-auto no-scrollbar">
+      <div className="flex items-center gap-1.5 p-1 bg-[#f3f0ea]/80 border border-yunlan-hairline rounded-xl overflow-x-auto no-scrollbar">
         {CATEGORIES.map((cat) => {
           const isActive = currentCategory === cat.id;
           const count = categoriesCount ? categoriesCount[cat.id] : undefined;
@@ -86,8 +86,8 @@ export const FilterBar: React.FC<FilterBarProps> = ({
               onClick={() => onSelectCategory(cat.id)}
               className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg whitespace-nowrap shrink-0 transition-all cursor-pointer ${
                 isActive
-                  ? 'bg-white dark:bg-slate-800 text-cyan-600 dark:text-cyan-400 font-semibold shadow-sm border border-slate-200/60 dark:border-slate-700/60'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                  ? 'bg-[#fffcf8] text-[#9a7b4f] font-semibold shadow-sm border border-[#e5dccf]/80'
+                  : 'text-yunlan-muted hover:text-[#4a4540]'
               }`}
             >
               {getCategoryIcon(cat.icon)}
@@ -95,8 +95,8 @@ export const FilterBar: React.FC<FilterBarProps> = ({
               {count !== undefined && count > 0 && (
                 <span className={`text-[10px] tabular-nums px-1.5 py-0.2 rounded-full ${
                   isActive 
-                    ? 'bg-cyan-50 dark:bg-cyan-950/60 text-cyan-600 dark:text-cyan-400' 
-                    : 'bg-slate-200 dark:bg-slate-800 text-slate-500'
+                    ? 'bg-[#f3f0ea] text-[#9a7b4f]' 
+                    : 'bg-[#ebe6de] text-yunlan-muted'
                 }`}>
                   {count}
                 </span>
