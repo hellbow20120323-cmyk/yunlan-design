@@ -1,59 +1,52 @@
-import fs from "node:fs";
-import path from "node:path";
-import { DATA_DIR } from "../paths.js";
 import crypto from "node:crypto";
+import { dataPath } from "../paths.js";
+import { JsonStore } from "../json-store.js";
 
-const USERS_PATH = path.join(DATA_DIR, "users.json");
+const store = new JsonStore(dataPath("users.json"), () => ({ users: [] }), {
+  normalize: (d) => ({ ...d, users: Array.isArray(d?.users) ? d.users : [] }),
+});
 
-function ensureDataDir() {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
+/** 内存索引：邮箱 → 用户；随文件对象变化自动重建 */
+let indexSource = null;
+let emailIndex = new Map();
+
+function normEmail(email) {
+  return String(email || "")
+    .trim()
+    .toLowerCase();
 }
 
-function readStore() {
-  ensureDataDir();
-  if (!fs.existsSync(USERS_PATH)) {
-    return { users: [] };
+function index() {
+  const data = store.read();
+  if (indexSource !== data || emailIndex.size !== data.users.length) {
+    emailIndex = new Map(data.users.map((u) => [u.email, u]));
+    indexSource = data;
   }
-  try {
-    return JSON.parse(fs.readFileSync(USERS_PATH, "utf8"));
-  } catch {
-    return { users: [] };
-  }
-}
-
-function writeStore(store) {
-  ensureDataDir();
-  fs.writeFileSync(USERS_PATH, JSON.stringify(store, null, 2), "utf8");
+  return emailIndex;
 }
 
 export function findUserByEmail(email) {
-  const norm = String(email || "")
-    .trim()
-    .toLowerCase();
+  const norm = normEmail(email);
   if (!norm) return null;
-  const store = readStore();
-  return store.users.find((u) => u.email === norm) || null;
+  return index().get(norm) || null;
 }
 
 export function findUserById(id) {
-  const store = readStore();
-  return store.users.find((u) => u.id === id) || null;
+  return store.read().users.find((u) => u.id === id) || null;
 }
 
 export function createUser(email, passwordHash) {
-  const norm = String(email || "")
-    .trim()
-    .toLowerCase();
+  const norm = normEmail(email);
   if (!norm) throw new Error("邮箱无效");
   if (findUserByEmail(norm)) throw new Error("该邮箱已注册");
-  const store = readStore();
+  const data = store.read();
   const user = {
     id: crypto.randomUUID(),
     email: norm,
     passwordHash,
     createdAt: new Date().toISOString(),
   };
-  store.users.push(user);
-  writeStore(store);
+  data.users.push(user);
+  store.write();
   return { id: user.id, email: user.email, createdAt: user.createdAt };
 }

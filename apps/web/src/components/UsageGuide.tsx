@@ -50,7 +50,7 @@ export const UsageGuide: React.FC = () => {
             <span>高效快捷键操作</span>
           </div>
           <p className="text-xs text-yunlan-muted font-light leading-relaxed">
-            为桌面端高频极客用户设计的零延迟键盘导航：
+            桌面端可用键盘导航；手机端请用底部「发现 / 网盘 / 榜单 / 指南」切换页面。
           </p>
           <div className="space-y-2 text-xs">
             <div className={`flex items-center justify-between p-2 ${codeBlock}`}>

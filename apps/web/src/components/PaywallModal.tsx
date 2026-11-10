@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { X, Crown, CheckCircle2, Loader2 } from 'lucide-react';
 import { AuthUser, BillingPlan } from '../types/auth';
+import { useLockBodyScroll } from '../hooks/useLockBodyScroll';
 
 interface PaywallModalProps {
   isOpen: boolean;
@@ -50,6 +51,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({
       .catch(() => setPlans([]));
   }, [isOpen]);
 
+  useLockBodyScroll(isOpen);
   if (!isOpen) return null;
 
   const startCheckout = async (planId: string) => {
@@ -99,14 +101,21 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-      <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl">
+    <div
+      className="fixed inset-0 z-[60] flex items-end md:items-center justify-center p-0 md:p-4 bg-black/50 backdrop-blur-sm yl-backdrop"
+      onClick={onClose}
+    >
+      <div
+        className="yl-modal-panel w-full md:max-w-lg max-h-[92dvh] overflow-y-auto rounded-t-2xl md:rounded-2xl border-t md:border border-slate-200 dark:border-slate-800 bg-yunlan-surface dark:bg-slate-900 shadow-2xl yl-safe-bottom"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="md:hidden mx-auto mt-2 h-1 w-10 rounded-full bg-slate-300" aria-hidden />
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-2">
             <Crown className="w-5 h-5 text-amber-500" />
             <h2 className="text-sm font-bold text-slate-900 dark:text-white">开通 VIP 继续搜索</h2>
           </div>
-          <button type="button" onClick={onClose} className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
+          <button type="button" onClick={onClose} className="p-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 min-h-11 min-w-11 flex items-center justify-center">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -125,14 +134,14 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({
           )}
 
           {!payment ? (
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {plans.map((plan) => (
                 <button
                   key={plan.id}
                   type="button"
                   disabled={busyPlan === plan.id}
                   onClick={() => startCheckout(plan.id)}
-                  className="relative text-left p-4 rounded-xl border-2 border-slate-200 dark:border-slate-700 hover:border-cyan-500/60 transition-colors"
+                  className="relative text-left p-4 min-h-[5.5rem] rounded-xl border-2 border-slate-200 dark:border-slate-700 hover:border-yunlan-cinnabar/50 transition-colors"
                 >
                   {plan.badge && (
                     <span className="absolute -top-2 right-2 text-[10px] px-2 py-0.5 rounded-full bg-cyan-600 text-white font-bold">
@@ -140,7 +149,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({
                     </span>
                   )}
                   <p className="font-bold text-slate-900 dark:text-white">{plan.label}</p>
-                  <p className="text-2xl font-extrabold text-cyan-600 dark:text-cyan-400 mt-1">
+                  <p className="text-2xl font-extrabold text-yunlan-cinnabar mt-1">
                     ¥{plan.priceCny}
                   </p>
                   <p className="text-[11px] text-slate-500 mt-1">{plan.durationDays} 天 VIP</p>
@@ -195,7 +204,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({
             <button
               type="button"
               onClick={onOpenAuth}
-              className="w-full py-2.5 rounded-lg bg-cyan-600 text-white font-semibold"
+              className="w-full min-h-11 py-2.5 rounded-lg bg-yunlan-cta text-white font-semibold"
             >
               登录 / 注册
             </button>

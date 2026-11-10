@@ -15,7 +15,19 @@ import { hunhepanEndpoints } from "./sources/hunhepan.js";
 import { resolveWeiboConfig, weiboStatusSummary } from "./sources/weibo.js";
 import { createAuthRouter } from "./auth/routes.js";
 import { getOrCreateClientId, getSessionFromRequest } from "./auth/cookies.js";
-import { createBillingRouter } from "./billing/routes.js";
+import { createBillingRouter, MOCK_ENABLED } from "./billing/routes.js";
+import { getAuthSecret } from "./auth/crypto.js";
+import { flushAllStores } from "./json-store.js";
+import {
+  IS_PROD,
+  clientIp,
+  corsOptions,
+  isAdmin,
+  rateLimit,
+  requireAdmin,
+  sameOriginGuard,
+  securityHeaders,
+} from "./security.js";
 import { consumeSearchPoint, getQuotaStatus } from "./points/quota.js";
 import { getVersionInfo, getVersionSummary } from "./version.js";
 import { resolveShareMetaBatch } from "./share-meta.js";
@@ -30,9 +42,31 @@ const ENGINE_FORCE_REFRESH = ["1", "true", "yes"].includes(
 );
 const VERSION = getVersionSummary();
 
+const HOST = (process.env.HOST || "127.0.0.1").trim();
+
+// 启动前自检：生产环境缺少 AUTH_SECRET 直接拒绝启动（见 auth/crypto.js）
+getAuthSecret();
+if (IS_PROD && MOCK_ENABLED) {
+  console.warn("[yunlan][安全警告] 生产环境开启了 BILLING_MOCK，任何登录用户都可免费开通会员！");
+}
+
 const app = express();
-app.use(cors({ origin: true, credentials: "include" }));
-app.use(express.json({ limit: "256kb" }));
+app.disable("x-powered-by");
+/**
+ * 反向代理层数：Cloudflare → nginx → 网关 共 2 跳，req.ip 才是真实访客 IP。
+ * 直连 nginx（无 Cloudflare）时 2 也同样得到正确结果。可用 TRUST_PROXY 覆盖。
+ */
+{
+  const raw = (process.env.TRUST_PROXY ?? "").trim();
+  if (raw === "") app.set("trust proxy", IS_PROD ? 2 : "loopback");
+  else if (/^\d+$/.test(raw)) app.set("trust proxy", Number(raw));
+  else if (["true", "false"].includes(raw)) app.set("trust proxy", raw === "true");
+  else app.set("trust proxy", raw);
+}
+app.use(securityHeaders);
+app.use(cors(corsOptions));
+app.use(express.json({ limit: "64kb" }));
+app.use(sameOriginGuard);
 
 app.use("/api/auth", createAuthRouter());
 app.use("/api/billing", createBillingRouter());
@@ -52,17 +86,17 @@ async function handleTrendingHot(req, res) {
     const data = await getSubhdHotCached(force);
     res.json({ ok: true, ...data });
   } catch (err) {
-    res.status(502).json({
-      ok: false,
-      error: err instanceof Error ? err.message : String(err),
-    });
+    console.warn("[hot] 热榜获取失败:", err instanceof Error ? err.message : err);
+    res.status(502).json({ ok: false, error: "热榜暂时不可用" });
   }
 }
 
-app.get("/api/hot/trending", handleTrendingHot);
-app.get("/api/hot/subhd", handleTrendingHot);
+const hotLimiter = rateLimit({ windowMs: 60_000, max: 60 });
+app.get("/api/hot/trending", hotLimiter, handleTrendingHot);
+app.get("/api/hot/subhd", hotLimiter, handleTrendingHot);
 
-app.post("/api/share-meta/batch", async (req, res) => {
+const shareMetaLimiter = rateLimit({ windowMs: 60_000, max: 30 });
+app.post("/api/share-meta/batch", shareMetaLimiter, async (req, res) => {
   try {
     const items = Array.isArray(req.body?.items) ? req.body.items : [];
     if (items.length > 12) {
@@ -71,18 +105,26 @@ app.post("/api/share-meta/batch", async (req, res) => {
     const metadata = await resolveShareMetaBatch(items);
     res.json({ ok: true, metadata });
   } catch (err) {
-    res.status(500).json({
-      ok: false,
-      error: err instanceof Error ? err.message : String(err),
-    });
+    console.warn("[share-meta] 失败:", err instanceof Error ? err.message : err);
+    res.status(500).json({ ok: false, error: "分享信息解析失败" });
   }
 });
 
-app.get("/api/health", async (_req, res) => {
+/** 引擎探活结果缓存：/api/health 无需鉴权，不能每次访问都向引擎发起请求 */
+let engineProbeCache = { at: 0, value: /** @type {any} */ (null) };
+async function probeEngineCached() {
+  if (Date.now() - engineProbeCache.at < 10_000) return engineProbeCache.value;
+  const value = await probeEngine(ENGINE_URL);
+  engineProbeCache = { at: Date.now(), value };
+  return value;
+}
+
+app.get("/api/health", rateLimit({ windowMs: 60_000, max: 120 }), async (req, res) => {
   let engine = null;
   if (ENGINE_URL && !FORCE_DEMO) {
-    engine = await probeEngine(ENGINE_URL);
+    engine = await probeEngineCached();
   }
+  const admin = isAdmin(req);
   const engineOk = Boolean(ENGINE_URL) && !FORCE_DEMO && Boolean(engine?.ok);
   const weibo = weiboStatusSummary();
   const liveReady = !FORCE_DEMO && (engineOk || ENABLE_EXT || (weibo.enabled && (weibo.configured || weibo.allowDemo)));
@@ -108,12 +150,17 @@ app.get("/api/health", async (_req, res) => {
     liveReady,
     modeLabel,
     engineConfigured: Boolean(ENGINE_URL),
-    engineUrl: ENGINE_URL || null,
     engineOk: engine ? engine.ok : null,
-    engine: engine?.detail ?? null,
     extSourcesEnabled: ENABLE_EXT,
-    extSources: ENABLE_EXT ? hunhepanEndpoints() : [],
-    weibo,
+    // 内网地址、上游端点、引擎插件清单、微博细节仅管理员可见，避免向公网暴露拓扑
+    ...(admin
+      ? {
+          engineUrl: ENGINE_URL || null,
+          engine: engine?.detail ?? null,
+          extSources: ENABLE_EXT ? hunhepanEndpoints() : [],
+          weibo,
+        }
+      : { weibo: { enabled: weibo.enabled, configured: weibo.configured } }),
   });
 });
 
@@ -135,7 +182,7 @@ app.get("/api/changelog", (_req, res) => {
 });
 
 /** 产品内微博配置（脱敏）；Cookie 永不回传明文 */
-app.get("/api/config/weibo", (_req, res) => {
+app.get("/api/config/weibo", requireAdmin, (_req, res) => {
   const file = readWeiboFileConfig();
   const resolved = resolveWeiboConfig();
   res.json({ ok: true, config: publicWeiboConfigView(file, resolved) });
@@ -149,7 +196,7 @@ app.get("/api/config/weibo", (_req, res) => {
  *   bloggers?, uids?, fetchComments?, maxPages?, allowDemo?
  * }
  */
-app.put("/api/config/weibo", (req, res) => {
+app.put("/api/config/weibo", requireAdmin, (req, res) => {
   try {
     const body = req.body || {};
     const prev = readWeiboFileConfig();
@@ -225,17 +272,26 @@ app.put("/api/config/weibo", (req, res) => {
       message: `已保存到 ${weiboConfigPath()}`,
     });
   } catch (err) {
-    res.status(500).json({
-      ok: false,
-      error: err instanceof Error ? err.message : String(err),
-    });
+    console.warn("[config/weibo] 保存失败:", err instanceof Error ? err.message : err);
+    res.status(500).json({ ok: false, error: "保存失败" });
   }
+});
+
+/** 每个 IP 每分钟 30 次搜索：配合积分额度，防止脚本批量刷上游 */
+const searchLimiter = rateLimit({
+  windowMs: 60_000,
+  max: 30,
+  message: "搜索过于频繁，请稍后再试",
 });
 
 async function handleSearch(req, res) {
   const started = Date.now();
   const body = req.method === "GET" ? req.query : req.body || {};
-  const kw = String(body.kw || body.q || "").trim();
+  // 去掉控制字符，避免污染日志与上游请求
+  const kw = String(body.kw || body.q || "")
+    // eslint-disable-next-line no-control-regex
+    .replace(/[\u0000-\u001f\u007f]/g, " ")
+    .trim();
   if (!kw) {
     return res.status(400).json({ error: "缺少关键词 kw", code: "MISSING_KW" });
   }
@@ -247,7 +303,7 @@ async function handleSearch(req, res) {
   const session = getSessionFromRequest(req);
   let pointsAfter;
   try {
-    pointsAfter = consumeSearchPoint({ userId: session?.uid, clientId });
+    pointsAfter = consumeSearchPoint({ userId: session?.uid, clientId, ip: clientIp(req) });
   } catch (err) {
     if (err?.code === "INSUFFICIENT_POINTS") {
       return res.status(402).json({
@@ -261,15 +317,11 @@ async function handleSearch(req, res) {
   }
 
   const cloudTypes = normalizeCloudTypes(body.cloud_types || body.cloudTypes);
-  const enableExt =
-    body.enable_ext === undefined
-      ? ENABLE_EXT
-      : !["0", "false", "no"].includes(String(body.enable_ext).toLowerCase());
+  // 客户端开关只能「关闭」服务端已启用的源，不能越权开启服务端关闭的源
+  const optedOut = (v) => v !== undefined && ["0", "false", "no"].includes(String(v).toLowerCase());
+  const enableExt = ENABLE_EXT && !optedOut(body.enable_ext);
   const resolvedWeibo = resolveWeiboConfig();
-  const enableWeibo =
-    body.enable_weibo === undefined
-      ? resolvedWeibo.enabled
-      : !["0", "false", "no"].includes(String(body.enable_weibo).toLowerCase());
+  const enableWeibo = resolvedWeibo.enabled && !optedOut(body.enable_weibo);
 
   const forceRefresh =
     ENGINE_FORCE_REFRESH ||
@@ -299,32 +351,82 @@ async function handleSearch(req, res) {
   });
 }
 
-app.get("/api/search", (req, res) => {
-  handleSearch(req, res).catch((e) => {
-    res.status(500).json({ error: e.message || "search failed" });
-  });
+function searchFailed(res, e) {
+  // 内部错误细节只写日志，不回给访客
+  console.error("[search] 失败:", e instanceof Error ? e.stack || e.message : e);
+  if (!res.headersSent) res.status(500).json({ error: "搜索服务暂时不可用，请稍后重试" });
+}
+
+app.get("/api/search", searchLimiter, (req, res) => {
+  handleSearch(req, res).catch((e) => searchFailed(res, e));
 });
 
-app.post("/api/search", (req, res) => {
-  handleSearch(req, res).catch((e) => {
-    res.status(500).json({ error: e.message || "search failed" });
-  });
+app.post("/api/search", searchLimiter, (req, res) => {
+  handleSearch(req, res).catch((e) => searchFailed(res, e));
 });
 
-app.use(express.static(WEB_DIST));
-app.get("*", (req, res, next) => {
-  if (req.path.startsWith("/api")) return next();
+/**
+ * 静态资源缓存策略：
+ * - 构建产物目录 /yl/ 带内容哈希 → 一年 immutable
+ * - index.html 永远回源校验，保证发版后用户立刻拿到新入口
+ * - 其他（logo 等）缓存一天
+ */
+app.use(
+  express.static(WEB_DIST, {
+    index: false,
+    setHeaders(res, filePath) {
+      if (filePath.includes(`${path.sep}yl${path.sep}`)) {
+        res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+      } else if (filePath.endsWith(".html")) {
+        res.setHeader("Cache-Control", "no-cache");
+      } else {
+        res.setHeader("Cache-Control", "public, max-age=86400");
+      }
+    },
+  })
+);
+
+app.use("/api", (_req, res) => {
+  res.status(404).json({ ok: false, error: "接口不存在" });
+});
+
+app.get("*", (req, res) => {
+  res.setHeader("Cache-Control", "no-cache");
   res.sendFile(path.join(WEB_DIST, "index.html"), (err) => {
-    if (err) res.status(404).json({ error: "Web UI 未构建，请先 npm run build 或分别启动 gateway/web" });
+    if (err && !res.headersSent) {
+      res.status(404).json({ error: "Web UI 未构建，请先 npm run build 或分别启动 gateway/web" });
+    }
   });
 });
 
-app.listen(PORT, "0.0.0.0", () => {
+// 统一错误出口：请求体过大 / JSON 非法等不再返回带堆栈的默认 HTML 页面
+// eslint-disable-next-line no-unused-vars
+app.use((err, _req, res, _next) => {
+  const status = err?.status || err?.statusCode || 500;
+  if (status >= 500) console.error("[gateway] 未处理错误:", err);
+  const msg =
+    status === 413 ? "请求体过大" : status === 400 ? "请求格式不正确" : "服务器内部错误";
+  if (!res.headersSent) res.status(status >= 400 && status < 600 ? status : 500).json({ ok: false, error: msg });
+});
+
+const server = app.listen(PORT, HOST, () => {
   scheduleSubhdHotDaily();
   const w = resolveWeiboConfig();
-  console.log(`[yunlan] gateway http://0.0.0.0:${PORT} v${VERSION.version} (${VERSION.buildTime})`);
+  console.log(`[yunlan] gateway http://${HOST}:${PORT} v${VERSION.version} (${VERSION.buildTime})`);
   console.log(
     `[yunlan] ENGINE_URL=${ENGINE_URL || "(none)"} EXT=${ENABLE_EXT} WEIBO=${w.enabled} mode=${w.searchModeHint} DEMO=${FORCE_DEMO}`
   );
   console.log(`[yunlan] 微博配置文件 ${weiboConfigPath()}（UIDs 来自文件=${uidsFromFile(readWeiboFileConfig()).length}）`);
 });
+
+// 慢速连接防护：请求头 / 请求体必须在限定时间内收完（响应时长不受影响）
+server.headersTimeout = 30_000;
+server.requestTimeout = 60_000;
+
+function shutdown(signal) {
+  console.log(`[yunlan] 收到 ${signal}，正在关闭…`);
+  flushAllStores();
+  server.close(() => process.exit(0));
+  setTimeout(() => process.exit(0), 5000).unref();
+}
+for (const sig of ["SIGTERM", "SIGINT"]) process.on(sig, () => shutdown(sig));

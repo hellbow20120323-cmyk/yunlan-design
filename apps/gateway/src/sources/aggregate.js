@@ -8,6 +8,7 @@ import {
 import { prepareSearchKeywords } from "../queryOptimize.js";
 import { searchHunhepanFamily } from "./hunhepan.js";
 import { searchWeibo, weiboConfigFromEnv } from "./weibo.js";
+import { isSafeShareUrl, safeHttpUrl } from "../security.js";
 
 /**
  * Normalize share URL for dedupe.
@@ -87,7 +88,9 @@ export function mergeAndDedupe(batches, limit = 120) {
   const map = new Map();
   for (const batch of batches) {
     for (const hit of batch) {
-      if (!hit?.url) continue;
+      // 上游数据不可信：只放行 http(s)/magnet，杜绝 javascript:/data: 链接进入前端 href
+      if (!hit?.url || !isSafeShareUrl(hit.url)) continue;
+      if (hit.weiboPostUrl && !safeHttpUrl(hit.weiboPostUrl)) hit.weiboPostUrl = "";
       const key = `${hit.cloudType}|${canonicalUrl(hit.url)}`;
       const prev = map.get(key);
       if (!prev || hit.score > prev.score) {
@@ -296,7 +299,61 @@ function finalizeSearchRun(batches, sourceStats, kw, cloudTypes, forceDemo) {
   return { results, demoMode, modeLabel, sourceStats, anyLive: true };
 }
 
+const SEARCH_CACHE_TTL_MS = Number(process.env.SEARCH_CACHE_TTL_MS || 90_000);
+const SEARCH_CACHE_MAX = 200;
+/** @type {Map<string, { expiresAt: number, value: any }>} */
+const searchCache = new Map();
+/** @type {Map<string, Promise<any>>} */
+const searchInflight = new Map();
+
+function searchCacheKey(opts) {
+  return JSON.stringify([
+    String(opts.kw).trim().toLowerCase(),
+    [...(opts.cloudTypes || [])].sort(),
+    Boolean(opts.enableExt),
+    Boolean(opts.enableWeibo),
+    Boolean(opts.forceDemo),
+    opts.engineUrl || "",
+  ]);
+}
+
+/**
+ * 带短 TTL 缓存与并发合并的聚合搜索。
+ * 热门词在几十秒内被多人搜索时，上游（引擎 / 混合盘 / 微博）只会被打一次；
+ * 积分仍按每次请求独立扣除，不影响计费。forceRefresh 会跳过读缓存但会回写。
+ */
 export async function searchMulti(opts) {
+  if (SEARCH_CACHE_TTL_MS <= 0) return searchMultiUncached(opts);
+  const key = searchCacheKey(opts);
+  const now = Date.now();
+
+  if (!opts.forceRefresh) {
+    const hit = searchCache.get(key);
+    if (hit && hit.expiresAt > now) return hit.value;
+    const running = searchInflight.get(key);
+    if (running) return running;
+  }
+
+  const task = searchMultiUncached(opts)
+    .then((value) => {
+      // 全部上游失败回落演示数据时不缓存，让下一次请求尽快重试真实上游
+      if (!value.demoMode) {
+        if (searchCache.size >= SEARCH_CACHE_MAX) {
+          const oldest = searchCache.keys().next().value;
+          if (oldest !== undefined) searchCache.delete(oldest);
+        }
+        searchCache.set(key, { expiresAt: Date.now() + SEARCH_CACHE_TTL_MS, value });
+      }
+      return value;
+    })
+    .finally(() => {
+      if (searchInflight.get(key) === task) searchInflight.delete(key);
+    });
+  searchInflight.set(key, task);
+  return task;
+}
+
+async function searchMultiUncached(opts) {
   const prepared = prepareSearchKeywords(opts.kw);
   const { cloudTypes, forceDemo } = opts;
 

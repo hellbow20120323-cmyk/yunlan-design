@@ -23,11 +23,11 @@ export const UserQuotaPanel: React.FC<UserQuotaPanelProps> = ({
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const onDoc = (e: MouseEvent) => {
+    const onDoc = (e: Event) => {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     };
-    document.addEventListener('mousedown', onDoc);
-    return () => document.removeEventListener('mousedown', onDoc);
+    document.addEventListener('pointerdown', onDoc);
+    return () => document.removeEventListener('pointerdown', onDoc);
   }, []);
 
   const vip = points?.subscription?.active || points?.unlimitedSearch;
@@ -43,9 +43,9 @@ export const UserQuotaPanel: React.FC<UserQuotaPanelProps> = ({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2 px-2.5 py-1.5 text-xs font-medium rounded-lg border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/80 hover:border-cyan-500/40 transition-colors"
+        className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-2.5 min-h-11 py-1.5 text-xs font-medium rounded-lg border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/80 hover:border-yunlan-cinnabar/40 transition-colors"
       >
-        <User className="w-3.5 h-3.5 text-cyan-500" />
+        <User className="w-3.5 h-3.5 text-yunlan-cinnabar" />
         <span className="tabular-nums text-slate-700 dark:text-slate-200">
           {loading ? '…' : vip ? 'VIP' : `${remaining} 点`}
         </span>
@@ -53,7 +53,7 @@ export const UserQuotaPanel: React.FC<UserQuotaPanelProps> = ({
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-72 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xl p-4 z-50 text-xs">
+        <div className="absolute right-0 mt-2 w-[min(18rem,calc(100vw-1.5rem))] rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xl p-4 z-50 text-xs">
           <div className="flex items-start justify-between gap-2 mb-3">
             <div>
               <p className="font-semibold text-slate-900 dark:text-white">
@@ -75,7 +75,7 @@ export const UserQuotaPanel: React.FC<UserQuotaPanelProps> = ({
             </div>
             <div className="h-2 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
               <div
-                className="h-full bg-gradient-to-r from-cyan-500 to-emerald-500 transition-all"
+                className="h-full bg-yunlan-cinnabar/80 transition-all"
                 style={{ width: `${100 - pct}%` }}
               />
             </div>
@@ -97,10 +97,10 @@ export const UserQuotaPanel: React.FC<UserQuotaPanelProps> = ({
                 onOpenPaywall();
                 setOpen(false);
               }}
-              className={`w-full mb-2 py-2 rounded-lg font-semibold text-white ${
+              className={`w-full mb-2 min-h-11 py-2 rounded-lg font-semibold text-white ${
                 low
-                  ? 'bg-gradient-to-r from-amber-500 to-orange-500'
-                  : 'bg-gradient-to-r from-cyan-600 to-blue-600'
+                  ? 'bg-yunlan-cinnabar hover:bg-[#a83d45]'
+                  : 'bg-slate-900 hover:bg-slate-800'
               }`}
             >
               {low ? '积分不足 · 立即开通 VIP' : '开通 VIP · 月付 3 元起'}
@@ -114,7 +114,7 @@ export const UserQuotaPanel: React.FC<UserQuotaPanelProps> = ({
                 onLogout();
                 setOpen(false);
               }}
-              className="w-full flex items-center justify-center gap-2 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
+              className="w-full flex items-center justify-center gap-2 min-h-11 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
             >
               <LogOut className="w-3.5 h-3.5" />
               退出登录
@@ -126,7 +126,7 @@ export const UserQuotaPanel: React.FC<UserQuotaPanelProps> = ({
                 onOpenAuth();
                 setOpen(false);
               }}
-              className="w-full py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold"
+              className="w-full min-h-11 py-2 rounded-lg bg-yunlan-cta hover:opacity-90 text-white font-semibold"
             >
               登录 / 注册
             </button>

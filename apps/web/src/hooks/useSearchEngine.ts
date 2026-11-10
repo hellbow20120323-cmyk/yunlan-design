@@ -99,7 +99,11 @@ export function useSearchEngine(
     }
   });
 
-  const abortRef = useRef<boolean>(false);
+  // 始终指向最新 filter，供事件处理函数读取，避免在 setState 更新器里触发副作用
+  const filterRef = useRef<SearchFilter>(filter);
+  filterRef.current = filter;
+  // 请求序号：用户连点筛选时，只采用最后一次请求的结果，丢弃过期响应
+  const seqRef = useRef(0);
 
   // Sync to URL
   const syncToURL = useCallback((currentFilter: SearchFilter) => {
@@ -129,12 +133,14 @@ export function useSearchEngine(
       executeOptions?: SearchExecuteOptions
     ) => {
     const currentFilter = customFilter || filter;
+    const seq = ++seqRef.current;
     setLoading(true);
     setError(null);
     syncToURL(currentFilter);
 
     try {
       const res = await SearchService.executeSearch(currentFilter, targetPage, 10, executeOptions);
+      if (seq !== seqRef.current) return; // 已有更新的请求，丢弃本次结果
       if (res.points && onPointsUpdate) onPointsUpdate(res.points);
 
       if (append && response) {
@@ -147,14 +153,14 @@ export function useSearchEngine(
       }
       setPage(targetPage);
 
-      // 先展示搜索结果，再异步递归统计夸克/UC 分享中的文件数与总体积。
-      // 元数据请求不重复搜索，也不额外扣点。
-      if (!append && res.items.length > 0) {
+      // 先展示搜索结果，再异步统计夸克/UC 分享中的文件数与总体积。
+      // 元数据请求不重复搜索，也不额外扣点；翻页新增的条目同样补全。
+      if (res.items.length > 0) {
         void fetchShareMetadata(res.items)
           .then((metadata) => {
             if (!Object.keys(metadata).length) return;
             setResponse((current) => {
-              if (!current || current.page !== targetPage) return current;
+              if (!current) return current;
               return {
                 ...current,
                 items: current.items.map((item) => {
@@ -196,6 +202,7 @@ export function useSearchEngine(
         });
       }
     } catch (err: unknown) {
+      if (seq !== seqRef.current) return;
       const e = err as Error & { code?: string; points?: PointsStatus; paywall?: boolean };
       if (e?.points && onPointsUpdate) onPointsUpdate(e.points);
       const msg = e instanceof Error ? e.message : '搜索执行失败，请检查网络或后端接口';
@@ -205,7 +212,7 @@ export function useSearchEngine(
         if (onPaywall) onPaywall(msg);
       }
     } finally {
-      setLoading(false);
+      if (seq === seqRef.current) setLoading(false);
     }
   },
     [filter, response, syncToURL, onPointsUpdate, onPaywall]
@@ -245,88 +252,83 @@ export function useSearchEngine(
     triggerSearch(filter, 1, false, { forceRefresh: true });
   }, [filter, triggerSearch]);
 
-  const toggleProvider = useCallback((providerId: DiskProviderId) => {
-    setFilter(prev => {
-      const exists = prev.selectedProviders.includes(providerId);
-      let updated: DiskProviderId[];
-      if (exists) {
-        // If it's the last one, don't allow 0, or toggle back to all
-        updated = prev.selectedProviders.filter(p => p !== providerId);
-        if (updated.length === 0) {
-          updated = [providerId]; // keep at least one
-        }
-      } else {
-        updated = [...prev.selectedProviders, providerId];
-      }
-      const next = { ...prev, selectedProviders: updated };
+  /**
+   * 统一的筛选变更入口：基于最新 filter 计算下一个状态，并在 setState 之外触发检索。
+   * （原先在 setFilter 更新器里调用 triggerSearch，更新器应是纯函数，
+   *  严格模式 / 并发渲染下会重复触发请求。）
+   * 仅改变分类、排序、时间等本地条件时，searchService 会命中网关结果缓存，不请求、不扣积分。
+   */
+  const applyFilterChange = useCallback(
+    (compute: (prev: SearchFilter) => SearchFilter) => {
+      const next = compute(filterRef.current);
+      filterRef.current = next;
+      setFilter(next);
       triggerSearch(next, 1, false);
-      return next;
-    });
-  }, [triggerSearch]);
+    },
+    [triggerSearch]
+  );
+
+  const toggleProvider = useCallback(
+    (providerId: DiskProviderId) => {
+      applyFilterChange((prev) => {
+        const exists = prev.selectedProviders.includes(providerId);
+        let updated: DiskProviderId[];
+        if (exists) {
+          updated = prev.selectedProviders.filter((p) => p !== providerId);
+          // 至少保留一个网盘
+          if (updated.length === 0) updated = [providerId];
+        } else {
+          updated = [...prev.selectedProviders, providerId];
+        }
+        return { ...prev, selectedProviders: updated };
+      });
+    },
+    [applyFilterChange]
+  );
 
   const selectAllProviders = useCallback(() => {
-    setFilter(prev => {
-      const next = { ...prev, selectedProviders: [...SEARCH_PROVIDER_IDS] };
-      triggerSearch(next, 1, false);
-      return next;
-    });
-  }, [triggerSearch]);
+    applyFilterChange((prev) => ({ ...prev, selectedProviders: [...SEARCH_PROVIDER_IDS] }));
+  }, [applyFilterChange]);
 
   const invertProviders = useCallback(() => {
-    setFilter(prev => {
+    applyFilterChange((prev) => {
       const inverted = SEARCH_PROVIDER_IDS.filter((p) => !prev.selectedProviders.includes(p));
-      const next = {
+      return {
         ...prev,
         selectedProviders: inverted.length > 0 ? inverted : [...SEARCH_PROVIDER_IDS],
       };
-      triggerSearch(next, 1, false);
-      return next;
     });
-  }, [triggerSearch]);
+  }, [applyFilterChange]);
 
-  const setCategory = useCallback((category: ResourceCategory) => {
-    setFilter(prev => {
-      const next = { ...prev, category };
-      triggerSearch(next, 1, false);
-      return next;
-    });
-  }, [triggerSearch]);
+  const setCategory = useCallback(
+    (category: ResourceCategory) => applyFilterChange((prev) => ({ ...prev, category })),
+    [applyFilterChange]
+  );
 
-  const setSortBy = useCallback((sortBy: SortOption) => {
-    setFilter(prev => {
-      const next = { ...prev, sortBy };
-      triggerSearch(next, 1, false);
-      return next;
-    });
-  }, [triggerSearch]);
+  const setSortBy = useCallback(
+    (sortBy: SortOption) => applyFilterChange((prev) => ({ ...prev, sortBy })),
+    [applyFilterChange]
+  );
 
-  const setTimeRange = useCallback((timeRange: TimeRangeOption) => {
-    setFilter(prev => {
-      const next = { ...prev, timeRange };
-      triggerSearch(next, 1, false);
-      return next;
-    });
-  }, [triggerSearch]);
+  const setTimeRange = useCallback(
+    (timeRange: TimeRangeOption) => applyFilterChange((prev) => ({ ...prev, timeRange })),
+    [applyFilterChange]
+  );
 
-  const setOnlyValid = useCallback((onlyValid: boolean) => {
-    setFilter(prev => {
-      const next = { ...prev, onlyValid };
-      triggerSearch(next, 1, false);
-      return next;
-    });
-  }, [triggerSearch]);
+  const setOnlyValid = useCallback(
+    (onlyValid: boolean) => applyFilterChange((prev) => ({ ...prev, onlyValid })),
+    [applyFilterChange]
+  );
 
-  const setSizeRange = useCallback((minSizeMb: number, maxSizeMb?: number) => {
-    setFilter(prev => {
-      const next = {
+  const setSizeRange = useCallback(
+    (minSizeMb: number, maxSizeMb?: number) =>
+      applyFilterChange((prev) => ({
         ...prev,
         minSizeMb: Math.max(0, minSizeMb),
         maxSizeMb: maxSizeMb != null && maxSizeMb > 0 ? maxSizeMb : undefined,
-      };
-      triggerSearch(next, 1, false);
-      return next;
-    });
-  }, [triggerSearch]);
+      })),
+    [applyFilterChange]
+  );
 
   const clearSearch = useCallback(() => {
     setResponse(null);
@@ -334,7 +336,6 @@ export function useSearchEngine(
     setSelectedItemIds(new Set());
     setFilter((prev) => {
       const next = { ...prev, query: '' };
-      const params = new URLSearchParams();
       window.history.replaceState({}, '', window.location.pathname);
       return next;
     });

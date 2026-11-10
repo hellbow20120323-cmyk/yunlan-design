@@ -22,8 +22,10 @@ function ensureDataDir() {
   fs.mkdirSync(DATA_DIR, { recursive: true });
 }
 
+/** 内存副本：首页每个访客都会请求热榜，不应每次都读盘 + 解析 34KB JSON */
+let memo = { path: "", mtimeMs: 0, data: /** @type {any} */ (null) };
+
 function readCache() {
-  ensureDataDir();
   const pathToRead = fs.existsSync(CACHE_PATH)
     ? CACHE_PATH
     : fs.existsSync(LEGACY_CACHE_PATH)
@@ -31,7 +33,11 @@ function readCache() {
       : null;
   if (!pathToRead) return null;
   try {
-    return JSON.parse(fs.readFileSync(pathToRead, "utf8"));
+    const mtimeMs = fs.statSync(pathToRead).mtimeMs;
+    if (memo.data && memo.path === pathToRead && memo.mtimeMs === mtimeMs) return memo.data;
+    const data = JSON.parse(fs.readFileSync(pathToRead, "utf8"));
+    memo = { path: pathToRead, mtimeMs, data };
+    return data;
   } catch {
     return null;
   }
@@ -39,8 +45,17 @@ function readCache() {
 
 function writeCache(data) {
   ensureDataDir();
-  fs.writeFileSync(CACHE_PATH, JSON.stringify(data, null, 2), "utf8");
+  const tmp = `${CACHE_PATH}.${process.pid}.tmp`;
+  fs.writeFileSync(tmp, JSON.stringify(data), { mode: 0o600 });
+  fs.renameSync(tmp, CACHE_PATH);
+  memo = { path: CACHE_PATH, mtimeMs: fs.statSync(CACHE_PATH).mtimeMs, data };
 }
+
+/** 强制刷新冷却：公开接口的 ?refresh=1 不能被用来持续轰炸上游 */
+const FORCE_COOLDOWN_MS = 10 * 60 * 1000;
+let lastForceAt = 0;
+/** @type {Promise<any> | null} */
+let scraping = null;
 
 function decodePosterText(raw) {
   return String(raw || "")
@@ -288,6 +303,9 @@ async function scrapeSubhdHot() {
 export async function getSubhdHotCached(force = false) {
   const day = todayKey();
   const cached = readCache();
+  if (force && Date.now() - lastForceAt < FORCE_COOLDOWN_MS && cached?.items?.length) {
+    force = false;
+  }
   if (
     !force &&
     cached?.cacheVersion === CACHE_VERSION &&
@@ -299,7 +317,12 @@ export async function getSubhdHotCached(force = false) {
   }
 
   try {
-    const fresh = await scrapeSubhdHot();
+    if (force) lastForceAt = Date.now();
+    // 并发请求合并为一次抓取
+    scraping ||= scrapeSubhdHot().finally(() => {
+      scraping = null;
+    });
+    const fresh = await scraping;
     writeCache(fresh);
     return { ...fresh, stale: false };
   } catch (err) {

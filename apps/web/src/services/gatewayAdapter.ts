@@ -137,6 +137,14 @@ function formatBytes(bytes: number): string {
   return `${value.toFixed(digits)} ${units[index]}`;
 }
 
+/**
+ * 网关请求的缓存键：只有「会改变网关返回内容」的条件参与——关键词与网盘范围。
+ * 分类 / 排序 / 时间 / 有效性 / 体积 / 页码都是前端本地过滤，不应触发新的网关请求（也就不会重复扣积分）。
+ */
+export function gatewayCacheKey(filter: SearchFilter): string {
+  return `${filter.query.trim().toLowerCase()}|${[...cloudTypesParam(filter.selectedProviders).split(',')].sort().join(',')}`;
+}
+
 function cloudTypesParam(selected: DiskProviderId[]): string {
   const picked = selected.filter((p) => GATEWAY_DISK_IDS.includes(p));
   if (picked.length === 0) return GATEWAY_DISK_IDS.join(',');

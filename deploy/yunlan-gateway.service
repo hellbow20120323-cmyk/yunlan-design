@@ -16,6 +16,11 @@ Environment=NODE_ENV=production
 ExecStart=/usr/bin/npm run start -w @yunlan/gateway
 Restart=always
 RestartSec=3
+KillSignal=SIGTERM
+TimeoutStopSec=10
+# 基础沙箱：禁止提权、独立 /tmp
+NoNewPrivileges=true
+PrivateTmp=true
 
 [Install]
 WantedBy=multi-user.target

@@ -4,6 +4,7 @@
  */
 
 import React, { useMemo, useState, useRef, useEffect } from 'react';
+import { safeHref } from '../utils/safeUrl';
 import {
   Search,
   X,
@@ -133,13 +134,13 @@ export const SearchResultsTable: React.FC<SearchResultsTableProps> = ({
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const onDoc = (e: MouseEvent) => {
+    const onDoc = (e: Event) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setMenuId(null);
       }
     };
-    document.addEventListener('mousedown', onDoc);
-    return () => document.removeEventListener('mousedown', onDoc);
+    document.addEventListener('pointerdown', onDoc);
+    return () => document.removeEventListener('pointerdown', onDoc);
   }, []);
 
   const sorted = useMemo(
@@ -177,9 +178,8 @@ export const SearchResultsTable: React.FC<SearchResultsTableProps> = ({
   const openLabel = (item: ResourceItem) =>
     item.diskProvider === 'magnet' ? '复制/打开磁力' : '打开链接';
 
-  return (
-    <div className="rounded-[2px] border border-yunlan-hairline bg-yunlan-surface overflow-hidden shadow-yunlan-card">
-      <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-yunlan-hairline bg-yunlan-mist/60">
+  const resultHeader = (
+      <div className="flex items-center justify-between gap-2 px-3 sm:px-4 py-3 border-b border-yunlan-hairline bg-yunlan-mist/60">
         <div className="flex items-center gap-2 min-w-0">
           <Search className="w-4 h-4 text-[#b8956b] shrink-0" />
           <h2 className="text-sm font-bold text-slate-900 truncate">搜索结果</h2>
@@ -189,23 +189,24 @@ export const SearchResultsTable: React.FC<SearchResultsTableProps> = ({
             </span>
           )}
         </div>
-        <div className="flex items-center gap-3 shrink-0 text-[10px] text-slate-500">
-          <span>
-            共 <strong className="text-slate-800 tabular-nums">{total}</strong> 条 · {tookMs}ms
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0 text-[10px] text-slate-500">
+          <span className="tabular-nums">
+            <strong className="text-slate-800">{total}</strong> 条
+            <span className="hidden sm:inline"> · {tookMs}ms</span>
           </span>
           {modeLabel && (
-            <span className={demoMode ? 'text-amber-600' : 'text-yunlan-stone'}>{modeLabel}</span>
+            <span className={`hidden md:inline ${demoMode ? 'text-amber-600' : 'text-yunlan-stone'}`}>{modeLabel}</span>
           )}
           {onForceRefresh && (
             <button
               type="button"
               onClick={onForceRefresh}
               disabled={forceRefreshLoading}
-              className="inline-flex items-center gap-1 px-2 py-1 rounded-sm text-yunlan-stone border border-yunlan-hairline hover:bg-yunlan-mist/80 transition-colors disabled:opacity-50"
+              className="inline-flex items-center justify-center gap-1 min-h-9 min-w-9 px-2 py-1 rounded-sm text-yunlan-stone border border-yunlan-hairline hover:bg-yunlan-mist/80 transition-colors disabled:opacity-50"
               title="跳过上游缓存，重新检索"
             >
               <RefreshCw
-                className={`w-3 h-3 ${forceRefreshLoading ? 'animate-spin' : ''}`}
+                className={`w-3.5 h-3.5 ${forceRefreshLoading ? 'animate-spin' : ''}`}
                 strokeWidth={1.75}
               />
               <span className="hidden md:inline">强制刷新</span>
@@ -214,15 +215,42 @@ export const SearchResultsTable: React.FC<SearchResultsTableProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-slate-200 text-slate-500 hover:text-slate-800 transition-colors"
+            className="p-2 rounded-lg hover:bg-slate-200 text-slate-500 hover:text-slate-800 transition-colors min-h-9 min-w-9 flex items-center justify-center"
             title="关闭结果"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
       </div>
+  );
 
-      <div className="overflow-x-auto">
+  return (
+    <div className="rounded-[2px] border border-yunlan-hairline bg-yunlan-surface overflow-hidden shadow-yunlan-card">
+      {resultHeader}
+
+      <div className="md:hidden divide-y divide-yunlan-hairline">
+        {sorted.map((item) => (
+          <MobileResultCard
+            key={item.id}
+            item={item}
+            menuOpen={menuId === item.id}
+            onToggleMenu={() => setMenuId(menuId === item.id ? null : item.id)}
+            menuRef={menuRef}
+            onOpenDetail={onOpenDetail}
+            onToggleFavorite={onToggleFavorite}
+            isFavorited={isFavorited(item.id)}
+            onCopy={() => copyItem(item)}
+            onCopyCode={() => {
+              if (!item.extractCode) return;
+              navigator.clipboard.writeText(item.extractCode);
+              onShowToast(`已复制提取码 ${item.extractCode}`);
+            }}
+            openLabel={openLabel(item)}
+          />
+        ))}
+      </div>
+
+      <div className="hidden md:block overflow-x-auto">
         <table className="w-full min-w-[720px] text-xs border-collapse">
           <thead>
             <tr className="border-b border-yunlan-hairline text-yunlan-muted bg-yunlan-paper/90">
@@ -302,7 +330,7 @@ export const SearchResultsTable: React.FC<SearchResultsTableProps> = ({
                           <Copy className="w-3.5 h-3.5" /> 复制链接
                         </button>
                         <a
-                          href={item.shareUrl}
+                          href={safeHref(item.shareUrl)}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="w-full flex items-center gap-2 px-3 py-2 hover:bg-slate-50 text-slate-700"
@@ -360,13 +388,165 @@ export const SearchResultsTable: React.FC<SearchResultsTableProps> = ({
       </div>
 
       {sortBy === 'relevance' && (
-        <p className="px-4 py-2 text-[10px] text-slate-500 border-t border-slate-100">
+        <p className="hidden md:block px-4 py-2 text-[10px] text-slate-500 border-t border-slate-100">
           点击表头可排序；每条下方灰色条为扩展信息（来源、链接、提取码等）。综合排序仍按 API 匹配度，表内排序仅当前页。
         </p>
       )}
     </div>
   );
 };
+
+function MobileResultCard({
+  item,
+  menuOpen,
+  onToggleMenu,
+  menuRef,
+  onOpenDetail,
+  onToggleFavorite,
+  isFavorited,
+  onCopy,
+  onCopyCode,
+  openLabel,
+}: {
+  item: ResourceItem;
+  menuOpen: boolean;
+  onToggleMenu: () => void;
+  menuRef: React.RefObject<HTMLDivElement | null>;
+  onOpenDetail: (item: ResourceItem) => void;
+  onToggleFavorite: (item: ResourceItem) => void;
+  isFavorited: boolean;
+  onCopy: () => void;
+  onCopyCode: () => void;
+  openLabel: string;
+}) {
+  const p = DISK_PROVIDERS[item.diskProvider];
+  const valid = item.isValid && item.healthScore >= 60;
+  const cat = CATEGORY_LABEL[item.category] || item.category;
+
+  return (
+    <article className="px-3 py-3.5 bg-yunlan-surface">
+      <div className="flex items-start gap-3">
+        <span
+          className="w-9 h-9 rounded-[2px] flex items-center justify-center text-[11px] font-bold text-white shrink-0"
+          style={{ backgroundColor: p?.color || '#64748b' }}
+        >
+          {p?.shortName?.slice(0, 2) || '?'}
+        </span>
+        <div className="min-w-0 flex-1">
+          <button
+            type="button"
+            onClick={() => onOpenDetail(item)}
+            className="text-left w-full"
+          >
+            <h3 className="text-[15px] font-medium text-yunlan-ink leading-snug line-clamp-2">
+              {item.title}
+            </h3>
+          </button>
+          <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-yunlan-muted">
+            <span>{p?.shortName || item.diskProvider}</span>
+            <span aria-hidden>·</span>
+            <span className={valid ? 'text-emerald-700' : 'text-yunlan-muted'}>
+              {valid ? '有效' : '未验证'}
+            </span>
+            <span aria-hidden>·</span>
+            <span className="tabular-nums text-yunlan-ink">
+              {item.sizeFormatted && item.sizeFormatted !== '—'
+                ? `${item.metaPartial ? '约 ' : ''}${item.sizeFormatted}`
+                : '—'}
+            </span>
+            {item.totalFiles > 0 && (
+              <>
+                <span aria-hidden>·</span>
+                <span className="tabular-nums">
+                  {item.metaPartial ? '≥' : ''}
+                  {item.totalFiles} 文件
+                </span>
+              </>
+            )}
+            <span aria-hidden>·</span>
+            <span>{cat}</span>
+          </p>
+        </div>
+        <div className="relative shrink-0">
+          <button
+            type="button"
+            onClick={onToggleMenu}
+            className="p-2 text-yunlan-muted min-h-11 min-w-11 flex items-center justify-center"
+            aria-label="更多操作"
+          >
+            <MoreVertical className="w-4 h-4" />
+          </button>
+          {menuOpen && (
+            <div
+              ref={menuRef}
+              className="absolute right-0 top-full z-20 mt-1 w-40 rounded-[2px] border border-yunlan-hairline bg-yunlan-paper shadow-ink-wash py-1 text-[13px]"
+            >
+              <button
+                type="button"
+                className="w-full flex items-center gap-2 px-3 py-2.5 text-yunlan-ink"
+                onClick={onCopy}
+              >
+                <Copy className="w-3.5 h-3.5" /> 复制链接
+              </button>
+              <a
+                href={safeHref(item.shareUrl)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full flex items-center gap-2 px-3 py-2.5 text-yunlan-ink"
+              >
+                <ExternalLink className="w-3.5 h-3.5" /> {openLabel}
+              </a>
+              <button
+                type="button"
+                className="w-full flex items-center gap-2 px-3 py-2.5 text-yunlan-ink"
+                onClick={() => onToggleFavorite(item)}
+              >
+                <Bookmark className={`w-3.5 h-3.5 ${isFavorited ? 'fill-amber-400 text-amber-500' : ''}`} />
+                {isFavorited ? '取消收藏' : '收藏'}
+              </button>
+              <button
+                type="button"
+                className="w-full flex items-center gap-2 px-3 py-2.5 text-yunlan-ink"
+                onClick={() => onOpenDetail(item)}
+              >
+                <Info className="w-3.5 h-3.5" /> 详情
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="mt-3 flex items-center gap-2">
+        {item.extractCode ? (
+          <button
+            type="button"
+            onClick={onCopyCode}
+            className="min-h-10 px-3 rounded-sm text-[12px] font-mono text-amber-900 bg-amber-50 border border-amber-200"
+          >
+            提取码 {item.extractCode}
+          </button>
+        ) : (
+          <span className="text-[11px] text-emerald-700 px-1">免提取码</span>
+        )}
+        <button
+          type="button"
+          onClick={onCopy}
+          className="min-h-10 px-3 rounded-sm text-[12px] text-yunlan-stone border border-yunlan-hairline bg-yunlan-paper"
+        >
+          复制
+        </button>
+        <a
+          href={safeHref(item.shareUrl)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="ml-auto min-h-10 px-3.5 inline-flex items-center rounded-sm text-[12px] font-medium text-white bg-yunlan-cta"
+        >
+          打开
+        </a>
+      </div>
+    </article>
+  );
+}
 
 function MetaItem({ label, children }: { label: string; children: React.ReactNode }) {
   return (

@@ -57,7 +57,7 @@ export const HotSearchAndRankings: React.FC<HotSearchAndRankingsProps> = ({
             <button
               key={item.keyword}
               onClick={() => onSelectKeyword(item.keyword, item.category)}
-              className="flex items-center justify-between p-2.5 rounded-xl border border-yunlan-hairline hover:border-[#d8cbb8] bg-[#faf8f5] hover:bg-[#f3f0ea] transition-all text-left group"
+              className="flex items-center justify-between min-h-11 p-2.5 rounded-xl border border-yunlan-hairline hover:border-[#d8cbb8] bg-[#faf8f5] hover:bg-[#f3f0ea] transition-all text-left group"
             >
               <div className="flex items-center gap-2 min-w-0">
                 <span className={`text-xs font-bold tabular-nums w-4 shrink-0 ${
@@ -92,14 +92,14 @@ export const HotSearchAndRankings: React.FC<HotSearchAndRankingsProps> = ({
               <div
                 key={i}
                 onClick={() => onSelectKeyword(r.title, 'video')}
-                className="flex items-start justify-between gap-2 text-xs group cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 p-2 rounded-lg transition-colors"
+                className="flex items-start justify-between gap-2 text-xs group cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 p-2 rounded-lg transition-colors min-h-12"
               >
                 <div className="flex items-start gap-2 min-w-0">
                   <span className={`font-bold tabular-nums ${i < 3 ? 'text-blue-500' : 'text-slate-400'}`}>
                     0{i + 1}
                   </span>
                   <div className="min-w-0">
-                    <p className="font-medium text-slate-800 dark:text-slate-200 group-hover:text-cyan-500 truncate">
+                    <p className="font-medium text-slate-800 dark:text-slate-200 group-hover:text-yunlan-stone line-clamp-2">
                       {r.title}
                     </p>
                     <span className="text-[11px] text-slate-400">
@@ -129,14 +129,14 @@ export const HotSearchAndRankings: React.FC<HotSearchAndRankingsProps> = ({
               <div
                 key={i}
                 onClick={() => onSelectKeyword(r.title, 'doc')}
-                className="flex items-start justify-between gap-2 text-xs group cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 p-2 rounded-lg transition-colors"
+                className="flex items-start justify-between gap-2 text-xs group cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 p-2 rounded-lg transition-colors min-h-12"
               >
                 <div className="flex items-start gap-2 min-w-0">
                   <span className={`font-bold tabular-nums ${i < 3 ? 'text-emerald-500' : 'text-slate-400'}`}>
                     0{i + 1}
                   </span>
                   <div className="min-w-0">
-                    <p className="font-medium text-slate-800 dark:text-slate-200 group-hover:text-cyan-500 truncate">
+                    <p className="font-medium text-slate-800 dark:text-slate-200 group-hover:text-yunlan-stone line-clamp-2">
                       {r.title}
                     </p>
                     <span className="text-[11px] text-slate-400">
@@ -166,14 +166,14 @@ export const HotSearchAndRankings: React.FC<HotSearchAndRankingsProps> = ({
               <div
                 key={i}
                 onClick={() => onSelectKeyword(r.title, 'software')}
-                className="flex items-start justify-between gap-2 text-xs group cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 p-2 rounded-lg transition-colors"
+                className="flex items-start justify-between gap-2 text-xs group cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 p-2 rounded-lg transition-colors min-h-12"
               >
                 <div className="flex items-start gap-2 min-w-0">
                   <span className={`font-bold tabular-nums ${i < 3 ? 'text-amber-500' : 'text-slate-400'}`}>
                     0{i + 1}
                   </span>
                   <div className="min-w-0">
-                    <p className="font-medium text-slate-800 dark:text-slate-200 group-hover:text-cyan-500 truncate">
+                    <p className="font-medium text-slate-800 dark:text-slate-200 group-hover:text-yunlan-stone line-clamp-2">
                       {r.title}
                     </p>
                     <span className="text-[11px] text-slate-400">

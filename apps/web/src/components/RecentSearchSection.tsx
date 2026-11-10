@@ -50,7 +50,7 @@ export const RecentSearchSection: React.FC<RecentSearchSectionProps> = ({
           {history.slice(0, 12).map((item) => (
             <div
               key={item.id}
-              className="flex items-center gap-1 px-2.5 py-1 text-xs rounded-lg bg-[#f3f0ea] text-[#5c564e]"
+              className="flex items-center gap-1 px-2.5 min-h-9 py-1 text-xs rounded-lg bg-[#f3f0ea] text-[#5c564e]"
             >
               <button type="button" onClick={() => onPickKeyword(item.query)} className="hover:text-yunlan-stone">
                 {item.query}

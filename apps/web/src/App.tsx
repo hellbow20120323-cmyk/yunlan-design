@@ -3,17 +3,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import React, { Suspense, lazy, useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useSearchEngine } from './hooks/useSearchEngine';
 import { Header } from './components/Header';
+import { MobileBottomNav } from './components/MobileBottomNav';
 import { HeroSearch } from './components/HeroSearch';
 import { HotTrendGrid } from './components/HotTrendGrid';
 import { HomeKeywordSidebar } from './components/HomeKeywordSidebar';
 import { FilterBar } from './components/FilterBar';
 import { SearchRefinePanel } from './components/SearchRefinePanel';
 import { SearchResultsTable } from './components/SearchResultsTable';
-import { ResourceDetailModal } from './components/ResourceDetailModal';
-import { FavoritesDrawer } from './components/FavoritesDrawer';
 import { DiskNavigationGrid } from './components/DiskNavigationGrid';
 import { HotSearchAndRankings } from './components/HotSearchAndRankings';
 import { UsageGuide } from './components/UsageGuide';
@@ -21,13 +20,24 @@ import { BatchActionBar } from './components/BatchActionBar';
 import { Footer } from './components/Footer';
 import { Toast } from './components/Toast';
 import { ResourceItem, DiskProviderId, ResourceCategory } from './types';
-import { SearchX, ArrowDown, ChevronRight } from 'lucide-react';
+import { SearchX, ArrowDown } from 'lucide-react';
 import { useAuth } from './hooks/useAuth';
+import { useVisualViewportKeyboard } from './hooks/useVisualViewportKeyboard';
 import { STORAGE_KEYS } from './utils/storage';
 import { useTrendingHot } from './hooks/useTrendingHot';
-import { AuthModal } from './components/AuthModal';
-import { PaywallModal } from './components/PaywallModal';
 import { shuffleCopy } from './utils/shuffle';
+
+// 弹窗与抽屉按需加载：首屏不需要，首次打开时才下载对应代码
+const ResourceDetailModal = lazy(() =>
+  import('./components/ResourceDetailModal').then((m) => ({ default: m.ResourceDetailModal }))
+);
+const FavoritesDrawer = lazy(() =>
+  import('./components/FavoritesDrawer').then((m) => ({ default: m.FavoritesDrawer }))
+);
+const AuthModal = lazy(() => import('./components/AuthModal').then((m) => ({ default: m.AuthModal })));
+const PaywallModal = lazy(() =>
+  import('./components/PaywallModal').then((m) => ({ default: m.PaywallModal }))
+);
 
 export default function App() {
   const auth = useAuth();
@@ -106,6 +116,7 @@ export default function App() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const keyboardOpen = useVisualViewportKeyboard();
   const [minSizeUnit, setMinSizeUnit] = useState<'MB' | 'GB'>('MB');
   const [maxSizeUnit, setMaxSizeUnit] = useState<'MB' | 'GB'>('GB');
 
@@ -191,7 +202,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-yunlan-ivory text-yunlan-ink transition-colors duration-200">
+    <div className="min-h-dvh flex flex-col bg-yunlan-ivory text-yunlan-ink transition-colors duration-200 pb-[calc(3.75rem+env(safe-area-inset-bottom))] md:pb-0">
       
       {/* Toast Feedback */}
       <Toast message={toastMessage} onClose={() => setToastMessage(null)} />
@@ -215,7 +226,7 @@ export default function App() {
       />
 
       {/* Main Viewport Content */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8">
         
         {/* TAB 1: Search View */}
         {activeTab === 'search' && (
@@ -233,6 +244,7 @@ export default function App() {
               query={filter.query}
               onQueryChange={setQuery}
               onSearch={handleSearchSubmit}
+              compact={Boolean(filter.query.trim())}
               loading={loading}
               history={history}
               onSelectHistory={(q) => {
@@ -255,6 +267,7 @@ export default function App() {
               />
             )}
 
+            {!filter.query.trim() && (
             <HotTrendGrid
               className="mt-6 sm:mt-8"
               singleRow
@@ -267,6 +280,7 @@ export default function App() {
                 handleSearchSubmit(keyword);
               }}
             />
+            )}
 
             {filter.query.trim() && (
             <div className="mt-4 space-y-3">
@@ -331,11 +345,11 @@ export default function App() {
                   {[1, 2, 3, 4].map((n) => (
                     <div 
                       key={n} 
-                      className="p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 animate-pulse space-y-3"
+                      className="p-5 rounded-xl border border-yunlan-hairline bg-yunlan-surface space-y-3"
                     >
-                      <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/4" />
-                      <div className="h-5 bg-slate-200 dark:bg-slate-800 rounded w-3/4" />
-                      <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/2" />
+                      <div className="h-4 yl-skeleton rounded w-1/4" />
+                      <div className="h-5 yl-skeleton rounded w-3/4" />
+                      <div className="h-4 yl-skeleton rounded w-1/2" />
                     </div>
                   ))}
                 </div>
@@ -356,7 +370,7 @@ export default function App() {
                       type="button"
                       onClick={handleForceRefreshSearch}
                       disabled={loading}
-                      className="px-4 py-2 text-xs font-medium rounded-sm text-yunlan-stone border border-yunlan-hairline bg-yunlan-surface hover:shadow-yunlan-feather transition-all disabled:opacity-50"
+                      className="min-h-11 px-4 py-2 text-xs font-medium rounded-sm text-yunlan-stone border border-yunlan-hairline bg-yunlan-surface hover:shadow-yunlan-feather transition-all disabled:opacity-50"
                     >
                       强制刷新本次搜索
                     </button>
@@ -367,7 +381,7 @@ export default function App() {
                         setCategory('all');
                         setOnlyValid(false);
                       }}
-                      className="px-4 py-2 text-xs font-semibold rounded-sm bg-yunlan-cta text-white transition-colors"
+                      className="min-h-11 px-4 py-2 text-xs font-semibold rounded-sm bg-yunlan-cta text-white transition-colors"
                     >
                       重置所有筛选条件
                     </button>
@@ -404,12 +418,12 @@ export default function App() {
                   <button
                     onClick={loadMore}
                     disabled={loading}
-                    className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-cyan-500/50 hover:bg-slate-50 dark:hover:bg-slate-850 shadow-xs transition-all disabled:opacity-50"
+                    className="inline-flex items-center gap-2 min-h-11 px-6 py-2.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-yunlan-cinnabar/50 hover:bg-slate-50 dark:hover:bg-slate-850 shadow-xs transition-all disabled:opacity-50"
                   >
                     {loading ? (
-                      <div className="w-3.5 h-3.5 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin" />
+                      <div className="w-3.5 h-3.5 border-2 border-yunlan-cinnabar border-t-transparent rounded-full animate-spin" />
                     ) : (
-                      <ArrowDown className="w-3.5 h-3.5 text-cyan-500" />
+                      <ArrowDown className="w-3.5 h-3.5 text-yunlan-cinnabar" />
                     )}
                     <span>加载更多搜索结果</span>
                   </button>
@@ -419,7 +433,7 @@ export default function App() {
             </div>
             ) : null}
 
-            {(trendingHot.loading ||
+            {!filter.query.trim() && (trendingHot.loading ||
               (trendingHot.data?.movies?.length ?? 0) > 0 ||
               (trendingHot.data?.tv?.length ?? 0) > 0) && (
               <section className="mt-10 sm:mt-12 pt-8 pb-6 border-t border-yunlan-hairline w-full max-w-[1100px] mx-auto">
@@ -498,7 +512,9 @@ export default function App() {
         onShowToast={handleShowToast}
       />
 
+      <Suspense fallback={null}>
       {/* Resource Detail Modal */}
+      {detailItem && (
       <ResourceDetailModal
         item={detailItem}
         onClose={() => setDetailItem(null)}
@@ -506,7 +522,9 @@ export default function App() {
         isFavorited={detailItem ? isFavorite(detailItem.id) : false}
         onShowToast={handleShowToast}
       />
+      )}
 
+      {isAuthOpen && (
       <AuthModal
         isOpen={isAuthOpen}
         onClose={() => setIsAuthOpen(false)}
@@ -519,7 +537,9 @@ export default function App() {
           handleShowToast('注册成功');
         }}
       />
+      )}
 
+      {isPaywallOpen && (
       <PaywallModal
         isOpen={isPaywallOpen}
         onClose={() => setIsPaywallOpen(false)}
@@ -534,7 +554,9 @@ export default function App() {
           handleShowToast('VIP 已开通，可以畅搜啦');
         }}
       />
+      )}
 
+      {isFavoritesOpen && (
       <FavoritesDrawer
         isOpen={isFavoritesOpen}
         onClose={() => setIsFavoritesOpen(false)}
@@ -543,8 +565,16 @@ export default function App() {
         onOpenDetail={(i) => setDetailItem(i)}
         onShowToast={handleShowToast}
       />
+      )}
+      </Suspense>
 
       <Footer onNavigateToTab={handleNavigateTab} />
+
+      <MobileBottomNav
+        activeTab={activeTab}
+        onNavigate={handleNavigateTab}
+        hidden={keyboardOpen}
+      />
 
     </div>
   );

@@ -1,49 +1,20 @@
-import fs from "node:fs";
-import path from "node:path";
-import { DATA_DIR } from "../paths.js";
+import crypto from "node:crypto";
+import { dataPath } from "../paths.js";
+import { JsonStore } from "../json-store.js";
 import { getPlan } from "./plans.js";
 
-const SUBS_PATH = path.join(DATA_DIR, "subscriptions.json");
-const ORDERS_PATH = path.join(DATA_DIR, "billing-orders.json");
+const subsStore = new JsonStore(dataPath("subscriptions.json"), () => ({ byUser: {} }), {
+  normalize: (d) => ({ ...d, byUser: d?.byUser || {} }),
+});
+const ordersStore = new JsonStore(dataPath("billing-orders.json"), () => ({ orders: [] }), {
+  normalize: (d) => ({ ...d, orders: Array.isArray(d?.orders) ? d.orders : [] }),
+});
 
-function ensureDataDir() {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-}
-
-function readSubs() {
-  ensureDataDir();
-  if (!fs.existsSync(SUBS_PATH)) return { byUser: {} };
-  try {
-    return JSON.parse(fs.readFileSync(SUBS_PATH, "utf8"));
-  } catch {
-    return { byUser: {} };
-  }
-}
-
-function writeSubs(data) {
-  ensureDataDir();
-  fs.writeFileSync(SUBS_PATH, JSON.stringify(data, null, 2), "utf8");
-}
-
-function readOrders() {
-  ensureDataDir();
-  if (!fs.existsSync(ORDERS_PATH)) return { orders: [] };
-  try {
-    return JSON.parse(fs.readFileSync(ORDERS_PATH, "utf8"));
-  } catch {
-    return { orders: [] };
-  }
-}
-
-function writeOrders(data) {
-  ensureDataDir();
-  fs.writeFileSync(ORDERS_PATH, JSON.stringify(data, null, 2), "utf8");
-}
+const MAX_PENDING_PER_USER = 5;
 
 export function getSubscription(userId) {
   if (!userId) return null;
-  const store = readSubs();
-  const rec = store.byUser[userId];
+  const rec = subsStore.read().byUser[userId];
   if (!rec?.activeUntil) return null;
   if (new Date(rec.activeUntil).getTime() <= Date.now()) return null;
   return rec;
@@ -70,65 +41,71 @@ export function subscriptionSummary(userId) {
 export function extendSubscription(userId, planId) {
   const plan = getPlan(planId);
   if (!plan) throw new Error("无效套餐");
-  const store = readSubs();
-  const prev = store.byUser[userId];
+  const data = subsStore.read();
+  const prev = data.byUser[userId];
   const base = prev?.activeUntil && new Date(prev.activeUntil).getTime() > Date.now()
     ? new Date(prev.activeUntil)
     : new Date();
   base.setDate(base.getDate() + plan.durationDays);
-  store.byUser[userId] = {
+  data.byUser[userId] = {
     planId,
     activeUntil: base.toISOString(),
     updatedAt: new Date().toISOString(),
   };
-  writeSubs(store);
-  return store.byUser[userId];
+  subsStore.write();
+  return data.byUser[userId];
 }
 
 export function createOrder({ userId, email, planId }) {
   const plan = getPlan(planId);
   if (!plan) throw new Error("无效套餐");
-  const store = readOrders();
+  const data = ordersStore.read();
+  const now = Date.now();
+  // 订单号用密码学随机数，Math.random 可被预测
   const order = {
-    id: `ord_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
+    id: `ord_${now.toString(36)}_${crypto.randomBytes(6).toString("hex")}`,
     userId,
     email,
     planId,
     amountCny: plan.priceCny,
     planLabel: plan.label,
     status: "pending",
-    createdAt: new Date().toISOString(),
-    expiresAt: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+    createdAt: new Date(now).toISOString(),
+    expiresAt: new Date(now + 30 * 60 * 1000).toISOString(),
   };
-  store.orders = (store.orders || []).filter(
-    (o) => !(o.userId === userId && o.status === "pending" && o.planId === planId)
+  // 同套餐的旧待支付单作废；过期单顺手清理；单用户待支付单设上限，防止刷单撑爆文件
+  data.orders = data.orders.filter(
+    (o) =>
+      !(o.userId === userId && o.status === "pending" && o.planId === planId) &&
+      !(o.status === "pending" && new Date(o.expiresAt).getTime() < now)
   );
-  store.orders.unshift(order);
-  store.orders = store.orders.slice(0, 500);
-  writeOrders(store);
+  const pending = data.orders.filter((o) => o.userId === userId && o.status === "pending").length;
+  if (pending >= MAX_PENDING_PER_USER) throw new Error("待支付订单过多，请先完成或等待过期");
+  data.orders.unshift(order);
+  data.orders = data.orders.slice(0, 500);
+  ordersStore.write();
   return order;
 }
 
 export function findOrder(orderId) {
-  const store = readOrders();
-  return store.orders.find((o) => o.id === orderId) || null;
+  return ordersStore.read().orders.find((o) => o.id === orderId) || null;
 }
 
 export function markOrderPaid(orderId, userId) {
-  const store = readOrders();
-  const order = store.orders.find((o) => o.id === orderId);
+  const data = ordersStore.read();
+  const order = data.orders.find((o) => o.id === orderId);
   if (!order) throw new Error("订单不存在");
   if (order.userId !== userId) throw new Error("无权操作此订单");
   if (order.status === "paid") return order;
   if (order.status !== "pending") throw new Error("订单状态不可支付");
   if (new Date(order.expiresAt).getTime() < Date.now()) {
     order.status = "expired";
-    writeOrders(store);
+    ordersStore.write();
     throw new Error("订单已过期，请重新下单");
   }
   order.status = "paid";
   order.paidAt = new Date().toISOString();
-  writeOrders(store);
+  ordersStore.write();
   extendSubscription(userId, order.planId);
   return order;
 }

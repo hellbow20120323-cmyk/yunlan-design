@@ -1,4 +1,6 @@
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000;
+const FAIL_TTL_MS = 5 * 60 * 1000;
+const CACHE_MAX_ENTRIES = 2000;
 const MAX_REQUESTS_PER_SHARE = 30;
 const PAGE_SIZE = 100;
 
@@ -147,33 +149,64 @@ export async function resolveShareMeta(url, password = "") {
   const cached = cache.get(key);
   if (cached && cached.expiresAt > Date.now()) return cached.value;
 
-  try {
-    const value = await resolveUcodeShare(parsed, password);
-    cache.set(key, { expiresAt: Date.now() + CACHE_TTL_MS, value });
-    return value;
-  } catch (err) {
-    return {
-      fileCount: 0,
-      sizeBytes: 0,
-      partial: false,
-      provider: parsed.provider,
-      error: err instanceof Error ? err.message : String(err),
-    };
+  // 同一分享并发请求只打一次上游
+  const running = inflight.get(key);
+  if (running) return running;
+
+  const task = (async () => {
+    try {
+      const value = await resolveUcodeShare(parsed, password);
+      setCache(key, value, CACHE_TTL_MS);
+      return value;
+    } catch (err) {
+      const value = {
+        fileCount: 0,
+        sizeBytes: 0,
+        partial: false,
+        provider: parsed.provider,
+        error: err instanceof Error ? err.message : String(err),
+      };
+      // 失败也短暂缓存，避免失效链接被反复刷新时持续打上游
+      setCache(key, value, FAIL_TTL_MS);
+      return value;
+    } finally {
+      inflight.delete(key);
+    }
+  })();
+  inflight.set(key, task);
+  return task;
+}
+
+/** @type {Map<string, Promise<ShareMeta>>} */
+const inflight = new Map();
+
+function setCache(key, value, ttl) {
+  if (cache.size >= CACHE_MAX_ENTRIES) {
+    // Map 按插入顺序迭代，先删最旧的一批
+    const drop = Math.ceil(CACHE_MAX_ENTRIES * 0.1);
+    let i = 0;
+    for (const k of cache.keys()) {
+      cache.delete(k);
+      if (++i >= drop) break;
+    }
   }
+  cache.set(key, { expiresAt: Date.now() + ttl, value });
 }
 
 export async function resolveShareMetaBatch(items) {
   const input = Array.isArray(items) ? items.slice(0, 12) : [];
-  const out = {};
+  const out = Object.create(null);
   let cursor = 0;
 
   async function worker() {
     while (cursor < input.length) {
       const index = cursor++;
-      const item = input[index] || {};
-      const url = String(item.url || "");
+      const item = input[index];
+      if (!item || typeof item !== "object") continue;
+      const url = String(item.url || "").slice(0, 300);
       if (!url) continue;
-      out[url] = await resolveShareMeta(url, String(item.password || ""));
+      const password = String(item.password || "").slice(0, 16);
+      out[url] = await resolveShareMeta(url, password);
     }
   }
 

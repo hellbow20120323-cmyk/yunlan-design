@@ -1,40 +1,60 @@
-import fs from "node:fs";
-import path from "node:path";
-import { DATA_DIR } from "../paths.js";
+import crypto from "node:crypto";
+import { dataPath } from "../paths.js";
+import { JsonStore } from "../json-store.js";
 import { isSubscriptionActive, subscriptionSummary } from "../billing/subscription-store.js";
-
-const QUOTA_PATH = path.join(DATA_DIR, "quota-usage.json");
 
 const TZ = process.env.POINTS_TZ || "Asia/Shanghai";
 const ANON_DAILY = Number(process.env.POINTS_ANON_DAILY || 50);
 const USER_DAILY = Number(process.env.POINTS_USER_DAILY || 100);
 const COST_PER_SEARCH = Number(process.env.POINTS_SEARCH_COST || 10);
 const SIGNUP_GIFT = Number(process.env.POINTS_SIGNUP_GIFT || 0);
+/**
+ * 匿名访客按 IP 的日额度上限。
+ * 客户端 ID 来自 Cookie / 请求头，清 Cookie 或随机换头即可刷新额度，所以匿名用户额外按 IP 兜底。
+ * 默认放宽为单人额度的 4 倍，兼顾校园网 / 公司出口等共享 IP 场景。
+ */
+const ANON_IP_DAILY = Number(process.env.POINTS_ANON_IP_DAILY || ANON_DAILY * 4);
 
-function ensureDataDir() {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-}
-
-function readUsage() {
-  ensureDataDir();
-  if (!fs.existsSync(QUOTA_PATH)) return { buckets: {}, signupGifts: {}, bonusBalance: {} };
-  try {
-    const data = JSON.parse(fs.readFileSync(QUOTA_PATH, "utf8"));
-    if (!data.bonusBalance) data.bonusBalance = {};
-    return data;
-  } catch {
-    return { buckets: {}, signupGifts: {}, bonusBalance: {} };
+const store = new JsonStore(
+  dataPath("quota-usage.json"),
+  () => ({ buckets: {}, signupGifts: {}, bonusBalance: {} }),
+  {
+    // 积分写入合并为 0.5s 延迟落盘；进程退出时同步刷盘
+    flushMs: 500,
+    normalize(data) {
+      return {
+        ...data,
+        buckets: data?.buckets || {},
+        signupGifts: data?.signupGifts || {},
+        bonusBalance: data?.bonusBalance || {},
+      };
+    },
   }
+);
+
+let prunedDay = "";
+
+/** 额度桶按日重置，过期桶没有保留价值，否则文件随访客数无限增长 */
+function readUsage() {
+  const data = store.read();
+  const day = todayKey();
+  if (prunedDay !== day) {
+    prunedDay = day;
+    let removed = 0;
+    for (const [k, rec] of Object.entries(data.buckets)) {
+      if (rec?.date !== day) {
+        delete data.buckets[k];
+        removed += 1;
+      }
+    }
+    if (removed) store.write();
+  }
+  return data;
 }
 
-function getAdminBonus(store, userId) {
+function getAdminBonus(data, userId) {
   if (!userId) return 0;
-  return Math.max(0, Number(store.bonusBalance?.[userId] || 0));
-}
-
-function writeUsage(data) {
-  ensureDataDir();
-  fs.writeFileSync(QUOTA_PATH, JSON.stringify(data, null, 2), "utf8");
+  return Math.max(0, Number(data.bonusBalance?.[userId] || 0));
 }
 
 /** @returns {string} YYYY-MM-DD in configured TZ */
@@ -68,14 +88,23 @@ export function bucketKey(kind, id) {
   return `${kind}:${id}`;
 }
 
-function getBucketRecord(store, key) {
+/** 只读查看当日桶：不存在时返回临时对象，不写入存储 */
+function peekBucket(data, key) {
   const day = todayKey();
-  let rec = store.buckets[key];
-  if (!rec || rec.date !== day) {
-    rec = { date: day, used: 0 };
-    store.buckets[key] = rec;
-  }
+  const rec = data.buckets[key];
+  return rec && rec.date === day ? rec : { date: day, used: 0 };
+}
+
+/** 取得可写的当日桶（必要时创建并挂入存储） */
+function touchBucket(data, key) {
+  const rec = peekBucket(data, key);
+  data.buckets[key] = rec;
   return rec;
+}
+
+function ipBucketKey(ip) {
+  const h = crypto.createHash("sha256").update(String(ip || "unknown")).digest("hex").slice(0, 16);
+  return bucketKey("ip", h);
 }
 
 export function getDailyLimit(loggedIn) {
@@ -83,20 +112,19 @@ export function getDailyLimit(loggedIn) {
 }
 
 export function getQuotaStatus({ userId, clientId }) {
-  const store = readUsage();
+  const data = readUsage();
   const loggedIn = Boolean(userId);
   const subscription = subscriptionSummary(userId);
   const vipActive = loggedIn && isSubscriptionActive(userId);
   const key = loggedIn ? bucketKey("user", userId) : bucketKey("anon", clientId || "unknown");
-  const rec = getBucketRecord(store, key);
-  writeUsage(store);
+  const rec = peekBucket(data, key);
 
   let bonusRemaining = 0;
   if (loggedIn && userId && SIGNUP_GIFT > 0 && !vipActive) {
-    const gifted = Number(store.signupGifts?.[userId] || 0);
+    const gifted = Number(data.signupGifts?.[userId] || 0);
     bonusRemaining = Math.max(0, SIGNUP_GIFT - gifted);
   }
-  const adminBonusRemaining = loggedIn && userId && !vipActive ? getAdminBonus(store, userId) : 0;
+  const adminBonusRemaining = loggedIn && userId && !vipActive ? getAdminBonus(data, userId) : 0;
 
   const dailyLimit = getDailyLimit(loggedIn);
   const dailyRemaining = vipActive ? dailyLimit : Math.max(0, dailyLimit - rec.used);
@@ -125,78 +153,81 @@ export function getQuotaStatus({ userId, clientId }) {
   };
 }
 
+function insufficient(loggedIn) {
+  const err = new Error(
+    loggedIn
+      ? "今日积分已用完，开通 VIP 后可不限次数搜索（月付 3 元起）"
+      : "今日体验积分已用完，请登录并开通 VIP 后继续搜索"
+  );
+  err.code = "INSUFFICIENT_POINTS";
+  return err;
+}
+
 /**
  * Consume points for one search. Throws Error with code INSUFFICIENT_POINTS
+ * @param {{ userId?: string, clientId?: string, ip?: string }} who
  */
-export function consumeSearchPoint({ userId, clientId }) {
+export function consumeSearchPoint({ userId, clientId, ip }) {
   if (userId && isSubscriptionActive(userId)) {
     return getQuotaStatus({ userId, clientId });
   }
 
-  const store = readUsage();
+  const data = readUsage();
   const loggedIn = Boolean(userId);
   const key = loggedIn ? bucketKey("user", userId) : bucketKey("anon", clientId || "unknown");
-  const rec = getBucketRecord(store, key);
   const dailyLimit = getDailyLimit(loggedIn);
   const cost = COST_PER_SEARCH;
 
   if (loggedIn && userId && SIGNUP_GIFT > 0) {
-    const gifted = Number(store.signupGifts?.[userId] || 0);
+    const gifted = Number(data.signupGifts?.[userId] || 0);
     if (gifted < SIGNUP_GIFT) {
-      store.signupGifts[userId] = gifted + cost;
-      writeUsage(store);
+      data.signupGifts[userId] = gifted + cost;
+      store.write();
       return getQuotaStatus({ userId, clientId });
     }
   }
 
   if (loggedIn && userId) {
-    if (!store.bonusBalance) store.bonusBalance = {};
-    const adminBonus = getAdminBonus(store, userId);
+    const adminBonus = getAdminBonus(data, userId);
     if (adminBonus >= cost) {
-      store.bonusBalance[userId] = adminBonus - cost;
-      writeUsage(store);
+      data.bonusBalance[userId] = adminBonus - cost;
+      store.write();
       return getQuotaStatus({ userId, clientId });
     }
     if (adminBonus > 0) {
       const fromDaily = cost - adminBonus;
-      store.bonusBalance[userId] = 0;
-      if (rec.used + fromDaily > dailyLimit) {
-        const err = new Error(
-          "今日积分已用完，开通 VIP 后可不限次数搜索（月付 3 元起）"
-        );
-        err.code = "INSUFFICIENT_POINTS";
-        throw err;
-      }
-      rec.used += fromDaily;
-      store.buckets[key] = rec;
-      writeUsage(store);
+      const rec = peekBucket(data, key);
+      // 先校验再扣减，避免额度不足时仍把赠送积分清零
+      if (rec.used + fromDaily > dailyLimit) throw insufficient(true);
+      data.bonusBalance[userId] = 0;
+      touchBucket(data, key).used += fromDaily;
+      store.write();
       return getQuotaStatus({ userId, clientId });
     }
   }
 
-  if (rec.used + cost > dailyLimit) {
-    const err = new Error(
-      loggedIn
-        ? "今日积分已用完，开通 VIP 后可不限次数搜索（月付 3 元起）"
-        : "今日体验积分已用完，请登录并开通 VIP 后继续搜索"
-    );
-    err.code = "INSUFFICIENT_POINTS";
-    throw err;
+  const rec = peekBucket(data, key);
+  if (rec.used + cost > dailyLimit) throw insufficient(loggedIn);
+
+  // 匿名访客：同时受 IP 日额度约束，防止清 Cookie / 换请求头刷额度
+  let ipRec = null;
+  if (!loggedIn && ip) {
+    ipRec = peekBucket(data, ipBucketKey(ip));
+    if (ipRec.used + cost > ANON_IP_DAILY) throw insufficient(false);
   }
 
-  rec.used += cost;
-  store.buckets[key] = rec;
-  writeUsage(store);
+  touchBucket(data, key).used += cost;
+  if (ipRec) touchBucket(data, ipBucketKey(ip)).used += cost;
+  store.write();
   return getQuotaStatus({ userId, clientId });
 }
 
 export function grantSignupGift(userId) {
   if (SIGNUP_GIFT <= 0) return;
-  const store = readUsage();
-  if (!store.signupGifts) store.signupGifts = {};
-  if (store.signupGifts[userId] === undefined) {
-    store.signupGifts[userId] = 0;
-    writeUsage(store);
+  const data = readUsage();
+  if (data.signupGifts[userId] === undefined) {
+    data.signupGifts[userId] = 0;
+    store.write();
   }
 }
 
@@ -204,10 +235,9 @@ export function grantSignupGift(userId) {
 export function grantBonusPoints(userId, amount) {
   const delta = Math.max(0, Math.floor(Number(amount) || 0));
   if (!userId || delta <= 0) return 0;
-  const store = readUsage();
-  if (!store.bonusBalance) store.bonusBalance = {};
-  const next = getAdminBonus(store, userId) + delta;
-  store.bonusBalance[userId] = next;
-  writeUsage(store);
+  const data = readUsage();
+  const next = getAdminBonus(data, userId) + delta;
+  data.bonusBalance[userId] = next;
+  store.write();
   return next;
 }

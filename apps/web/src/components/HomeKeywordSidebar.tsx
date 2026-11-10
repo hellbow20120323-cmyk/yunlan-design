@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { BookOpen, Gamepad2, Music2, Wrench } from 'lucide-react';
 import {
   STUDY_EXAM_HOT_KEYWORDS,
@@ -90,6 +90,8 @@ export const HomeKeywordSidebar: React.FC<HomeKeywordSidebarProps> = ({
     []
   );
 
+  const [openTitle, setOpenTitle] = useState<string | null>(null);
+
   const sections: CatalogSection[] = [
     {
       icon: <BookOpen className="w-3.5 h-3.5" strokeWidth={1.75} />,
@@ -135,17 +137,57 @@ export const HomeKeywordSidebar: React.FC<HomeKeywordSidebarProps> = ({
       aria-label="热门分类快捷搜索"
     >
       <div className="lg:sticky lg:top-24 rounded-[2px] border border-yunlan-hairline bg-yunlan-surface/95 backdrop-blur-sm shadow-yunlan-card overflow-hidden">
-        <header className="px-4 pt-4 pb-3 border-b border-yunlan-hairline">
+        <header className="px-4 pt-3 pb-2.5 sm:pt-4 sm:pb-3 border-b border-yunlan-hairline">
           <p className="text-[10px] font-sans tracking-[0.28em] text-yunlan-muted">INDEX</p>
           <h2 className="mt-1 font-yunlan-serif text-sm font-medium tracking-[0.08em] text-yunlan-ink">
             资源索引
           </h2>
-          <p className="mt-1 text-[11px] font-light leading-relaxed text-yunlan-muted">
+          <p className="mt-1 text-[11px] font-light leading-relaxed text-yunlan-muted hidden sm:block">
             精选分类与示例检索词
           </p>
         </header>
 
-        <div className="px-3 py-2 space-y-0 max-h-[min(70vh,640px)] overflow-y-auto">
+        {/* 手机：四分类手风琴 + 关键词芯片 */}
+        <div className="lg:hidden px-2 py-2">
+          <div className="grid grid-cols-2 gap-1.5">
+            {sections.map((section) => {
+              const active = openTitle === section.title;
+              return (
+                <button
+                  key={section.title}
+                  type="button"
+                  onClick={() => setOpenTitle(active ? null : section.title)}
+                  className={`flex items-center justify-center gap-1.5 min-h-11 rounded-sm text-[12px] tracking-wide border transition-colors ${
+                    active
+                      ? 'border-yunlan-cinnabar/40 bg-yunlan-mist text-yunlan-ink'
+                      : 'border-yunlan-hairline text-yunlan-muted'
+                  }`}
+                >
+                  <span className="text-yunlan-cinnabar/80">{section.icon}</span>
+                  {section.title}
+                </button>
+              );
+            })}
+          </div>
+          {sections.map((section) =>
+            openTitle === section.title ? (
+              <div key={section.title} className="mt-2 flex flex-wrap gap-1.5 px-0.5 pb-1">
+                {section.groups.flatMap((g) => g.samples).map((kw) => (
+                  <button
+                    key={kw}
+                    type="button"
+                    onClick={() => onPickKeyword(kw, section.category)}
+                    className="min-h-9 px-2.5 text-[12px] font-light text-yunlan-ink bg-yunlan-mist/80 border border-yunlan-hairline rounded-sm"
+                  >
+                    {kw}
+                  </button>
+                ))}
+              </div>
+            ) : null
+          )}
+        </div>
+
+        <div className="hidden lg:block px-3 py-2 space-y-0 max-h-[min(70vh,640px)] overflow-y-auto">
           {sections.map((section, sIdx) => (
             <div key={section.title}>
               <div className="flex items-center gap-2 px-1 py-2.5">

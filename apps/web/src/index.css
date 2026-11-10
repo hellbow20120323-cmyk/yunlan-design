@@ -1,6 +1,54 @@
 @import "tailwindcss";
 @custom-variant dark (&:where(.dark, .dark *));
 
+/**
+ * 水墨色阶重映射
+ * 组件里大量使用 slate / cyan / amber / emerald / red 等 Tailwind 默认色阶（冷灰、青、橙）。
+ * 在主题层统一替换为偏暖的墨色、石青、赭金、青玉、朱砂，全站一次性与水墨风格对齐，
+ * 同时把最浅的辅助文字（slate-400）加深一档，提升小字号的可读对比度。
+ */
+@theme {
+  --color-slate-50: #f7f7f6;
+  --color-slate-100: #efede9;
+  --color-slate-200: #e4e1db;
+  --color-slate-300: #d1cdc6;
+  --color-slate-400: #8b8780;
+  --color-slate-500: #6d6a65;
+  --color-slate-600: #56534e;
+  --color-slate-700: #413e3a;
+  --color-slate-800: #2f2d2a;
+  --color-slate-850: #272523;
+  --color-slate-900: #2a2826;
+  --color-slate-950: #1d1b1a;
+
+  /* 石青：链接 / 信息色 */
+  --color-cyan-400: #4f8fc9;
+  --color-cyan-500: #2b73b6;
+  --color-cyan-600: #1661ab;
+  --color-cyan-700: #124f8a;
+  --color-blue-500: #2f6fae;
+  --color-blue-600: #1661ab;
+
+  /* 赭金：收藏 / 热榜 / VIP */
+  --color-amber-300: #e6bd6c;
+  --color-amber-400: #d9a441;
+  --color-amber-500: #b8862f;
+  --color-amber-600: #9a6f24;
+  --color-amber-700: #7a561b;
+  --color-orange-400: #cf7a45;
+  --color-orange-500: #bf6430;
+
+  /* 青玉：成功 */
+  --color-emerald-400: #5fae92;
+  --color-emerald-500: #3f9577;
+  --color-emerald-600: #2f7d63;
+
+  /* 朱砂：危险 / 强调 */
+  --color-red-400: #d0646c;
+  --color-red-500: #c04851;
+  --color-red-600: #a83d45;
+}
+
 @layer base {
   :root {
     --yunlan-paper: #f7f7f6;
@@ -13,8 +61,55 @@
     --yunlan-stone: #1661ab;
     --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
       'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
-    --font-serif: 'Noto Serif SC', 'Songti SC', 'STSong', serif;
+    --font-serif: 'Noto Serif SC', 'Source Han Serif SC', 'Noto Serif CJK SC', 'Songti SC', 'STSong',
+      'Songti TC', 'SimSun', serif;
     --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    scroll-behavior: smooth;
+    /* 弹窗开关时滚动条出现/消失不再让页面横向跳动 */
+    scrollbar-gutter: stable;
+  }
+
+  body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* 水墨选区 */
+  ::selection {
+    background: rgba(192, 72, 81, 0.18);
+    color: var(--yunlan-ink);
+  }
+
+  /* 键盘焦点环：朱砂细线，仅键盘操作可见，鼠标点击不出现 */
+  :focus-visible {
+    outline: 2px solid var(--yunlan-cinnabar);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible {
+    outline-offset: 0;
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+  p {
+    text-wrap: pretty;
+  }
+
+  img {
+    /* 海报未加载时显示纸色底，避免灰块突兀闪烁 */
+    background-color: var(--yunlan-mist);
   }
 
   body {
@@ -22,6 +117,17 @@
     background-color: var(--yunlan-paper);
     color: var(--yunlan-ink);
     overflow-x: hidden;
+    min-height: 100dvh;
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+
+  button,
+  a,
+  [role='button'],
+  summary {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: rgba(42, 40, 38, 0.08);
   }
 
   .dark body {
@@ -135,4 +241,106 @@
 
 .tabular-nums {
   font-variant-numeric: tabular-nums;
+}
+
+/** 手机端：避免 iOS 聚焦输入框时整页缩放；加大可点区域 */
+@media (max-width: 767px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+.yl-tap {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+.yl-safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+.yl-safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* ------------------------------------------------------------------ */
+/* 动效：补齐组件里已使用、但此前没有任何样式支撑的 animate-in 系列类     */
+/* ------------------------------------------------------------------ */
+@keyframes yl-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes yl-slide-right {
+  from { opacity: 0; transform: translateX(28px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes yl-slide-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes yl-slide-down {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes yl-sheet-up {
+  from { opacity: 0.6; transform: translateY(32px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes yl-pop {
+  from { opacity: 0; transform: translateY(8px) scale(0.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes yl-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.animate-in {
+  animation-duration: 0.2s;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  animation-fill-mode: both;
+}
+.animate-in.fade-in { animation-name: yl-fade-in; }
+.animate-in.slide-in-from-right { animation-name: yl-slide-right; }
+.animate-in.slide-in-from-bottom-4 { animation-name: yl-slide-up; }
+.animate-in.fade-in.slide-in-from-top-3 { animation-name: yl-slide-down; }
+
+/** 弹窗面板：手机端自底部升起（底部抽屉），桌面端轻轻浮现 */
+.yl-modal-panel {
+  animation: yl-sheet-up 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@media (min-width: 768px) {
+  .yl-modal-panel {
+    animation-name: yl-pop;
+    animation-duration: 0.22s;
+  }
+}
+.yl-backdrop {
+  animation: yl-fade-in 0.18s ease-out both;
+}
+
+/** 骨架屏：墨色高光缓缓掠过，比 animate-pulse 更贴合水墨质感 */
+.yl-skeleton {
+  background: linear-gradient(
+    100deg,
+    var(--yunlan-mist) 30%,
+    #f3f1ed 50%,
+    var(--yunlan-mist) 70%
+  );
+  background-size: 200% 100%;
+  animation: yl-shimmer 1.6s ease-in-out infinite;
+}
+
+/* 尊重系统「减少动态效果」设置 */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

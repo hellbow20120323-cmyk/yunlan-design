@@ -17,6 +17,7 @@ interface HeroSearchProps {
   onClearHistory: () => void;
   onRemoveHistoryItem: (id: string) => void;
   inputRef?: React.RefObject<HTMLInputElement | null>;
+  compact?: boolean;
 }
 
 export const HeroSearch: React.FC<HeroSearchProps> = ({
@@ -29,18 +30,19 @@ export const HeroSearch: React.FC<HeroSearchProps> = ({
   onClearHistory,
   onRemoveHistoryItem,
   inputRef,
+  compact = false,
 }) => {
   const [isFocused, setIsFocused] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
+    const handleClickOutside = (e: Event) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setIsFocused(false);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('pointerdown', handleClickOutside);
+    return () => document.removeEventListener('pointerdown', handleClickOutside);
   }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -50,18 +52,18 @@ export const HeroSearch: React.FC<HeroSearchProps> = ({
   };
 
   return (
-    <div className="w-full max-w-3xl mx-auto pt-10 pb-3 sm:pt-12 sm:pb-5">
-      <div className="text-center mb-10 sm:mb-12">
-        <p className="text-[10px] sm:text-[11px] font-sans font-normal tracking-[0.35em] text-yunlan-muted mb-5">
+    <div className={`w-full max-w-3xl mx-auto ${compact ? 'pt-3 pb-2 md:pt-10 md:pb-5' : 'pt-8 pb-3 sm:pt-12 sm:pb-5'}`}>
+      <div className={`${compact ? 'hidden md:block' : ''} text-center mb-7 sm:mb-12`}>
+        <p className="text-[10px] sm:text-[11px] font-sans font-normal tracking-[0.35em] text-yunlan-muted mb-4 sm:mb-5">
           云览 · YUNLAN
         </p>
         <h1
-          className="font-yunlan-serif text-[1.65rem] sm:text-[2.1rem] lg:text-[2.35rem] font-medium tracking-[0.22em] text-yunlan-ink"
+          className="font-yunlan-serif text-[1.45rem] sm:text-[2.1rem] lg:text-[2.35rem] font-medium tracking-[0.12em] sm:tracking-[0.22em] text-yunlan-ink"
           style={{ textWrap: 'balance' }}
         >
           万象云盘，一览尽搜
         </h1>
-        <p className="mt-5 text-xs sm:text-[13px] font-sans font-light text-yunlan-muted max-w-md mx-auto leading-[1.85] tracking-wide">
+        <p className="mt-3 sm:mt-5 text-xs sm:text-[13px] font-sans font-light text-yunlan-muted max-w-md mx-auto leading-[1.85] tracking-wide px-2">
           收录海量文件索引 · 十大云盘协同 · 智能排重与有效性标注
         </p>
       </div>
@@ -82,12 +84,16 @@ export const HeroSearch: React.FC<HeroSearchProps> = ({
             />
             <input
               ref={inputRef}
-              type="text"
+              type="search"
+              enterKeyHint="search"
+              autoCapitalize="none"
+              autoCorrect="off"
+              autoComplete="off"
               value={query}
               onChange={(e) => onQueryChange(e.target.value)}
               onFocus={() => setIsFocused(true)}
-              placeholder="搜索剧集、考研学习、行业软件、无损音乐、游戏 MOD…"
-              className="w-full text-sm sm:text-[15px] font-sans font-light text-yunlan-ink placeholder:text-[#b0ada8] bg-transparent focus:outline-none"
+              placeholder="搜索剧集、资料、软件、音乐…"
+              className="w-full text-base sm:text-[15px] font-sans font-light text-yunlan-ink placeholder:text-[#b0ada8] bg-transparent focus:outline-none min-h-11"
             />
             {query && (
               <button
@@ -96,7 +102,8 @@ export const HeroSearch: React.FC<HeroSearchProps> = ({
                   onQueryChange('');
                   inputRef?.current?.focus();
                 }}
-                className="p-1 text-yunlan-muted hover:text-yunlan-ink transition-colors"
+                className="p-2 text-yunlan-muted hover:text-yunlan-ink transition-colors min-h-11 min-w-11 flex items-center justify-center"
+                aria-label="清空搜索词"
               >
                 <X className="w-4 h-4" strokeWidth={1.5} />
               </button>
@@ -107,7 +114,7 @@ export const HeroSearch: React.FC<HeroSearchProps> = ({
             <button
               type="submit"
               disabled={loading || !query.trim()}
-              className="flex-1 sm:flex-none px-8 py-2.5 sm:py-2 text-sm font-sans font-medium tracking-[0.2em] bg-yunlan-cta rounded-sm shadow-yunlan-feather hover:shadow-ink-wash active:scale-[0.99] transition-all disabled:opacity-50"
+              className="flex-1 sm:flex-none min-h-11 px-6 sm:px-8 py-2.5 sm:py-2 text-sm font-sans font-medium tracking-[0.2em] bg-yunlan-cta rounded-sm shadow-yunlan-feather hover:shadow-ink-wash active:scale-[0.99] transition-all disabled:opacity-50"
             >
               {loading ? (
                 <span className="inline-flex items-center justify-center gap-2">
@@ -125,11 +132,11 @@ export const HeroSearch: React.FC<HeroSearchProps> = ({
                 setIsFocused(false);
                 onSearch(undefined, { forceRefresh: true });
               }}
-              className="inline-flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2.5 sm:py-2 text-xs font-sans font-medium tracking-wide text-yunlan-stone border border-yunlan-hairline bg-yunlan-surface rounded-sm hover:border-yunlan-stone/40 hover:shadow-yunlan-feather transition-all disabled:opacity-50"
+              className="inline-flex items-center justify-center gap-1.5 min-h-11 min-w-11 px-3 sm:px-4 py-2.5 sm:py-2 text-xs font-sans font-medium tracking-wide text-yunlan-stone border border-yunlan-hairline bg-yunlan-surface rounded-sm hover:border-yunlan-stone/40 hover:shadow-yunlan-feather transition-all disabled:opacity-50"
               title="跳过上游缓存，重新聚合各数据源（耗时更长，仍扣搜索积分）"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} strokeWidth={1.75} />
-              <span className="hidden sm:inline">强制刷新</span>
+              <span className="sm:inline">刷新</span>
             </button>
           </div>
         </form>

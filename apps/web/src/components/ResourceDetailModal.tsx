@@ -4,6 +4,7 @@
  */
 
 import React, { useState } from 'react';
+import { safeHref } from '../utils/safeUrl';
 import { ResourceItem } from '../types';
 import { DISK_PROVIDERS } from '../constants/providers';
 import { 
@@ -22,6 +23,7 @@ import {
   Share2
 } from 'lucide-react';
 import { SearchService } from '../services/searchService';
+import { useLockBodyScroll } from '../hooks/useLockBodyScroll';
 
 interface ResourceDetailModalProps {
   item: ResourceItem | null;
@@ -38,12 +40,13 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
   isFavorited,
   onShowToast,
 }) => {
-  if (!item) return null;
-
   const [copied, setCopied] = useState(false);
   const [testingHealth, setTestingHealth] = useState(false);
   const [healthStatus, setHealthStatus] = useState<string | null>(null);
   const [reported, setReported] = useState(false);
+
+  useLockBodyScroll(Boolean(item));
+  if (!item) return null;
 
   const provider = DISK_PROVIDERS[item.diskProvider];
 
@@ -78,13 +81,17 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
+    <div
+      className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-0 md:p-6 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150"
+      onClick={onClose}
+    >
       <div 
-        className="relative w-full max-w-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+        className="yl-modal-panel relative w-full md:max-w-2xl bg-yunlan-surface dark:bg-slate-900 border-t md:border border-slate-200 dark:border-slate-800 rounded-t-2xl md:rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92dvh]"
         onClick={(e) => e.stopPropagation()}
       >
+        <div className="md:hidden mx-auto mt-2 mb-1 h-1 w-10 rounded-full bg-slate-300" aria-hidden />
         {/* Header bar */}
-        <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between gap-4">
+        <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between gap-4">
           <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
             <span 
               className="w-2.5 h-2.5 rounded-full" 
@@ -112,7 +119,7 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
 
             <button
               onClick={onClose}
-              className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              className="p-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors min-h-11 min-w-11 flex items-center justify-center"
             >
               <X className="w-5 h-5" />
             </button>
@@ -120,10 +127,10 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
         </div>
 
         {/* Modal Body */}
-        <div className="p-6 overflow-y-auto space-y-6">
+        <div className="p-4 sm:p-6 overflow-y-auto space-y-6">
           {/* Title & Metadata */}
           <div>
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white leading-snug">
+            <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white leading-snug">
               {item.title}
             </h2>
             <div className="mt-2.5 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 flex-wrap">
@@ -194,7 +201,7 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
               <div className="flex items-center gap-2">
                 <button
                   onClick={handleCopy}
-                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                  className={`flex items-center justify-center gap-1.5 min-h-11 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
                     copied 
                       ? 'bg-emerald-600 text-white' 
                       : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 hover:border-slate-400'
@@ -205,10 +212,10 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
                 </button>
 
                 <a
-                  href={item.shareUrl}
+                  href={safeHref(item.shareUrl)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold text-white bg-cyan-600 hover:bg-cyan-500 transition-colors"
+                  className="flex items-center justify-center gap-1.5 min-h-11 px-3.5 py-1.5 rounded-lg text-xs font-semibold text-white bg-yunlan-cta hover:opacity-90 transition-colors"
                 >
                   <span>直达网盘转存</span>
                   <ExternalLink className="w-3.5 h-3.5" />
@@ -253,7 +260,7 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
           </div>
 
           {/* Report Invalid Link Action */}
-          <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800 text-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pt-2 border-t border-slate-100 dark:border-slate-800 text-xs pb-[env(safe-area-inset-bottom)]">
             <span className="text-slate-400">遇到链接失效、密码错误或内容违规？</span>
             <button
               onClick={handleReportInvalid}
@@ -271,14 +278,30 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
         </div>
 
         {/* Modal Footer */}
-        <div className="px-6 py-3 bg-slate-50 dark:bg-slate-950/50 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500">
-          <span>资源编号: {item.id}</span>
-          <button
-            onClick={onClose}
-            className="px-4 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-          >
-            关闭
-          </button>
+        <div className="px-4 sm:px-6 py-3 bg-slate-50 dark:bg-slate-950/50 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2 text-xs text-slate-500 yl-safe-bottom">
+          <span className="truncate hidden sm:inline">资源编号: {item.id}</span>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <button
+              onClick={handleCopy}
+              className="flex-1 sm:flex-none min-h-11 px-4 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            >
+              {copied ? '已复制' : '复制链接'}
+            </button>
+            <a
+              href={safeHref(item.shareUrl)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 sm:flex-none min-h-11 px-4 inline-flex items-center justify-center rounded-lg text-white bg-yunlan-cta font-medium"
+            >
+              直达网盘
+            </a>
+            <button
+              onClick={onClose}
+              className="hidden sm:inline-flex min-h-11 px-4 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors items-center"
+            >
+              关闭
+            </button>
+          </div>
         </div>
       </div>
     </div>

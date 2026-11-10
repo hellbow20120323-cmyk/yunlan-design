@@ -5,6 +5,7 @@
 
 import React from 'react';
 import { ALL_PROVIDER_IDS, DISK_PROVIDERS } from '../constants/providers';
+import { BrandLogo } from './BrandLogo';
 
 interface FooterProps {
   onNavigateToTab: (tab: 'search' | 'providers' | 'rankings' | 'guide') => void;
@@ -12,13 +13,14 @@ interface FooterProps {
 
 export const Footer: React.FC<FooterProps> = ({ onNavigateToTab }) => {
   return (
-    <footer className="w-full border-t border-yunlan-hairline bg-yunlan-paper/80 text-xs text-yunlan-muted mt-20 transition-colors">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <footer className="w-full border-t border-yunlan-hairline bg-yunlan-paper/80 text-xs text-yunlan-muted mt-12 sm:mt-20 transition-colors">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
         
         {/* Main Footer Row */}
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 pb-8 border-b border-yunlan-hairline">
           <div>
-            <div className="flex items-center gap-2 mb-1.5">
+            <div className="flex items-center gap-2.5 mb-1.5">
+              <BrandLogo className="w-8 h-8" />
               <span className="font-semibold text-[#3d3832] text-sm">云览 Yunlan</span>
               <span className="text-[11px] text-[#a88858]">· 专业多网盘聚合资源搜索</span>
             </div>
@@ -27,7 +29,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigateToTab }) => {
             </p>
           </div>
 
-          <div className="flex items-center gap-6 flex-wrap text-xs">
+          <div className="hidden md:flex items-center gap-6 flex-wrap text-xs">
             <button
               onClick={() => onNavigateToTab('search')}
               className="hover:text-[#9a7b4f] transition-colors"

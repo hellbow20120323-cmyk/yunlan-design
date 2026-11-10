@@ -4,9 +4,11 @@
  */
 
 import React from 'react';
+import { safeHref } from '../utils/safeUrl';
 import { ResourceItem } from '../types';
 import { DISK_PROVIDERS } from '../constants/providers';
-import { X, Bookmark, Trash2, ExternalLink, Copy, Check } from 'lucide-react';
+import { X, Bookmark, Trash2, ExternalLink, Copy } from 'lucide-react';
+import { useLockBodyScroll } from '../hooks/useLockBodyScroll';
 
 interface FavoritesDrawerProps {
   isOpen: boolean;
@@ -25,12 +27,16 @@ export const FavoritesDrawer: React.FC<FavoritesDrawerProps> = ({
   onOpenDetail,
   onShowToast,
 }) => {
+  useLockBodyScroll(isOpen);
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-black/50 backdrop-blur-xs animate-in fade-in duration-150">
+    <div
+      className="fixed inset-0 z-50 flex justify-end bg-black/50 backdrop-blur-xs animate-in fade-in duration-150"
+      onClick={onClose}
+    >
       <div 
-        className="w-full max-w-md bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-200"
+        className="w-full md:max-w-md bg-yunlan-surface dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-200 yl-safe-top yl-safe-bottom"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -44,7 +50,7 @@ export const FavoritesDrawer: React.FC<FavoritesDrawerProps> = ({
 
           <button
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="p-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors min-h-11 min-w-11 flex items-center justify-center"
           >
             <X className="w-5 h-5" />
           </button>
@@ -92,7 +98,7 @@ export const FavoritesDrawer: React.FC<FavoritesDrawerProps> = ({
                       onOpenDetail(item);
                       onClose();
                     }}
-                    className="font-semibold text-slate-900 dark:text-white hover:text-cyan-600 dark:hover:text-cyan-400 cursor-pointer line-clamp-2 leading-snug"
+                    className="font-semibold text-slate-900 dark:text-white hover:text-yunlan-stone cursor-pointer line-clamp-2 leading-snug"
                   >
                     {item.title}
                   </h4>
@@ -118,7 +124,7 @@ export const FavoritesDrawer: React.FC<FavoritesDrawerProps> = ({
                       </button>
 
                       <a
-                        href={item.shareUrl}
+                        href={safeHref(item.shareUrl)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-1 text-[11px] text-cyan-600 hover:underline"

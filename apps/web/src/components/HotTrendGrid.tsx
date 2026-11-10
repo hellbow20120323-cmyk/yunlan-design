@@ -170,11 +170,11 @@ export const HotTrendGrid: React.FC<HotTrendGridProps> = ({
           ? Array.from({ length: singleRow ? 10 : dense ? (embedded ? 12 : 20) : 12 }).map((_, i) => (
               <div
                 key={i}
-                className={`aspect-[27/40] bg-[#ebe6de] animate-pulse shrink-0 rounded-xl ${
+                className={`aspect-[27/40] yl-skeleton shrink-0 rounded-[2px] ${
                   singleRow
-                    ? 'w-[72px] sm:w-[88px]'
+                    ? 'w-[80px] sm:w-[88px]'
                     : dense
-                      ? 'w-[72px] sm:w-[88px]'
+                      ? 'w-[80px] sm:w-[88px]'
                       : ''
                 }`}
               />
@@ -184,9 +184,9 @@ export const HotTrendGrid: React.FC<HotTrendGridProps> = ({
                 key={`${tab}-${item.id}`}
                 className={
                   singleRow
-                    ? 'shrink-0 w-[72px] sm:w-[88px] snap-start'
+                    ? 'shrink-0 w-[80px] sm:w-[88px] snap-start'
                     : dense
-                      ? 'w-[72px] sm:w-[88px] shrink-0'
+                      ? 'w-[80px] sm:w-[88px] shrink-0'
                       : undefined
                 }
               >

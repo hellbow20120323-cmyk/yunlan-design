@@ -3,7 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React from 'react';
+import React, { useState } from 'react';
+import { ChevronDown } from 'lucide-react';
 import { DiskProviderId } from '../types';
 import { DISK_PROVIDERS, SEARCH_PROVIDER_IDS } from '../constants/providers';
 
@@ -43,6 +44,7 @@ export const SearchRefinePanel: React.FC<SearchRefinePanelProps> = ({
   onMinSizeChange,
   onMaxSizeChange,
 }) => {
+  const [open, setOpen] = useState(false);
   const minDisplay =
     minUnit === 'GB' ? (minSizeMb / 1024).toFixed(minSizeMb % 1024 === 0 ? 0 : 1) : String(minSizeMb);
   const maxDisplay =
@@ -51,9 +53,29 @@ export const SearchRefinePanel: React.FC<SearchRefinePanelProps> = ({
       : maxUnit === 'GB'
         ? String(maxSizeGb)
         : String(Math.round(maxSizeGb * 1024));
+  const selectedCount = selectedProviders.length;
+  const sizeHint =
+    minSizeMb <= 0 && maxSizeGb === null
+      ? '大小不限'
+      : `${minDisplay}${minUnit} ~ ${maxDisplay}${maxDisplay === '∞' ? '' : maxUnit}`;
 
   return (
-    <div className="rounded-2xl border border-yunlan-hairline bg-[#fffcf8] p-4 sm:p-5 space-y-4 shadow-yunlan-card">
+    <div className="rounded-2xl border border-yunlan-hairline bg-[#fffcf8] p-3 sm:p-5 space-y-4 shadow-yunlan-card">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="md:hidden w-full flex items-center justify-between min-h-11 px-1 text-left"
+      >
+        <span className="text-[13px] font-medium text-[#4a4540]">
+          来源与大小
+          <span className="ml-2 font-normal text-yunlan-muted">
+            {selectedCount} 个网盘 · {sizeHint}
+          </span>
+        </span>
+        <ChevronDown className={`w-4 h-4 text-yunlan-muted transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+
+      <div className={`${open ? 'block' : 'hidden'} md:block space-y-4`}>
       <div>
         <p className="text-xs font-semibold tracking-wide text-[#8a8278] mb-2.5">来源类型</p>
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-2">
@@ -66,7 +88,7 @@ export const SearchRefinePanel: React.FC<SearchRefinePanelProps> = ({
                 key={id}
                 type="button"
                 onClick={() => onToggleProvider(id)}
-                className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium border transition-all ${
+                className={`flex items-center gap-2 px-3 min-h-11 py-2 rounded-xl text-xs font-medium border transition-all ${
                   selected
                     ? 'border-[#d4c4a8] bg-[#f3f0ea] text-[#4a4540]'
                     : 'border-yunlan-hairline bg-[#faf8f5] text-yunlan-muted hover:border-[#d8cbb8] hover:text-[#5c564e]'
@@ -140,6 +162,7 @@ export const SearchRefinePanel: React.FC<SearchRefinePanelProps> = ({
             </select>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );

@@ -56,7 +56,7 @@ export const BatchActionBar: React.FC<BatchActionBarProps> = ({
   };
 
   return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-full max-w-xl px-4 animate-in slide-in-from-bottom-4 duration-200">
+    <div className="fixed bottom-[calc(4.25rem+env(safe-area-inset-bottom))] md:bottom-6 left-1/2 -translate-x-1/2 z-40 w-full max-w-xl px-3 sm:px-4 animate-in slide-in-from-bottom-4 duration-200">
       <div className="flex items-center justify-between gap-3 p-3 bg-slate-900/95 dark:bg-slate-950/95 text-white backdrop-blur-md rounded-2xl border border-slate-700 shadow-2xl">
         <div className="flex items-center gap-2 pl-2 text-xs">
           <span className="font-semibold text-cyan-400 tabular-nums">已选 {selectedCount} 项</span>

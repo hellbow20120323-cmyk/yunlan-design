@@ -18,7 +18,7 @@ export const DiskNavigationGrid: React.FC<DiskNavigationGridProps> = ({
 }) => {
   return (
     <PageShell
-      title="聚合云盘引擎导航与矩阵"
+      title="网盘引擎导航"
       subtitle="全面兼容国内十大主流云盘，一站式对比特性、限速策略及格式支持"
     >
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
@@ -80,7 +80,7 @@ export const DiskNavigationGrid: React.FC<DiskNavigationGridProps> = ({
               <div className="pt-3 border-t border-yunlan-hairline flex items-center justify-between gap-2">
                 <button
                   onClick={() => onSearchProvider(id)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#9a7b4f] hover:bg-[#f3f0ea] rounded-lg transition-colors"
+                  className="flex items-center gap-1.5 min-h-11 px-3 py-1.5 text-xs font-medium text-[#9a7b4f] hover:bg-[#f3f0ea] rounded-lg transition-colors"
                 >
                   <Search className="w-3.5 h-3.5" />
                   <span>检索该网盘</span>
@@ -90,7 +90,7 @@ export const DiskNavigationGrid: React.FC<DiskNavigationGridProps> = ({
                   href={p.officialUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1 px-3 py-1.5 text-xs text-yunlan-muted hover:text-[#4a4540] transition-colors"
+                  className="flex items-center gap-1 min-h-11 px-3 py-1.5 text-xs text-yunlan-muted hover:text-[#4a4540] transition-colors"
                 >
                   <span>官网直达</span>
                   <ExternalLink className="w-3 h-3" />

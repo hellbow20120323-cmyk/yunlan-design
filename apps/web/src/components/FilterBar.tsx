@@ -73,9 +73,9 @@ export const FilterBar: React.FC<FilterBarProps> = ({
   hideViewSwitcher,
 }) => {
   return (
-    <div className="w-full space-y-3.5 mb-6">
+    <div className="w-full space-y-3 mb-4 sm:mb-6">
       {/* Category Tabs (Segmented control row) */}
-      <div className="flex items-center gap-1.5 p-1 bg-[#f3f0ea]/80 border border-yunlan-hairline rounded-xl overflow-x-auto no-scrollbar">
+      <div className="flex items-center gap-1.5 p-1 bg-[#f3f0ea]/80 border border-yunlan-hairline rounded-xl overflow-x-auto no-scrollbar snap-x snap-mandatory">
         {CATEGORIES.map((cat) => {
           const isActive = currentCategory === cat.id;
           const count = categoriesCount ? categoriesCount[cat.id] : undefined;
@@ -84,7 +84,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
             <button
               key={cat.id}
               onClick={() => onSelectCategory(cat.id)}
-              className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg whitespace-nowrap shrink-0 transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 min-h-11 py-2 text-xs font-medium rounded-lg whitespace-nowrap shrink-0 snap-start transition-all cursor-pointer ${
                 isActive
                   ? 'bg-[#fffcf8] text-[#9a7b4f] font-semibold shadow-sm border border-[#e5dccf]/80'
                   : 'text-yunlan-muted hover:text-[#4a4540]'
@@ -107,36 +107,35 @@ export const FilterBar: React.FC<FilterBarProps> = ({
       </div>
 
       {/* Secondary Controls Bar: Metrics + Sort + Valid Toggle + View Switcher */}
-      <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
+      <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center sm:justify-between gap-2.5 sm:gap-3 text-xs">
         
         {/* Left: Result Count & Timing (Strictly unboxed text metadata) */}
-        <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
-          <span>共找到 <strong className="font-semibold tabular-nums text-slate-900 dark:text-white">{totalResults}</strong> 个资源</span>
-          <span aria-hidden="true">·</span>
-          <span className="tabular-nums">耗时 {tookMs}ms</span>
-          <span aria-hidden="true">·</span>
+        <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 flex-wrap">
+          <span>共 <strong className="font-semibold tabular-nums text-slate-900 dark:text-white">{totalResults}</strong> 个</span>
+          <span className="hidden sm:inline" aria-hidden="true">·</span>
+          <span className="hidden sm:inline tabular-nums">耗时 {tookMs}ms</span>
           {modeLabel ? (
             <span
-              className={
+              className={`truncate max-w-[70vw] sm:max-w-none ${
                 demoMode
                   ? 'text-amber-600 dark:text-amber-400 font-medium'
                   : 'text-emerald-600 dark:text-emerald-400 font-medium'
-              }
+              }`}
             >
               {modeLabel}
             </span>
           ) : (
-            <span className="text-emerald-600 dark:text-emerald-400 font-medium">智能排重过滤已开启</span>
+            <span className="hidden sm:inline text-emerald-600 dark:text-emerald-400 font-medium">智能排重过滤已开启</span>
           )}
         </div>
 
         {/* Right: Controls Strip */}
-        <div className="flex items-center gap-3 ml-auto flex-wrap">
+        <div className="flex items-center gap-2 sm:gap-3 sm:ml-auto overflow-x-auto no-scrollbar pb-0.5">
           
           {/* Validity Toggle */}
           <button
             onClick={() => onToggleOnlyValid(!onlyValid)}
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border transition-all cursor-pointer ${
+            className={`flex items-center gap-1.5 px-2.5 min-h-10 py-1.5 rounded-lg border transition-all cursor-pointer shrink-0 ${
               onlyValid
                 ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
                 : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
@@ -147,7 +146,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
           </button>
 
           {/* Time Range Filter */}
-          <div className="flex items-center gap-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-1">
+          <div className="flex items-center gap-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-2 min-h-10 py-1 shrink-0">
             <Clock className="w-3.5 h-3.5 text-slate-400" />
             <select
               value={currentTimeRange}
@@ -163,7 +162,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
           </div>
 
           {/* Sort Dropdown */}
-          <div className="flex items-center gap-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-1">
+          <div className="flex items-center gap-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-2 min-h-10 py-1 shrink-0">
             <ArrowDownUp className="w-3.5 h-3.5 text-slate-400" />
             <select
               value={currentSort}

@@ -23,16 +23,16 @@ export const PageShell: React.FC<PageShellProps> = ({
 }) => {
   const maxClass = maxWidth === '4xl' ? 'max-w-4xl' : 'max-w-6xl';
   return (
-    <div className={`w-full ${maxClass} mx-auto py-8 sm:py-10 ${className}`}>
-      <header className="mb-8 sm:mb-10">
-        <p className="text-[10px] font-sans font-normal tracking-[0.28em] text-yunlan-muted mb-3">
+    <div className={`w-full ${maxClass} mx-auto py-5 sm:py-10 ${className}`}>
+      <header className="mb-5 sm:mb-10">
+        <p className="text-[10px] font-sans font-normal tracking-[0.28em] text-yunlan-muted mb-2 sm:mb-3">
           YUNLAN
         </p>
-        <h1 className="font-yunlan-serif text-xl sm:text-2xl font-medium tracking-[0.12em] text-yunlan-ink">
+        <h1 className="font-yunlan-serif text-lg sm:text-2xl font-medium tracking-[0.08em] sm:tracking-[0.12em] text-yunlan-ink">
           {title}
         </h1>
         {subtitle ? (
-          <p className="mt-3 text-sm font-light text-yunlan-muted leading-relaxed max-w-2xl">
+          <p className="mt-2 sm:mt-3 text-[13px] sm:text-sm font-light text-yunlan-muted leading-relaxed max-w-2xl">
             {subtitle}
           </p>
         ) : null}

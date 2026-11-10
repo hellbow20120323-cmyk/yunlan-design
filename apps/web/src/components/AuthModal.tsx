@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, LogIn, UserPlus } from 'lucide-react';
+import { useLockBodyScroll } from '../hooks/useLockBodyScroll';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -20,6 +21,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
+  useLockBodyScroll(isOpen);
   if (!isOpen) return null;
 
   const submit = async (e: React.FormEvent) => {
@@ -38,13 +40,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-      <div className="w-full max-w-md rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl">
+    <div
+      className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-0 md:p-4 bg-black/50 backdrop-blur-xs yl-backdrop"
+      onClick={onClose}
+    >
+      <div
+        className="yl-modal-panel w-full md:max-w-md rounded-t-2xl md:rounded-2xl border-t md:border border-slate-200 dark:border-slate-800 bg-yunlan-surface dark:bg-slate-900 shadow-2xl yl-safe-bottom"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="md:hidden mx-auto mt-2 h-1 w-10 rounded-full bg-slate-300" aria-hidden />
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-800">
           <h2 className="text-sm font-bold text-slate-900 dark:text-white">
             {mode === 'login' ? '登录' : '注册'}
           </h2>
-          <button type="button" onClick={onClose} className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
+          <button type="button" onClick={onClose} className="p-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 min-h-11 min-w-11 flex items-center justify-center">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -60,7 +69,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 px-3 py-2"
+              className="mt-1 w-full min-h-11 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 px-3 py-2"
             />
           </label>
           <label className="block">
@@ -72,21 +81,21 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 px-3 py-2"
+              className="mt-1 w-full min-h-11 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 px-3 py-2"
             />
           </label>
           {error && <p className="text-xs text-red-500">{error}</p>}
           <button
             type="submit"
             disabled={busy}
-            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-cyan-600 text-white font-semibold disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-2 min-h-11 py-2.5 rounded-lg bg-yunlan-cta text-white font-semibold disabled:opacity-50"
           >
             {mode === 'login' ? <LogIn className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
             {busy ? '处理中…' : mode === 'login' ? '登录' : '注册'}
           </button>
           <button
             type="button"
-            className="w-full text-xs text-cyan-600 dark:text-cyan-400"
+            className="w-full min-h-11 text-xs text-yunlan-stone"
             onClick={() => {
               setMode(mode === 'login' ? 'register' : 'login');
               setError('');

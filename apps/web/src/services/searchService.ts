@@ -12,12 +12,13 @@ import {
   ResourceCategory,
   BackendApiConfig 
 } from '../types';
-import { MOCK_RESOURCES } from './mockData';
 import { ALL_PROVIDER_IDS, DISK_PROVIDERS } from '../constants/providers';
 import {
   adaptGatewayResponse,
   emptySearchResponse,
   fetchGatewaySearch,
+  gatewayCacheKey,
+  type GatewaySearchResponse,
 } from './gatewayAdapter';
 import { STORAGE_KEYS } from '../utils/storage';
 
@@ -40,6 +41,31 @@ function isQuotaOrClientError(err: unknown): boolean {
 function isGatewayEndpoint(url: string): boolean {
   const u = url.trim();
   return u === '/api/search' || u.endsWith('/api/search') || u.includes('/api/search?');
+}
+
+/** 网关原始响应的会话级缓存：翻页、排序、分类等本地操作直接复用，不再请求（也不再扣积分） */
+const RAW_CACHE_TTL_MS = 10 * 60 * 1000;
+const RAW_CACHE_MAX = 20;
+const rawCache = new Map<string, { at: number; raw: GatewaySearchResponse }>();
+
+function rawCacheGet(key: string): GatewaySearchResponse | null {
+  const hit = rawCache.get(key);
+  if (!hit) return null;
+  if (Date.now() - hit.at > RAW_CACHE_TTL_MS) {
+    rawCache.delete(key);
+    return null;
+  }
+  return hit.raw;
+}
+
+function rawCacheSet(key: string, raw: GatewaySearchResponse) {
+  rawCache.delete(key);
+  rawCache.set(key, { at: Date.now(), raw });
+  while (rawCache.size > RAW_CACHE_MAX) {
+    const oldest = rawCache.keys().next().value;
+    if (oldest === undefined) break;
+    rawCache.delete(oldest);
+  }
 }
 
 export class SearchService {
@@ -86,12 +112,20 @@ export class SearchService {
     if (config.useCustomBackend && config.endpointUrl) {
       try {
         if (isGatewayEndpoint(config.endpointUrl)) {
+          const cacheKey = gatewayCacheKey(filter);
+          const cached = options?.forceRefresh ? null : rawCacheGet(cacheKey);
+          if (cached) {
+            // 本地重算：不请求网关、不扣积分；points 置空，界面保持上一次的额度显示
+            const adapted = adaptGatewayResponse(cached, filter, page, pageSize);
+            return { ...adapted, points: undefined, modeLabel: cached.modeLabel, demoMode: cached.demoMode };
+          }
           const timeout = options?.forceRefresh
             ? Math.max(config.timeoutMs, 60_000)
             : config.timeoutMs;
           const raw = await fetchGatewaySearch(config.endpointUrl, filter, timeout, {
             forceRefresh: options?.forceRefresh,
           });
+          rawCacheSet(cacheKey, raw);
           const adapted = adaptGatewayResponse(raw, filter, page, pageSize);
           return { ...adapted, points: raw.points, modeLabel: raw.modeLabel, demoMode: raw.demoMode };
         }
@@ -178,6 +212,8 @@ export class SearchService {
     const query = filter.query.trim().toLowerCase();
 
     // 1. 先从预置的精品资源库检索
+    // 模拟数据仅在无网关时使用，按需加载避免进入主包
+    const { MOCK_RESOURCES } = await import('./mockData');
     let pool: ResourceItem[] = [...MOCK_RESOURCES];
 
     // 如果用户输入了自定义关键词且预置库结果较少，动态生成高拟真度的网盘搜索结果

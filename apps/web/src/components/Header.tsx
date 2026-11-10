@@ -5,6 +5,7 @@
 
 import React from 'react';
 import { Compass, Database, Flame, Crown, Bookmark } from 'lucide-react';
+import { BrandLogo } from './BrandLogo';
 import { UserQuotaPanel } from './UserQuotaPanel';
 import { AuthUser, PointsStatus } from '../types/auth';
 
@@ -36,24 +37,18 @@ export const Header: React.FC<HeaderProps> = ({
   favoritesCount = 0,
 }) => {
   return (
-    <header className="sticky top-0 z-40 w-full backdrop-blur-md bg-yunlan-paper/90 border-b border-yunlan-hairline transition-colors">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-8">
+    <header className="sticky top-0 z-40 w-full backdrop-blur-md bg-yunlan-paper/90 border-b border-yunlan-hairline transition-colors yl-safe-top">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-14 md:h-16 flex items-center justify-between gap-3 md:gap-8">
         <button
           type="button"
           onClick={() => (onGoHome ? onGoHome() : setActiveTab('search'))}
-          className="flex items-center gap-2.5 text-left group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#c9a86c]/40 rounded-lg p-1"
+          className="flex items-center gap-2 md:gap-2.5 text-left group focus:outline-none focus-visible:ring-2 focus-visible:ring-yunlan-cinnabar/30 rounded-sm p-1 min-h-11"
           title="返回首页"
         >
-          <div className="w-8 h-8 rounded-[2px] border border-yunlan-cinnabar/80 bg-yunlan-surface flex items-center justify-center shadow-yunlan-card group-hover:shadow-ink-wash transition-shadow">
-            <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="11" cy="11" r="8" />
-              <path d="m21 21-4.3-4.3" />
-              <path d="M7 11c0-2.2 1.8-4 4-4" />
-            </svg>
-          </div>
+          <BrandLogo className="w-8 h-8 md:w-9 md:h-9 group-hover:shadow-ink-wash transition-shadow" />
           <div className="flex flex-col">
-            <span className="font-yunlan-serif text-base font-medium tracking-[0.15em] text-yunlan-ink whitespace-nowrap shrink-0 flex items-center gap-2">
-              云览 <span className="font-sans text-[10px] font-normal tracking-[0.22em] text-yunlan-muted">YUNLAN</span>
+            <span className="font-yunlan-serif text-[15px] md:text-base font-medium tracking-[0.15em] text-yunlan-ink whitespace-nowrap shrink-0 flex items-center gap-2">
+              云览 <span className="hidden sm:inline font-sans text-[10px] font-normal tracking-[0.22em] text-yunlan-muted">YUNLAN</span>
             </span>
           </div>
         </button>
@@ -107,17 +102,17 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
         </nav>
 
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-center gap-1 sm:gap-3 shrink-0">
           {onOpenFavorites && (
             <button
               type="button"
               onClick={onOpenFavorites}
-              className="relative p-2 text-yunlan-muted hover:text-[#4a4540] hover:bg-[#f3f0ea] rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#c9a86c]/40"
+              className="relative p-2.5 text-yunlan-muted hover:text-yunlan-ink hover:bg-yunlan-mist/80 rounded-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-yunlan-cinnabar/30 min-h-11 min-w-11 flex items-center justify-center"
               title="我的收藏"
             >
               <Bookmark className="w-4 h-4" />
               {favoritesCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 min-w-4 h-4 px-0.5 text-[10px] font-bold text-white bg-yunlan-cta rounded-sm flex items-center justify-center">
+                <span className="absolute top-1 right-1 min-w-4 h-4 px-0.5 text-[10px] font-bold text-white bg-yunlan-cta rounded-sm flex items-center justify-center">
                   {favoritesCount > 9 ? '9+' : favoritesCount}
                 </span>
               )}
@@ -125,16 +120,26 @@ export const Header: React.FC<HeaderProps> = ({
           )}
 
           {onOpenPaywall && !points?.subscription?.active && !points?.unlimitedSearch && (
-            <button
-              type="button"
-              onClick={onOpenPaywall}
-              className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-amber-950 bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-300 hover:to-orange-400 rounded-lg shadow-sm shadow-amber-500/25 transition-all whitespace-nowrap"
-              title="月付 3 元起 · 有效期内搜索不扣积分"
-            >
-              <Crown className="w-3.5 h-3.5" />
-              <span>开通 VIP</span>
-              <span className="text-[10px] font-semibold opacity-90">¥3起</span>
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={onOpenPaywall}
+                className="sm:hidden p-2.5 text-yunlan-cinnabar hover:bg-yunlan-mist/80 rounded-sm min-h-11 min-w-11 flex items-center justify-center"
+                title="开通 VIP · 月付 3 元起"
+              >
+                <Crown className="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                onClick={onOpenPaywall}
+                className="hidden sm:flex items-center gap-1.5 px-3 min-h-9 text-xs font-semibold text-white bg-yunlan-cinnabar hover:bg-[#a83d45] rounded-[4px] transition-colors whitespace-nowrap active:translate-y-px"
+                title="月付 3 元起 · 有效期内搜索不扣积分"
+              >
+                <Crown className="w-3.5 h-3.5" />
+                <span>开通 VIP</span>
+                <span className="text-[10px] font-semibold opacity-90">¥3起</span>
+              </button>
+            </>
           )}
 
           {onOpenAuth && onLogout && (

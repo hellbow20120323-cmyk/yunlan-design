@@ -49,14 +49,22 @@ ENGINE_URL=http://127.0.0.1:8888 npm run dev # 网关 :8787 + Web :5173
 | `DEMO_MODE` | `1` 强制演示数据 | `0` |
 | `ENABLE_EXT_SOURCES` | 混合盘系等额外源 | `1` |
 | `YUNLAN_DATA_DIR` | 运行数据目录 | `<仓库根>/.data` |
-| `AUTH_SECRET` | 登录会话签名密钥（生产必填） | 开发默认值 |
+| `HOST` | 网关监听地址（生产经 nginx 反代，勿直接暴露） | `127.0.0.1` |
+| `AUTH_SECRET` | 登录会话签名密钥，≥32 字符。**生产缺失将拒绝启动**；开发缺失则每次启动随机生成 | 无 |
+| `ADMIN_TOKEN` | 管理接口（`/api/config/weibo`、`/api/health` 详情）凭证，请求头 `Authorization: Bearer <token>`。未设置时生产环境一律拒绝 | 空 |
+| `TRUST_PROXY` | 反代层数，决定限流 / 额度使用的访客 IP。Cloudflare → nginx → 网关 为 `2` | 生产 `2`，开发 `loopback` |
+| `CORS_ORIGINS` | 额外允许的跨域来源（逗号分隔）。默认仅同源；开发环境放行 localhost | 空 |
+| `COOKIE_SECURE` | `1/0` 强制 Cookie 的 Secure 标记；默认按 `X-Forwarded-Proto` / `CF-Visitor` 自动判断 | 自动 |
+| `POINTS_ANON_IP_DAILY` | 匿名访客按 IP 的日积分上限（防清 Cookie 刷额度） | 单人额度 ×4 |
+| `SEARCH_CACHE_TTL_MS` | 网关搜索结果短缓存（相同关键词合并上游请求，`0` 关闭） | `90000` |
+| `BILLING_MOCK` | `1` 开启模拟支付（任何登录用户可免费开通会员，**切勿在生产开启**） | `0` |
 | `POINTS_SEARCH_COST` 等 | 积分规则，见 `apps/gateway/src/points/quota.js` | |
 
 引擎变量见 `engine/README.md`。
 
 ## API
 
-- `GET /api/health`：`liveReady`、`modeLabel`、`engineConfigured`、`engineOk`
+- `GET /api/health`：`liveReady`、`modeLabel`、`engineConfigured`、`engineOk`（引擎地址、插件、微博细节仅管理员可见）
 - `GET|POST /api/search`：`kw`、`cloud_types=quark,baidu,...`、`refresh=1`（跳过引擎缓存）
 - 前端深链：`/?q=三体`
 

@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { getSessionFromRequest } from "../auth/cookies.js";
+import { rateLimit } from "../security.js";
 import { PLAN_LIST } from "./plans.js";
 import {
   createOrder,
@@ -8,7 +9,8 @@ import {
   subscriptionSummary,
 } from "./subscription-store.js";
 
-const MOCK_ENABLED = ["1", "true", "yes"].includes(
+/** 模拟支付会白送会员：仅在显式开启时可用，生产环境启动时会打印醒目警告（见 index.js） */
+export const MOCK_ENABLED = ["1", "true", "yes"].includes(
   String(process.env.BILLING_MOCK || "").toLowerCase()
 );
 
@@ -52,7 +54,13 @@ export function createBillingRouter() {
     res.json({ ok: true, subscription: subscriptionSummary(session.uid) });
   });
 
-  router.post("/orders", (req, res) => {
+  const orderLimiter = rateLimit({
+    windowMs: 60 * 60_000,
+    max: 20,
+    message: "下单过于频繁，请稍后再试",
+  });
+
+  router.post("/orders", orderLimiter, (req, res) => {
     const session = getSessionFromRequest(req);
     if (!session) {
       return res.status(401).json({ ok: false, error: "请先登录后再购买会员" });
