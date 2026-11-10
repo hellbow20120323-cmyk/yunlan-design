@@ -1,0 +1,24 @@
+{
+  "name": "yunlan",
+  "private": true,
+  "version": "0.4.0",
+  "description": "云览 Yunlan — 网盘公开分享聚合搜索",
+  "scripts": {
+    "dev": "concurrently -n gateway,web -c cyan,magenta \"npm run dev -w @yunlan/gateway\" \"npm run dev -w @yunlan/web\"",
+    "dev:gateway": "npm run dev -w @yunlan/gateway",
+    "dev:web": "npm run dev -w @yunlan/web",
+    "build": "npm run build -w @yunlan/web",
+    "start": "npm run start -w @yunlan/gateway",
+    "test": "npm run test -w @yunlan/gateway",
+    "smoke": "npm run smoke -w @yunlan/gateway",
+    "engine:build": "cd engine && CGO_ENABLED=0 go build -o yunlan-engine .",
+    "engine:test": "cd engine && go test ./..."
+  },
+  "workspaces": [
+    "apps/gateway",
+    "apps/web"
+  ],
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

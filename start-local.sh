@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# panfind-stack 根目录一键入口
+# 云览本机一键入口
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")" && pwd)"
-exec "$ROOT/panfind/scripts/start-local.sh"
+exec "$ROOT/scripts/start-local.sh"

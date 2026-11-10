@@ -1,6 +1,0 @@
-{
-  "name": "海搜 Haisou - 聚合云盘资源搜索引擎",
-  "description": "专业高效的多网盘聚合搜索引擎，支持夸克网盘、阿里云盘、百度网盘、迅雷云盘、123云盘等主流平台，提供极速检索、文件预览、有效性检测与批量保存。",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}

@@ -1,0 +1,16 @@
+{
+  "name": "@yunlan/gateway",
+  "version": "0.4.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch src/index.js",
+    "start": "node src/index.js",
+    "smoke": "node src/smoke.js",
+    "test": "node --test src/**/*.test.js src/*.test.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2"
+  }
+}

@@ -4,9 +4,13 @@ dist/
 *.log
 .env
 .env.*
+!.env.example
 .DS_Store
-# pansou build artifacts / cache
-pansou/pansou
-pansou/pansou.exe
-pansou/cache/
+.data/
+**/weibo-config.json
+# engine build artifacts / cache
+engine/yunlan-engine
+engine/yunlan-engine.exe
+engine/cache/
+engine/logs/
 **/cache/

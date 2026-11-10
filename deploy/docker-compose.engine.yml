@@ -1,0 +1,21 @@
+# 云览引擎：仅监听本机 8888，由网关调用；CHANNELS / ENABLED_PLUGINS 默认值见 engine/Dockerfile
+services:
+  engine:
+    build:
+      context: ../engine
+    image: yunlan-engine:local
+    container_name: yunlan-engine
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8888:8888"
+    environment:
+      - TZ=Asia/Shanghai
+      - CACHE_PATH=/app/cache
+      - CACHE_ENABLED=true
+      - AUTH_ENABLED=false
+    volumes:
+      - yunlan-engine-cache:/app/cache
+
+volumes:
+  yunlan-engine-cache:
+    name: yunlan-engine-cache

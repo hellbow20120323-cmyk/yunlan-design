@@ -1,0 +1,21 @@
+[Unit]
+Description=Yunlan gateway (API + Web)
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/yunlan
+EnvironmentFile=-/home/ubuntu/yunlan/.data/yunlan.env
+Environment=PORT=8787
+Environment=ENGINE_URL=http://127.0.0.1:8888
+Environment=DEMO_MODE=0
+Environment=ENABLE_EXT_SOURCES=1
+Environment=NODE_ENV=production
+ExecStart=/usr/bin/npm run start -w @yunlan/gateway
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
