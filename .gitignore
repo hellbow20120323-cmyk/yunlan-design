@@ -13,4 +13,3 @@ engine/yunlan-engine
 engine/yunlan-engine.exe
 engine/cache/
 engine/logs/
-**/cache/

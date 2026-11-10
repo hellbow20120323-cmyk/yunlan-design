@@ -1,4 +1,5 @@
 # 云览引擎：仅监听本机 8888，由网关调用；CHANNELS / ENABLED_PLUGINS 默认值见 engine/Dockerfile
+name: yunlan
 services:
   engine:
     build:
