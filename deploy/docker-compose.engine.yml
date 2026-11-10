@@ -17,6 +17,7 @@ services:
     volumes:
       - yunlan-engine-cache:/app/cache
 
+# 首次部署前：docker volume create yunlan-engine-cache（deploy.sh 会自动执行）
 volumes:
   yunlan-engine-cache:
-    name: yunlan-engine-cache
+    external: true

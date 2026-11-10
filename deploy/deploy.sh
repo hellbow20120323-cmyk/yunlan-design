@@ -28,6 +28,7 @@ cd '${REMOTE_DIR}'
 mkdir -p .data
 npm install --omit=dev --no-audit --no-fund --silent
 if [[ "${WITH_ENGINE}" == "1" ]]; then
+  docker volume create yunlan-engine-cache >/dev/null
   docker compose -f deploy/docker-compose.engine.yml up -d --build
 fi
 sudo systemctl restart yunlan-gateway
