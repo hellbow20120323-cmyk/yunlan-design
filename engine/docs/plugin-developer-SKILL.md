@@ -1,5 +1,5 @@
 ---
-name: pansou-plugin-developer
+name: yunlan-engine-plugin-developer
 description: Build, extend, review, debug, or package 云览引擎 Go search plugins under plugin/*, including AsyncSearchPlugin implementations, BaseAsyncPlugin usage, Service-layer filter strategy, Web management routes, logged-in source plugins, magnet/torrent plugins, net-disk link extraction, work_title handling, and 云览引擎 plugin tests or documentation.
 ---
 
