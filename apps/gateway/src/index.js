@@ -15,7 +15,7 @@ import { hunhepanEndpoints } from "./sources/hunhepan.js";
 import { resolveWeiboConfig, weiboStatusSummary } from "./sources/weibo.js";
 import { createAuthRouter } from "./auth/routes.js";
 import { getOrCreateClientId, getSessionFromRequest } from "./auth/cookies.js";
-import { BILLING_NOTIFY_SECRET, createBillingRouter, MOCK_ENABLED } from "./billing/routes.js";
+import { BILLING_NOTIFY_SECRET, createBillingRouter, MOCK_ENABLED, ONLINE_PAY_DISABLED } from "./billing/routes.js";
 import { getAuthSecret } from "./auth/crypto.js";
 import { flushAllStores } from "./json-store.js";
 import {
@@ -58,6 +58,9 @@ if (IS_PROD && MOCK_ENABLED) {
 }
 if (IS_PROD && !BILLING_NOTIFY_SECRET && !MOCK_ENABLED) {
   console.warn("[yunlan][计费] 未设置 BILLING_NOTIFY_SECRET，支付回调将全部拒绝；会员只能人工开通。");
+}
+if (ONLINE_PAY_DISABLED) {
+  console.info("[yunlan][计费] BILLING_DISABLE_ONLINE_PAY 已开启，支付宝/微信支付入口已关闭，仅支持邮件申请。");
 }
 
 const app = express();

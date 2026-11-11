@@ -26,6 +26,14 @@ export const MOCK_ENABLED = ["1", "true", "yes"].includes(
   String(process.env.BILLING_MOCK || "").toLowerCase()
 );
 
+/**
+ * 强制关闭在线支付（支付宝/微信）。开启后所有会员申请必须走邮件联系开通，
+ * 即便服务器已配好商户密钥也不会展示/调用。临时切换时把它设为 1 即可。
+ */
+export const ONLINE_PAY_DISABLED = ["1", "true", "yes"].includes(
+  String(process.env.BILLING_DISABLE_ONLINE_PAY || "").toLowerCase()
+);
+
 /** 支付渠道回调密钥；未配置时回调接口一律 503 */
 export const BILLING_NOTIFY_SECRET = (process.env.BILLING_NOTIFY_SECRET || "").trim();
 const NOTIFY_TOLERANCE_MS = Number(process.env.BILLING_NOTIFY_TOLERANCE_MS || 5 * 60_000);
@@ -35,7 +43,7 @@ function payInstructions(order) {
   const contactEmail = (process.env.BILLING_CONTACT_EMAIL || "").trim();
   const hint =
     (process.env.BILLING_PAY_HINT || "").trim() ||
-    "请使用微信或支付宝完成转账，并在备注中填写订单号，我们将在 10 分钟内开通。";
+    "目前仅支持邮件申请开通。请按下方模板发送邮件给我们，收到后 1 个工作日内为你开通会员。";
   return {
     amountCny: order.amountCny,
     orderId: order.id,
@@ -43,18 +51,20 @@ function payInstructions(order) {
     hint,
     contact: contact || null,
     contactEmail: contactEmail || null,
-    methods: ["微信", "支付宝"],
+    methods: ONLINE_PAY_DISABLED ? ["邮件申请"] : ["微信", "支付宝"],
   };
 }
 
 /** 已配置的下单渠道；前端据此展示支付方式 */
 export function availableProviders() {
+  if (ONLINE_PAY_DISABLED) return { alipay: false, wechat: false };
   return { alipay: isAlipayEnabled(), wechat: isWechatEnabled() };
 }
 
 const PAYMENT_PROVIDERS = ["alipay", "wechat", "manual"];
 
 function resolveProvider(requested) {
+  if (ONLINE_PAY_DISABLED) return "manual";
   const p = String(requested || "").toLowerCase();
   if (PAYMENT_PROVIDERS.includes(p)) return p;
   const avail = availableProviders();
