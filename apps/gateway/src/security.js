@@ -99,6 +99,10 @@ export function sameOriginGuard(req, res, next) {
   if (req.path.startsWith("/api/billing/notify")) return next();
   const origin = req.headers.origin;
   if (!origin) return next();
+  // 邮件客户端内置浏览器提交表单时常带 Origin: null，这些路径以 URL 中一次性令牌 + Cookie 鉴权
+  if (origin === "null" && (req.path.startsWith("/relay/") || req.path.startsWith("/unsubscribe/"))) {
+    return next();
+  }
   if (isAllowedOrigin(origin)) return next();
   try {
     const host = String(req.headers.host || "").toLowerCase();

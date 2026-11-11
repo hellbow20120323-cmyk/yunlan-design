@@ -244,6 +244,16 @@ export const ADMIN_JS = `
     el.textContent = text || '';
     el.className = 'msg' + (err ? ' err' : '');
   }
+  function mailReasonText(reason) {
+    var map = {
+      already_reviewed: '该申请此前已审核，未重复发送',
+      opt_out: '该邮箱已退订，按合规要求不再发送',
+      mail_not_configured: '服务端未配置发件邮箱',
+      send_failed: '发信失败，请查看服务端日志',
+      no_review: '缺少审核记录'
+    };
+    return map[reason] || reason || '未知原因';
+  }
 
   function loadStats() {
     api('/api/support/admin/overview').then(function (d) {
@@ -273,7 +283,7 @@ export const ADMIN_JS = `
     state.selected = id;
     $('detail').classList.remove('hidden');
     $('detail-body').innerHTML = '<p class="meta">加载中…</p>';
-    api('/api/support/admin/applications/' + encodeURIComponent(id)).then(function (d) {
+    return api('/api/support/admin/applications/' + encodeURIComponent(id)).then(function (d) {
       var a = d.application;
       var reviews = (d.reviews || []).map(function (r) {
         return '<div class="kv">' + esc(fmt(r.createdAt)) + ' · ' + (r.action === 'approve' ? '通过' : '驳回') + (r.note ? ' · ' + esc(r.note) : '') + '</div>';
@@ -286,7 +296,7 @@ export const ADMIN_JS = `
         '<div class="kv"><strong>邮箱</strong>：' + esc(a.email) + '</div>' +
         '<div class="kv"><strong>口令</strong>：<span class="code">' + esc(a.code) + '</span></div>' +
         '<div class="kv"><strong>状态</strong>：' + statusBadge(a.status) + '</div>' +
-        '<div class="kv"><strong>提交</strong>：' + esc(fmt(a.createdAt)) + ' · 邮件许可：' + (a.optInEmail ? '是' : '否') + '</div>' +
+        '<div class="kv"><strong>提交</strong>：' + esc(fmt(a.createdAt)) + ' · 邮件许可：' + (a.optInEmail ? '是' : '否') + (a.unsubscribedAt ? '（已于 ' + esc(fmt(a.unsubscribedAt)) + ' 退订）' : '') + '</div>' +
         '<div class="kv"><strong>发信</strong>：' + esc(a.mailStatus || '-') + (a.mailError ? ' · ' + esc(a.mailError) : '') + '</div>' +
         '<h2>审核记录</h2>' + reviews +
         '<h2>上传凭证</h2>' + uploads +
@@ -328,21 +338,42 @@ export const ADMIN_JS = `
       if (!confirm('驳回时未填写备注，仍要提交吗？')) return;
     }
     if (action === 'approve' && !confirm('确认人工审核通过？')) return;
+    var approveBtn = $('approve-btn');
+    var rejectBtn = $('reject-btn');
+    function unlock() {
+      if (approveBtn) approveBtn.disabled = false;
+      if (rejectBtn) rejectBtn.disabled = false;
+    }
+    if (approveBtn) approveBtn.disabled = true;
+    if (rejectBtn) rejectBtn.disabled = true;
     api('/api/support/admin/applications/' + encodeURIComponent(state.selected) + '/review', {
       method: 'POST',
       body: { action: action, note: note, grantPlanId: grantPlanId }
     }).then(function (d) {
-      showMsg('review-msg', d.message || '已保存');
+      var msg = d.message || '已保存';
+      var err = false;
+      if (d.mail && d.mail.sent === false) {
+        err = true;
+        msg = '审核已保存；结果邮件未发送（' + mailReasonText(d.mail.reason) + '）';
+      }
       loadApps(); loadStats(); loadCandidates();
-      if (d.mail && d.mail.sent === false) showMsg('review-msg', '审核已保存；结果邮件未发送（' + d.mail.reason + '）', true);
-    }).catch(function (e) { showMsg('review-msg', e.message, true); });
+      var refresh = state.selected ? selectApp(state.selected) : null;
+      if (refresh && refresh.then) {
+        refresh.then(function () { showMsg('review-msg', msg, err); }).catch(unlock);
+      } else {
+        showMsg('review-msg', msg, err);
+      }
+    }).catch(function (e) {
+      unlock();
+      showMsg('review-msg', e.message, true);
+    });
   }
 
   function resendMail() {
     if (!state.selected) return;
     api('/api/support/admin/applications/' + encodeURIComponent(state.selected) + '/resend', { method: 'POST' })
       .then(function (d) {
-        showMsg('review-msg', d.mail && d.mail.sent ? '通知邮件已发送' : '未发送：' + ((d.mail && d.mail.reason) || '未知原因'), !(d.mail && d.mail.sent));
+        showMsg('review-msg', d.mail && d.mail.sent ? '通知邮件已发送' : '未发送：' + mailReasonText(d.mail && d.mail.reason), !(d.mail && d.mail.sent));
         loadStats();
       })
       .catch(function (e) { showMsg('review-msg', e.message, true); });
