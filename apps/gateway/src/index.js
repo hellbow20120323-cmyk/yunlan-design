@@ -15,7 +15,7 @@ import { hunhepanEndpoints } from "./sources/hunhepan.js";
 import { resolveWeiboConfig, weiboStatusSummary } from "./sources/weibo.js";
 import { createAuthRouter } from "./auth/routes.js";
 import { getOrCreateClientId, getSessionFromRequest } from "./auth/cookies.js";
-import { createBillingRouter, MOCK_ENABLED } from "./billing/routes.js";
+import { BILLING_NOTIFY_SECRET, createBillingRouter, MOCK_ENABLED } from "./billing/routes.js";
 import { getAuthSecret } from "./auth/crypto.js";
 import { flushAllStores } from "./json-store.js";
 import {
@@ -28,7 +28,11 @@ import {
   sameOriginGuard,
   securityHeaders,
 } from "./security.js";
-import { consumeSearchPoint, getQuotaStatus } from "./points/quota.js";
+import {
+  consumeSearchPointWithReceipt,
+  getQuotaStatus,
+  refundSearchPoint,
+} from "./points/quota.js";
 import { getVersionInfo, getVersionSummary } from "./version.js";
 import { resolveShareMetaBatch } from "./share-meta.js";
 import { getSubhdHotCached, scheduleSubhdHotDaily } from "./sources/subhd-hot.js";
@@ -52,6 +56,9 @@ getAuthSecret();
 if (IS_PROD && MOCK_ENABLED) {
   console.warn("[yunlan][安全警告] 生产环境开启了 BILLING_MOCK，任何登录用户都可免费开通会员！");
 }
+if (IS_PROD && !BILLING_NOTIFY_SECRET && !MOCK_ENABLED) {
+  console.warn("[yunlan][计费] 未设置 BILLING_NOTIFY_SECRET，支付回调将全部拒绝；会员只能人工开通。");
+}
 
 const app = express();
 app.disable("x-powered-by");
@@ -68,7 +75,15 @@ app.disable("x-powered-by");
 }
 app.use(securityHeaders);
 app.use(cors(corsOptions));
-app.use(express.json({ limit: "64kb" }));
+app.use(
+  express.json({
+    limit: "64kb",
+    // 支付回调需对原始字节验签，保留 Buffer（不参与其他业务逻辑）
+    verify(req, _res, buf) {
+      req.rawBody = buf;
+    },
+  })
+);
 app.use(sameOriginGuard);
 
 app.use("/api/auth", createAuthRouter());
@@ -336,9 +351,9 @@ async function handleSearch(req, res) {
 
   const clientId = getOrCreateClientId(req, res);
   const session = getSessionFromRequest(req);
-  let pointsAfter;
+  let consumed;
   try {
-    pointsAfter = consumeSearchPoint({ userId: session?.uid, clientId, ip: clientIp(req) });
+    consumed = consumeSearchPointWithReceipt({ userId: session?.uid, clientId, ip: clientIp(req) });
   } catch (err) {
     if (err?.code === "INSUFFICIENT_POINTS") {
       return res.status(402).json({
@@ -350,6 +365,18 @@ async function handleSearch(req, res) {
     }
     throw err;
   }
+  const pointsAfter = consumed.points;
+  // 同一次搜索只允许返还一次；失败或演示兜底时把积分原路退回
+  let refunded = false;
+  const refundPoint = () => {
+    if (refunded) return;
+    refunded = true;
+    try {
+      refundSearchPoint(consumed.receipt);
+    } catch (err) {
+      console.warn("[points] 返还失败:", err instanceof Error ? err.message : err);
+    }
+  };
 
   const cloudTypes = normalizeCloudTypes(body.cloud_types || body.cloudTypes);
   // 客户端开关只能「关闭」服务端已启用的源，不能越权开启服务端关闭的源
@@ -362,15 +389,24 @@ async function handleSearch(req, res) {
     ENGINE_FORCE_REFRESH ||
     ["1", "true", "yes"].includes(String(body.refresh || body.force_refresh || "").toLowerCase());
 
-  const { results, demoMode, modeLabel, sourceStats, queryHint } = await searchMulti({
-    kw,
-    cloudTypes,
-    engineUrl: ENGINE_URL,
-    forceDemo: FORCE_DEMO,
-    enableExt,
-    enableWeibo,
-    forceRefresh,
-  });
+  let outcome;
+  try {
+    outcome = await searchMulti({
+      kw,
+      cloudTypes,
+      engineUrl: ENGINE_URL,
+      forceDemo: FORCE_DEMO,
+      enableExt,
+      enableWeibo,
+      forceRefresh,
+    });
+  } catch (err) {
+    refundPoint();
+    throw err;
+  }
+  const { results, demoMode, modeLabel, sourceStats, queryHint } = outcome;
+  // 所有真实上游都不可用、只能返回演示数据时，不应为这次搜索收费
+  if (demoMode) refundPoint();
 
   res.json({
     query: kw,
@@ -382,7 +418,7 @@ async function handleSearch(req, res) {
     cloudTypes,
     tookMs: Date.now() - started,
     sourceStats,
-    points: pointsAfter,
+    points: refunded ? getQuotaStatus({ userId: session?.uid, clientId }) : pointsAfter,
   });
 }
 

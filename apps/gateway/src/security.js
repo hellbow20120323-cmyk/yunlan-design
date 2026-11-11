@@ -95,6 +95,8 @@ export const corsOptions = {
  */
 export function sameOriginGuard(req, res, next) {
   if (req.method === "GET" || req.method === "HEAD" || req.method === "OPTIONS") return next();
+  // 支付回调是服务端到服务端调用，靠 HMAC 验签鉴权，与浏览器 CSRF 无关
+  if (req.path.startsWith("/api/billing/notify")) return next();
   const origin = req.headers.origin;
   if (!origin) return next();
   if (isAllowedOrigin(origin)) return next();

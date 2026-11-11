@@ -164,12 +164,19 @@ function insufficient(loggedIn) {
 }
 
 /**
- * Consume points for one search. Throws Error with code INSUFFICIENT_POINTS
+ * 扣减一次搜索积分，并返回可用于返还的凭据。
+ * receipt 记录积分来自哪个桶，refundSearchPoint 按原路返还。
  * @param {{ userId?: string, clientId?: string, ip?: string }} who
+ * @returns {{ points: object, receipt: object }}
  */
-export function consumeSearchPoint({ userId, clientId, ip }) {
+export function consumeSearchPointWithReceipt({ userId, clientId, ip }) {
+  const done = (receipt) => ({
+    points: getQuotaStatus({ userId, clientId }),
+    receipt,
+  });
+
   if (userId && isSubscriptionActive(userId)) {
-    return getQuotaStatus({ userId, clientId });
+    return done({ vip: true });
   }
 
   const data = readUsage();
@@ -183,7 +190,7 @@ export function consumeSearchPoint({ userId, clientId, ip }) {
     if (gifted < SIGNUP_GIFT) {
       data.signupGifts[userId] = gifted + cost;
       store.write();
-      return getQuotaStatus({ userId, clientId });
+      return done({ userId, gift: cost });
     }
   }
 
@@ -192,7 +199,7 @@ export function consumeSearchPoint({ userId, clientId, ip }) {
     if (adminBonus >= cost) {
       data.bonusBalance[userId] = adminBonus - cost;
       store.write();
-      return getQuotaStatus({ userId, clientId });
+      return done({ userId, bonus: cost });
     }
     if (adminBonus > 0) {
       const fromDaily = cost - adminBonus;
@@ -202,7 +209,7 @@ export function consumeSearchPoint({ userId, clientId, ip }) {
       data.bonusBalance[userId] = 0;
       touchBucket(data, key).used += fromDaily;
       store.write();
-      return getQuotaStatus({ userId, clientId });
+      return done({ userId, bonus: adminBonus, daily: fromDaily, key });
     }
   }
 
@@ -219,7 +226,52 @@ export function consumeSearchPoint({ userId, clientId, ip }) {
   touchBucket(data, key).used += cost;
   if (ipRec) touchBucket(data, ipBucketKey(ip)).used += cost;
   store.write();
-  return getQuotaStatus({ userId, clientId });
+  return done({ daily: cost, key, ipKey: ipRec ? ipBucketKey(ip) : undefined });
+}
+
+/**
+ * Consume points for one search. Throws Error with code INSUFFICIENT_POINTS
+ * @param {{ userId?: string, clientId?: string, ip?: string }} who
+ */
+export function consumeSearchPoint(who) {
+  return consumeSearchPointWithReceipt(who).points;
+}
+
+/**
+ * 按扣减凭据原路返还一次搜索积分。调用方必须保证同一凭据只返还一次。
+ * 跨日（搜索期间过了零点）的日额度桶已被清理，无法返还，忽略即可。
+ * @param {{ vip?: true, userId?: string, gift?: number, bonus?: number, daily?: number, key?: string, ipKey?: string }} receipt
+ */
+export function refundSearchPoint(receipt) {
+  if (!receipt || receipt.vip) return;
+  const data = readUsage();
+  const day = todayKey();
+  let changed = false;
+
+  if (receipt.userId) {
+    if (receipt.gift > 0) {
+      const gifted = Number(data.signupGifts?.[receipt.userId] || 0);
+      data.signupGifts[receipt.userId] = Math.max(0, gifted - receipt.gift);
+      changed = true;
+    }
+    if (receipt.bonus > 0) {
+      data.bonusBalance[receipt.userId] = getAdminBonus(data, receipt.userId) + receipt.bonus;
+      changed = true;
+    }
+  }
+
+  const refundBucket = (key, amount) => {
+    const rec = data.buckets[key];
+    if (!rec || rec.date !== day) return;
+    rec.used = Math.max(0, rec.used - amount);
+    changed = true;
+  };
+  if (receipt.daily > 0) {
+    if (receipt.key) refundBucket(receipt.key, receipt.daily);
+    if (receipt.ipKey) refundBucket(receipt.ipKey, receipt.daily);
+  }
+
+  if (changed) store.write();
 }
 
 export function grantSignupGift(userId) {

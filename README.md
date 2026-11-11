@@ -59,6 +59,22 @@ ENGINE_URL=http://127.0.0.1:8888 npm run dev # 网关 :8787 + Web :5173
 | `SEARCH_CACHE_TTL_MS` | 网关搜索结果短缓存（相同关键词合并上游请求，`0` 关闭） | `90000` |
 | `HOT_REFRESH_HOUR` / `HOT_REFRESH_MINUTE` | 首页热门影视（含豆瓣热播剧集）每日刷新时刻，时区同 `POINTS_TZ` | `9` / `0` |
 | `BILLING_MOCK` | `1` 开启模拟支付（任何登录用户可免费开通会员，**切勿在生产开启**） | `0` |
+| `BILLING_NOTIFY_SECRET` | 支付回调 HMAC 密钥；设置后启用 `POST /api/billing/notify`，未设置时回调一律 503 | 空 |
+| `BILLING_NOTIFY_TOLERANCE_MS` | 回调时间戳容忍窗口（防止重放） | `300000` |
+| `BILLING_CONTACT` | 人工开通联系方式（微信号 / QQ 等，展示在付款页） | 空 |
+| `BILLING_CONTACT_EMAIL` | 人工开通申请邮箱；配置后前端显示「发送开通申请邮件」（mailto 自动带订单号） | 空 |
+| `BILLING_PAY_HINT` | 人工转账提示文案 | 内置文案 |
+| `ALIPAY_APP_ID` | 支付宝应用 App ID；与商户私钥同时配置后启用电脑网站支付 | 空 |
+| `ALIPAY_PRIVATE_KEY_PATH` / `ALIPAY_PRIVATE_KEY` | 应用私钥（PKCS8 PEM）文件路径 / 内联内容（`\n` 代表换行） | 空 |
+| `ALIPAY_PUBLIC_KEY_PATH` / `ALIPAY_PUBLIC_KEY` | 支付宝公钥，用于异步通知验签 | 空 |
+| `ALIPAY_NOTIFY_URL` | 支付宝异步通知地址，须公网 HTTPS，如 `https://<域名>/api/billing/notify/alipay` | 空 |
+| `ALIPAY_RETURN_URL` | 支付完成后的同步跳回地址 | 空 |
+| `ALIPAY_GATEWAY` | 支付宝网关；沙箱环境可改 | 正式网关 |
+| `WECHAT_APP_ID` / `WECHAT_MCH_ID` / `WECHAT_MCH_SERIAL_NO` | 微信支付 AppID、商户号、商户 API 证书序列号 | 空 |
+| `WECHAT_PRIVATE_KEY_PATH` / `WECHAT_PRIVATE_KEY` | 商户 API 私钥（`apiclient_key.pem`） | 空 |
+| `WECHAT_API_V3_KEY` | APIv3 密钥（32 字节，用于解密支付通知） | 空 |
+| `WECHAT_PLATFORM_CERT_PATH` / `WECHAT_PLATFORM_PUBLIC_KEY` | 微信支付平台证书或公钥，用于通知验签 | 空 |
+| `WECHAT_NOTIFY_URL` | Native 支付回调地址，须公网 HTTPS，如 `https://<域名>/api/billing/notify/wechat` | 空 |
 | `PUBLIC_ORIGIN` | 站点正式地址（canonical / sitemap / OG 图） | `https://panso.hellbow.xyz` |
 | `POINTS_SEARCH_COST` 等 | 积分规则，见 `apps/gateway/src/points/quota.js` | |
 
@@ -67,7 +83,13 @@ ENGINE_URL=http://127.0.0.1:8888 npm run dev # 网关 :8787 + Web :5173
 ## API
 
 - `GET /api/health`：`liveReady`、`modeLabel`、`engineConfigured`、`engineOk`（引擎地址、插件、微博细节仅管理员可见）
-- `GET|POST /api/search`：`kw`、`cloud_types=quark,baidu,...`、`refresh=1`（跳过引擎缓存）
+- `GET|POST /api/search`：`kw`、`cloud_types=quark,baidu,...`、`refresh=1`（跳过引擎缓存）。上游异常或只能返回演示数据时，本次搜索积分自动返还
+- `POST /api/billing/notify`：渠道无关支付回调。请求头 `X-Yunlan-Timestamp`（毫秒/秒）、`X-Yunlan-Nonce`、`X-Yunlan-Signature`（hex HMAC-SHA256，签名原文为 `timestamp.nonce.` 拼接原始请求体），Body `{ "orderId": "...", "amountCny": 3, "status": "paid", "channelTxnId": "..." }`；校验金额与订单状态，按订单幂等开通，重复通知不会重复延长会员
+- `POST /api/billing/orders`：Body `{ "planId": "month", "provider": "alipay" | "wechat" | "manual" }`；支付宝返回 `payUrl`（电脑网站收银台），微信返回 `qrCode`（Native `code_url`），未配置渠道时走人工流程（返回 `payment.contactEmail` 等，订单有效期 7 天）
+- `GET /api/billing/admin/orders?status=pending|paid|all&limit=50`：管理端订单列表，需 `ADMIN_TOKEN`
+- `POST /api/billing/admin/orders/:orderId/grant`：管理员线下核款后手动开通会员，Body 可选 `{ "note": "微信转账单号" }`；允许补开已过期订单，重复调用幂等。示例：`curl -X POST -H "Authorization: Bearer $ADMIN_TOKEN" -H "Content-Type: application/json" -d '{"note":"微信转账 123"}' https://<域名>/api/billing/admin/orders/ord_xxx/grant`
+- `POST /api/billing/notify/alipay`：支付宝异步通知（`application/x-www-form-urlencoded` + RSA2 验签），成功返回纯文本 `success`
+- `POST /api/billing/notify/wechat`：微信支付 APIv3 通知（平台证书验签 + AES-256-GCM 解密），成功返回 `{ "code": "SUCCESS" }`
 - 前端深链：`/?q=三体`（搜索结果页标题为「关键词 - N条网盘资源 | 云览」；爬虫访问时服务端预渲染列表，不扣积分）
 - `GET /sitemap.xml`：首页 + 热门电影/剧集关键词
 - `GET /robots.txt`

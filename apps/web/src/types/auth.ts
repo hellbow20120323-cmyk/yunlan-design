@@ -29,6 +29,11 @@ export interface BillingPlan {
   badge: string;
 }
 
+export interface BillingProviders {
+  alipay: boolean;
+  wechat: boolean;
+}
+
 export interface AuthUser {
   id: string;
   email: string;
