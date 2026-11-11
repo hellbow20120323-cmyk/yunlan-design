@@ -54,6 +54,12 @@ export const Footer: React.FC<FooterProps> = ({ onNavigateToTab }) => {
             >
               使用指南
             </button>
+            <a
+              href="/support"
+              className="hover:text-[#9a7b4f] transition-colors"
+            >
+              支持与申请
+            </a>
           </div>
         </div>
 

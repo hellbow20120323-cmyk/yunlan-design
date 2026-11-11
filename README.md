@@ -76,6 +76,13 @@ ENGINE_URL=http://127.0.0.1:8888 npm run dev # 网关 :8787 + Web :5173
 | `WECHAT_PLATFORM_CERT_PATH` / `WECHAT_PLATFORM_PUBLIC_KEY` | 微信支付平台证书或公钥，用于通知验签 | 空 |
 | `WECHAT_NOTIFY_URL` | Native 支付回调地址，须公网 HTTPS，如 `https://<域名>/api/billing/notify/wechat` | 空 |
 | `PUBLIC_ORIGIN` | 站点正式地址（canonical / sitemap / OG 图） | `https://panso.hellbow.xyz` |
+| `ZEPTOMAIL_SMTP_HOST` / `ZEPTOMAIL_SMTP_PORT` | 国内版 ZeptoMail SMTP 主机与端口（465 SSL / 587 STARTTLS） | `smtp.zeptomail.com.cn` / `465` |
+| `ZEPTOMAIL_SMTP_USER` / `ZEPTOMAIL_SMTP_PASS` | SMTP 用户名与 API 密钥；未配置密钥时申请可入库但不会发信 | `emailapikey` / 空 |
+| `MAIL_FROM` / `MAIL_FROM_NAME` | 发件地址与显示名 | `noreply@hellbow.xyz` / `云览 Yunlan` |
+| `MAIL_UNSUBSCRIBE_MAILTO` | `List-Unsubscribe` 的 mailto 退订地址（可选，URL 退订始终存在） | 空 |
+| `ZEPTOMAIL_INTL_SMTP_*` | 国际版 ZeptoMail 配置；海外邮箱（gmail / outlook 等）优先路由，未配置自动回退国内版 | 空 |
+| `SUPPORT_LINK_TTL_MS` | 一次性中转链接有效期 | `86400000`（24 小时） |
+| `SUPPORT_MATCH_WINDOW_SEC` | 账单时间与申请时间的匹配窗口 | `60` |
 | `POINTS_SEARCH_COST` 等 | 积分规则，见 `apps/gateway/src/points/quota.js` | |
 
 引擎变量见 `engine/README.md`。
@@ -90,6 +97,16 @@ ENGINE_URL=http://127.0.0.1:8888 npm run dev # 网关 :8787 + Web :5173
 - `POST /api/billing/admin/orders/:orderId/grant`：管理员线下核款后手动开通会员，Body 可选 `{ "note": "微信转账单号" }`；允许补开已过期订单，重复调用幂等。示例：`curl -X POST -H "Authorization: Bearer $ADMIN_TOKEN" -H "Content-Type: application/json" -d '{"note":"微信转账 123"}' https://<域名>/api/billing/admin/orders/ord_xxx/grant`
 - `POST /api/billing/notify/alipay`：支付宝异步通知（`application/x-www-form-urlencoded` + RSA2 验签），成功返回纯文本 `success`
 - `POST /api/billing/notify/wechat`：微信支付 APIv3 通知（平台证书验签 + AES-256-GCM 解密），成功返回 `{ "code": "SUCCESS" }`
+- `POST /api/support/applications`：Body `{ "email": "...", "optInEmail": true }`。同一邮箱幂等；口令与一次性链接只通过邮件下发，接口不返回口令。未勾选邮件许可时不调用任何邮件接口
+- `GET /api/support/status`：凭中转页写入的 `yl_app` Cookie 读取本申请状态、口令与已上传凭证
+- `POST /api/support/uploads`：补充账单截图（`Content-Type: image/png|jpeg|webp`，≤2MB）或仅 JSON `{ "tradeNo": "..." }`；需 `yl_app` Cookie
+- `GET|POST /api/support/admin/applications`、`/admin/applications/:id`：管理端申请列表与详情，需 `ADMIN_TOKEN`
+- `POST /api/support/admin/applications/:id/review`：人工终审，Body `{ "action": "approve"|"reject", "note": "...", "grantPlanId": "month"? }`；`grantPlanId` 仅对同邮箱已注册用户开通权限，不传则只改申请状态
+- `POST /api/support/admin/applications/:id/resend`：重发当前状态通知（受 opt-in 与退订状态约束）
+- `POST /api/support/admin/donations/import`：人工导入账单，Body `{ "csv": "到账时间,备注,金额,交易单号" }` 或 `{ "records": [...] }`。只生成加权候选，不修改申请状态
+- `GET /api/support/admin/candidates?reviewed=0`：候选列表；`POST /api/support/admin/candidates/:id/reviewed` 标记已处理
+- `POST /api/support/admin/qr`：上传赞赏码（`image/png|jpeg|webp`），仅用于中转页之后的「自愿支持」页面
+- 页面：`/support` 申请表单、`/relay/:token` 一次性中转页（24h 且单次访问）、`/relay/status` 申请状态页、`/support/admin` 人工审核后台
 - 前端深链：`/?q=三体`（搜索结果页标题为「关键词 - N条网盘资源 | 云览」；爬虫访问时服务端预渲染列表，不扣积分）
 - `GET /sitemap.xml`：首页 + 热门电影/剧集关键词
 - `GET /robots.txt`

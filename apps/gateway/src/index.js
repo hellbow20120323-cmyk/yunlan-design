@@ -16,6 +16,8 @@ import { resolveWeiboConfig, weiboStatusSummary } from "./sources/weibo.js";
 import { createAuthRouter } from "./auth/routes.js";
 import { getOrCreateClientId, getSessionFromRequest } from "./auth/cookies.js";
 import { BILLING_NOTIFY_SECRET, createBillingRouter, MOCK_ENABLED, ONLINE_PAY_DISABLED } from "./billing/routes.js";
+import { createSupportRouter, registerSupportPages } from "./support/routes.js";
+import { isMailConfigured } from "./support/mailer.js";
 import { getAuthSecret } from "./auth/crypto.js";
 import { flushAllStores } from "./json-store.js";
 import {
@@ -62,6 +64,9 @@ if (IS_PROD && !BILLING_NOTIFY_SECRET && !MOCK_ENABLED) {
 if (ONLINE_PAY_DISABLED) {
   console.info("[yunlan][计费] BILLING_DISABLE_ONLINE_PAY 已开启，支付宝/微信支付入口已关闭，仅支持邮件申请。");
 }
+if (!isMailConfigured()) {
+  console.warn("[yunlan][支持申请] 未配置 ZEPTOMAIL_SMTP_PASS，申请可入库但不会发送通知邮件。");
+}
 
 const app = express();
 app.disable("x-powered-by");
@@ -91,6 +96,8 @@ app.use(sameOriginGuard);
 
 app.use("/api/auth", createAuthRouter());
 app.use("/api/billing", createBillingRouter());
+app.use("/api/support", createSupportRouter());
+registerSupportPages(app);
 
 app.get("/api/points", (req, res) => {
   const clientId = getOrCreateClientId(req, res);
