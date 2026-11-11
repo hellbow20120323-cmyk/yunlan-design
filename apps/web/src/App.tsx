@@ -56,6 +56,14 @@ export default function App() {
     });
   }, [trendingHot.data]);
 
+  const suggestKeywords = useMemo(() => {
+    const movies = trendingHot.data?.movies ?? [];
+    const tv = trendingHot.data?.tv ?? [];
+    return [...movies, ...tv]
+      .flatMap((item) => [item.keyword, item.title])
+      .filter((text): text is string => Boolean(text));
+  }, [trendingHot.data]);
+
   /** 底部海报墙：随机打乱后两边取相同条数，避免剧集明显少于电影 */
   const { bottomMoviesShuffled, bottomTvShuffled } = useMemo(() => {
     const movies = shuffleCopy(trendingHot.data?.movies ?? []);
@@ -79,6 +87,7 @@ export default function App() {
   // Search Engine state hook
   const {
     filter,
+    hasSearched,
     setQuery,
     handleSearchSubmit,
     handleForceRefreshSearch,
@@ -110,10 +119,13 @@ export default function App() {
     setIsPaywallOpen(true);
   });
 
-  usePageSeo(filter.query, response && filter.query.trim() ? response.total : null);
+  usePageSeo(hasSearched ? filter.query : '', response && hasSearched ? response.total : null);
 
   // Modals & Drawers state
   const [detailItem, setDetailItem] = useState<ResourceItem | null>(null);
+  const resolvedDetail = detailItem
+    ? response?.items.find((entry) => entry.id === detailItem.id) ?? detailItem
+    : null;
   const [isFavoritesOpen, setIsFavoritesOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -170,18 +182,17 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  /** 底部热门电影/剧集海报：触发检索并回到顶部搜索框 */
-  const pickTrendPosterAndSearch = useCallback(
+  /** 影片海报：只把片名填进搜索框，等用户点「搜索」再检索 */
+  const fillSearchFromPoster = useCallback(
     (keyword: string) => {
       setQuery(keyword);
-      handleSearchSubmit(keyword);
       setActiveTab('search');
       window.scrollTo({ top: 0, behavior: 'smooth' });
       window.setTimeout(() => {
         searchInputRef.current?.focus({ preventScroll: true });
       }, 200);
     },
-    [setQuery, handleSearchSubmit]
+    [setQuery]
   );
 
   const handleGoHome = () => {
@@ -235,7 +246,7 @@ export default function App() {
           <div className="py-2">
             <div
               className={
-                !filter.query.trim()
+                !hasSearched
                   ? 'flex flex-col lg:flex-row lg:items-start gap-6 lg:gap-10 xl:gap-12'
                   : ''
               }
@@ -246,8 +257,9 @@ export default function App() {
               query={filter.query}
               onQueryChange={setQuery}
               onSearch={handleSearchSubmit}
-              compact={Boolean(filter.query.trim())}
+              compact={hasSearched}
               loading={loading}
+              suggestKeywords={suggestKeywords}
               history={history}
               onSelectHistory={(q) => {
                 setQuery(q);
@@ -258,7 +270,7 @@ export default function App() {
               inputRef={searchInputRef}
             />
 
-            {!filter.query.trim() && (
+            {!hasSearched && (
               <HomeKeywordSidebar
                 className="mt-3 lg:hidden"
                 onPickKeyword={(keyword, category) => {
@@ -269,7 +281,7 @@ export default function App() {
               />
             )}
 
-            {!filter.query.trim() && (
+            {!hasSearched && (
             <HotTrendGrid
               className="mt-6 sm:mt-8"
               singleRow
@@ -277,14 +289,11 @@ export default function App() {
               loading={trendingHot.loading}
               maxItems={10}
               title="热门精选"
-              onPickKeyword={(keyword) => {
-                setQuery(keyword);
-                handleSearchSubmit(keyword);
-              }}
+              onPickKeyword={fillSearchFromPoster}
             />
             )}
 
-            {filter.query.trim() && (
+            {hasSearched && (
             <div className="mt-4 space-y-3">
               <SearchRefinePanel
                 selectedProviders={filter.selectedProviders}
@@ -329,8 +338,8 @@ export default function App() {
             </div>
             )}
 
-            {/* Results Section — 无搜索词时不占位，避免中间大块空白 */}
-            {filter.query.trim() ? (
+            {/* Results Section — 未提交检索时不占位，避免输入时首页跳动 */}
+            {hasSearched ? (
             <div className="space-y-3 mt-3">
               
               {/* Error state */}
@@ -435,7 +444,7 @@ export default function App() {
             </div>
             ) : null}
 
-            {!filter.query.trim() && (trendingHot.loading ||
+            {!hasSearched && (trendingHot.loading ||
               (trendingHot.data?.movies?.length ?? 0) > 0 ||
               (trendingHot.data?.tv?.length ?? 0) > 0) && (
               <section className="mt-10 sm:mt-12 pt-8 pb-6 border-t border-yunlan-hairline w-full max-w-[1100px] mx-auto">
@@ -450,7 +459,7 @@ export default function App() {
                     loading={trendingHot.loading}
                     maxItems={80}
                     title="热门电影"
-                    onPickKeyword={pickTrendPosterAndSearch}
+                    onPickKeyword={fillSearchFromPoster}
                   />
                   <HotTrendGrid
                     embedded
@@ -463,7 +472,7 @@ export default function App() {
                     loading={trendingHot.loading}
                     maxItems={80}
                     title="热门剧集"
-                    onPickKeyword={pickTrendPosterAndSearch}
+                    onPickKeyword={fillSearchFromPoster}
                   />
                 </div>
               </section>
@@ -471,7 +480,7 @@ export default function App() {
 
               </div>
 
-              {!filter.query.trim() && (
+              {!hasSearched && (
                 <HomeKeywordSidebar
                   className="hidden lg:block lg:pt-4 shrink-0"
                   onPickKeyword={(keyword, category) => {
@@ -516,12 +525,12 @@ export default function App() {
 
       <Suspense fallback={null}>
       {/* Resource Detail Modal */}
-      {detailItem && (
+      {resolvedDetail && (
       <ResourceDetailModal
-        item={detailItem}
+        item={resolvedDetail}
         onClose={() => setDetailItem(null)}
         onToggleFavorite={toggleFavorite}
-        isFavorited={detailItem ? isFavorite(detailItem.id) : false}
+        isFavorited={isFavorite(resolvedDetail.id)}
         onShowToast={handleShowToast}
       />
       )}

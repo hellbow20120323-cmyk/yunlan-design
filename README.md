@@ -81,12 +81,13 @@ ENGINE_URL=http://127.0.0.1:8888 npm run dev # 网关 :8787 + Web :5173
 - Nginx 反代 `:80 → 127.0.0.1:8787`，前面是 Cloudflare
 
 ```bash
-./deploy/deploy.sh            # 构建 Web 并发布网关
-./deploy/deploy.sh --engine   # 同时重建引擎容器
+npm run deploy                # lint + 测试 → 构建 Web → 发布网关
+npm run deploy:engine         # 同上，并重建引擎容器
+./deploy/deploy.sh --help     # 更多参数（--skip-test / --skip-build）
 ```
 
 清引擎搜索缓存：删卷内 `shard_*` 与 `check_cache.db` 后**必须重启容器**（内存里还有一层）。
 
 ## 合规
 
-仅聚合公开分享链接元数据；不收集私有盘凭证；不提供提取码破解。结果指向第三方，请自行确认版权与有效性。
+仅聚合公开分享链接元数据；不收集私有盘凭证；不提供提取码破解或文件代下。夸克 / UC / 阿里云盘可预览公开分享目录（文件名与大小），下载仍跳转官网。结果指向第三方，请自行确认版权与有效性。

@@ -3,10 +3,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Search, X, RefreshCw } from 'lucide-react';
 import { SearchExecuteOptions, SearchHistoryItem } from '../types';
 import { RecentSearchSection } from './RecentSearchSection';
+import { SearchSuggestList } from './SearchSuggestList';
+import { useSearchSuggest } from '../hooks/useSearchSuggest';
+
+const SUGGEST_LIST_ID = 'yunlan-search-suggest';
+
 interface HeroSearchProps {
   query: string;
   onQueryChange: (q: string) => void;
@@ -18,6 +23,7 @@ interface HeroSearchProps {
   onRemoveHistoryItem: (id: string) => void;
   inputRef?: React.RefObject<HTMLInputElement | null>;
   compact?: boolean;
+  suggestKeywords?: string[];
 }
 
 export const HeroSearch: React.FC<HeroSearchProps> = ({
@@ -31,24 +37,68 @@ export const HeroSearch: React.FC<HeroSearchProps> = ({
   onRemoveHistoryItem,
   inputRef,
   compact = false,
+  suggestKeywords = [],
 }) => {
   const [isFocused, setIsFocused] = useState(false);
+  const [composing, setComposing] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
   const containerRef = useRef<HTMLDivElement>(null);
+  const historyQueries = useMemo(() => history.map((item) => item.query), [history]);
+  const suggestions = useSearchSuggest(
+    query,
+    suggestKeywords,
+    historyQueries,
+    isFocused && !composing
+  );
 
   useEffect(() => {
     const handleClickOutside = (e: Event) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setIsFocused(false);
+        setActiveIndex(-1);
       }
     };
     document.addEventListener('pointerdown', handleClickOutside);
     return () => document.removeEventListener('pointerdown', handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    setActiveIndex(-1);
+  }, [query]);
+
+  const pickSuggestion = (text: string, searchNow: boolean) => {
+    onQueryChange(text);
+    setIsFocused(false);
+    setActiveIndex(-1);
+    if (searchNow) onSearch(text);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (isFocused && activeIndex >= 0 && suggestions[activeIndex]) {
+      pickSuggestion(suggestions[activeIndex].text, false);
+      return;
+    }
     setIsFocused(false);
     onSearch();
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!isFocused || suggestions.length === 0) return;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setActiveIndex((prev) => (prev + 1) % suggestions.length);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setActiveIndex((prev) => (prev <= 0 ? suggestions.length - 1 : prev - 1));
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      setIsFocused(false);
+      setActiveIndex(-1);
+    } else if (e.key === 'Tab' && suggestions[0] && activeIndex < 0) {
+      e.preventDefault();
+      onQueryChange(suggestions[0].text);
+    }
   };
 
   return (
@@ -68,7 +118,7 @@ export const HeroSearch: React.FC<HeroSearchProps> = ({
         </p>
       </div>
 
-      <div ref={containerRef} className="relative w-full mb-0">
+      <div ref={containerRef} className="relative z-20 w-full mb-0">
         <form
           onSubmit={handleSubmit}
           className={`relative flex flex-col sm:flex-row sm:items-end gap-3 sm:gap-5 px-1 pb-1 transition-colors duration-300 ${
@@ -84,7 +134,14 @@ export const HeroSearch: React.FC<HeroSearchProps> = ({
             />
             <input
               ref={inputRef}
-              type="search"
+              type="text"
+              role="combobox"
+              aria-autocomplete="list"
+              aria-expanded={isFocused && suggestions.length > 0}
+              aria-controls={SUGGEST_LIST_ID}
+              aria-activedescendant={
+                activeIndex >= 0 ? `${SUGGEST_LIST_ID}-opt-${activeIndex}` : undefined
+              }
               enterKeyHint="search"
               autoCapitalize="none"
               autoCorrect="off"
@@ -92,6 +149,13 @@ export const HeroSearch: React.FC<HeroSearchProps> = ({
               value={query}
               onChange={(e) => onQueryChange(e.target.value)}
               onFocus={() => setIsFocused(true)}
+              onClick={() => setIsFocused(true)}
+              onKeyDown={handleKeyDown}
+              onCompositionStart={() => setComposing(true)}
+              onCompositionEnd={(e) => {
+                setComposing(false);
+                onQueryChange(e.currentTarget.value);
+              }}
               placeholder="搜索剧集、资料、软件、音乐…"
               className="w-full text-base sm:text-[15px] font-sans font-light text-yunlan-ink placeholder:text-[#8f8b85] bg-transparent focus:outline-none min-h-11"
             />
@@ -141,7 +205,18 @@ export const HeroSearch: React.FC<HeroSearchProps> = ({
           </div>
         </form>
 
-        {isFocused && history.length > 0 ? (
+        {isFocused && query.trim() && suggestions.length > 0 ? (
+          <SearchSuggestList
+            items={suggestions}
+            query={query}
+            activeIndex={activeIndex}
+            listId={SUGGEST_LIST_ID}
+            onHover={setActiveIndex}
+            onPick={(text) => pickSuggestion(text, false)}
+          />
+        ) : null}
+
+        {isFocused && !query.trim() && history.length > 0 ? (
           <RecentSearchSection
             className="mt-4"
             history={history}

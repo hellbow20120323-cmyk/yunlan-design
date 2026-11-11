@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { safeHref } from '../utils/safeUrl';
-import { ResourceItem } from '../types';
+import { FileItem, ResourceItem, SharePreview } from '../types';
 import { DISK_PROVIDERS } from '../constants/providers';
 import { 
   X, 
@@ -16,14 +16,17 @@ import {
   FileText, 
   Film, 
   Archive, 
-  ShieldCheck, 
   AlertCircle, 
   Bookmark, 
   RefreshCw,
-  Share2
 } from 'lucide-react';
 import { SearchService } from '../services/searchService';
+import { applyShareMeta, fetchShareMetadata } from '../services/gatewayAdapter';
 import { useLockBodyScroll } from '../hooks/useLockBodyScroll';
+
+function supportsSharePreview(item: ResourceItem): boolean {
+  return item.diskProvider === 'quark' || item.diskProvider === 'uc' || item.diskProvider === 'aliyun';
+}
 
 interface ResourceDetailModalProps {
   item: ResourceItem | null;
@@ -44,9 +47,68 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
   const [testingHealth, setTestingHealth] = useState(false);
   const [healthStatus, setHealthStatus] = useState<string | null>(null);
   const [reported, setReported] = useState(false);
+  const [overlay, setOverlay] = useState<{
+    fileTree?: FileItem[];
+    sharePreview?: SharePreview;
+    totalFiles?: number;
+    sizeFormatted?: string;
+  } | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
 
   useLockBodyScroll(Boolean(item));
+
+  useEffect(() => {
+    setCopied(false);
+    setTestingHealth(false);
+    setHealthStatus(null);
+    setReported(false);
+    setOverlay(null);
+    setPreviewLoading(false);
+  }, [item?.id]);
+
+  useEffect(() => {
+    if (!item || !supportsSharePreview(item)) return;
+    if (item.fileTree?.length || item.sharePreview) return;
+    let cancelled = false;
+    setPreviewLoading(true);
+    void fetchShareMetadata([item])
+      .then((metadata) => {
+        if (cancelled) return;
+        const meta = metadata[item.shareUrl];
+        if (!meta) {
+          setOverlay({
+            sharePreview: { status: 'error', error: '未读到公开分享目录' },
+          });
+          return;
+        }
+        const next = applyShareMeta(item, meta);
+        setOverlay({
+          fileTree: next.fileTree,
+          sharePreview: next.sharePreview,
+          totalFiles: next.totalFiles,
+          sizeFormatted: next.sizeFormatted,
+        });
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setOverlay({
+          sharePreview: { status: 'error', error: '目录预览暂时不可用' },
+        });
+      })
+      .finally(() => {
+        if (!cancelled) setPreviewLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [item]);
+
   if (!item) return null;
+
+  const fileTree = overlay?.fileTree ?? item.fileTree;
+  const sharePreview = overlay?.sharePreview ?? item.sharePreview;
+  const totalFiles = overlay?.totalFiles ?? item.totalFiles;
+  const sizeFormatted = overlay?.sizeFormatted ?? item.sizeFormatted;
 
   const provider = DISK_PROVIDERS[item.diskProvider];
 
@@ -75,7 +137,7 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
   };
 
   const getFileIcon = (ext: string) => {
-    if (['mkv', 'mp4', 'avi', 'mov'].includes(ext)) return <Film className="w-4 h-4 text-blue-500" />;
+    if (['mkv', 'mp4', 'avi', 'mov', 'ts', 'rmvb'].includes(ext)) return <Film className="w-4 h-4 text-blue-500" />;
     if (['zip', 'rar', '7z', 'tar'].includes(ext)) return <Archive className="w-4 h-4 text-amber-500" />;
     return <FileText className="w-4 h-4 text-emerald-500" />;
   };
@@ -135,12 +197,12 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
             </h2>
             <div className="mt-2.5 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 flex-wrap">
               <span className="font-mono tabular-nums font-semibold text-slate-700 dark:text-slate-300">
-                {item.sizeFormatted}
+                {sizeFormatted}
               </span>
               <span aria-hidden="true">·</span>
               <span className="tabular-nums">更新于 {item.updatedAt}</span>
               <span aria-hidden="true">·</span>
-              <span>共 {item.totalFiles} 个文件</span>
+              <span>共 {totalFiles} 个文件</span>
               {item.uploader && (
                 <>
                   <span aria-hidden="true">·</span>
@@ -226,34 +288,54 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
 
           {/* File Tree Breakdown */}
           <div>
-            <div className="flex items-center justify-between mb-2.5">
+            <div className="flex items-center justify-between mb-2.5 gap-3">
               <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                <FolderTree className="w-4 h-4 text-cyan-500" />
-                <span>包含文件清单明细</span>
+                <FolderTree className="w-4 h-4 text-yunlan-stone" />
+                <span>公开分享目录</span>
               </span>
-              <span className="text-xs text-slate-400">
-                文件转存前可在此核对完整性
+              <span className="text-xs text-slate-400 text-right">
+                {sharePreview?.truncated
+                  ? '仅列出部分文件，完整目录请到网盘查看'
+                  : '仅预览，下载请前往网盘官网'}
               </span>
             </div>
 
             <div className="rounded-xl border border-slate-200 dark:border-slate-800 divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden text-xs">
-              {item.fileTree && item.fileTree.length > 0 ? (
-                item.fileTree.map((f, i) => (
-                  <div key={i} className="flex items-center justify-between p-3 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
-                    <div className="flex items-center gap-2.5 min-w-0 flex-1 pr-3">
-                      {getFileIcon(f.extension)}
-                      <span className="font-mono text-slate-800 dark:text-slate-200 truncate" title={f.name}>
-                        {f.name}
+              {previewLoading && !sharePreview && !(fileTree && fileTree.length) ? (
+                <div className="p-4 text-center text-slate-400">正在读取公开分享目录…</div>
+              ) : sharePreview?.status === 'error' ? (
+                <div className="p-4 text-center text-slate-500 space-y-1">
+                  <p>{sharePreview.error || '暂时无法读取目录'}</p>
+                  <p className="text-slate-400">可仍跳转官网查看或转存</p>
+                </div>
+              ) : fileTree && fileTree.length > 0 ? (
+                <>
+                  {fileTree.map((f, i) => (
+                    <div key={`${f.name}-${i}`} className="flex items-center justify-between p-3 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1 pr-3">
+                        {getFileIcon(f.extension)}
+                        <span className="font-mono text-slate-800 dark:text-slate-200 truncate" title={f.name}>
+                          {f.name}
+                        </span>
+                      </div>
+                      <span className="font-mono tabular-nums text-slate-500 shrink-0">
+                        {f.sizeFormatted}
                       </span>
                     </div>
-                    <span className="font-mono tabular-nums text-slate-500 shrink-0">
-                      {f.sizeFormatted}
-                    </span>
-                  </div>
-                ))
+                  ))}
+                  {sharePreview?.truncated ? (
+                    <div className="px-3 py-2.5 bg-slate-50 dark:bg-slate-900/40 text-slate-500">
+                      仅列出部分文件。完整目录请点下方「直达网盘」。
+                    </div>
+                  ) : null}
+                </>
+              ) : supportsSharePreview(item) ? (
+                <div className="p-4 text-center text-slate-400">
+                  公开分享里没有列出文件，请到网盘页面确认
+                </div>
               ) : (
                 <div className="p-4 text-center text-slate-400">
-                  该网盘未公开内部子目录，请在网盘页面查看完整目录
+                  目前仅夸克、UC、阿里云盘支持目录预览，请到网盘页面查看完整目录
                 </div>
               )}
             </div>

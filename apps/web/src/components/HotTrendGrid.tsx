@@ -82,6 +82,27 @@ export const HotTrendGrid: React.FC<HotTrendGridProps> = ({
     : tabs;
 
   const Root = embedded ? 'div' : 'section';
+  const cards = loading
+    ? Array.from({ length: singleRow ? 10 : dense ? (embedded ? 12 : 20) : 12 }).map((_, i) => (
+        <div
+          key={i}
+          className={`aspect-[27/40] yl-skeleton shrink-0 rounded-[2px] ${
+            singleRow ? 'yl-poster-tile--spotlight' : dense ? 'yl-poster-tile--dense' : ''
+          }`}
+        />
+      ))
+    : displayItems.map((item) => (
+        <div key={`${tab}-${item.id}`} className={singleRow ? 'snap-start' : undefined}>
+          <TrendPosterCard
+            item={item}
+            onPick={onPickKeyword}
+            showKindTag={!dense && !singleRow && tab === 'all'}
+            compact={dense || singleRow}
+            compactSize={singleRow ? 'spotlight' : 'dense'}
+            posterOnly={posterOnly}
+          />
+        </div>
+      ));
 
   return (
     <Root
@@ -157,49 +178,23 @@ export const HotTrendGrid: React.FC<HotTrendGridProps> = ({
         )}
       </div>
 
-      <div
-        className={
-          singleRow
-            ? 'flex flex-nowrap items-start justify-start gap-5 sm:gap-7 overflow-x-auto overflow-y-hidden pb-4 pt-2 px-2 snap-x snap-mandatory scroll-smooth no-scrollbar'
-            : dense
+      {singleRow ? (
+        <div className="overflow-x-auto no-scrollbar">
+          <div className="flex w-max flex-nowrap items-start justify-start gap-5 sm:gap-6 px-2 pt-1 pb-2 snap-x snap-mandatory scroll-smooth">
+            {cards}
+          </div>
+        </div>
+      ) : (
+        <div
+          className={
+            dense
               ? 'flex flex-wrap justify-center gap-3 sm:gap-3.5'
               : 'grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3 sm:gap-4'
-        }
-      >
-        {loading
-          ? Array.from({ length: singleRow ? 10 : dense ? (embedded ? 12 : 20) : 12 }).map((_, i) => (
-              <div
-                key={i}
-                className={`aspect-[27/40] yl-skeleton shrink-0 rounded-[2px] ${
-                  singleRow
-                    ? 'w-[80px] sm:w-[88px]'
-                    : dense
-                      ? 'w-[80px] sm:w-[88px]'
-                      : ''
-                }`}
-              />
-            ))
-          : displayItems.map((item) => (
-              <div
-                key={`${tab}-${item.id}`}
-                className={
-                  singleRow
-                    ? 'shrink-0 w-[80px] sm:w-[88px] snap-start'
-                    : dense
-                      ? 'w-[80px] sm:w-[88px] shrink-0'
-                      : undefined
-                }
-              >
-                <TrendPosterCard
-                  item={item}
-                  onPick={onPickKeyword}
-                  showKindTag={!dense && !singleRow && tab === 'all'}
-                  compact={dense || singleRow}
-                  posterOnly={posterOnly}
-                />
-              </div>
-            ))}
-      </div>
+          }
+        >
+          {cards}
+        </div>
+      )}
     </Root>
   );
 };

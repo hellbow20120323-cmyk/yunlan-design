@@ -130,7 +130,21 @@ function estimateFileCount(files) {
  * @param {number} page
  * @param {AbortSignal} signal
  */
-async function fetchPage(apiURL, keyword, page, signal) {
+const UPSTREAM_TYPE = {
+  aliyun: "ALY",
+  quark: "QUARK",
+  baidu: "BDY",
+  xunlei: "XUNLEI",
+  uc: "UC",
+};
+
+async function fetchPage(apiURL, keyword, page, signal, diskType) {
+  const payload = {
+    page,
+    q: keyword,
+    size: 30,
+  };
+  if (diskType) payload.type = diskType;
   const res = await fetch(apiURL, {
     method: "POST",
     headers: {
@@ -139,11 +153,7 @@ async function fetchPage(apiURL, keyword, page, signal) {
       "User-Agent": "Yunlan/0.4 (+public-share-meta-search)",
     },
     // Minimal body is more compatible across hunhepan-family mirrors
-    body: JSON.stringify({
-      page,
-      q: keyword,
-      size: 30,
-    }),
+    body: JSON.stringify(payload),
     signal,
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -158,10 +168,10 @@ async function fetchPage(apiURL, keyword, page, signal) {
  * @param {string} kw
  * @param {AbortSignal} signal
  */
-async function searchEndpoint(ep, kw, signal) {
+async function searchEndpoint(ep, kw, signal, diskType) {
   const pages = await Promise.allSettled([
-    fetchPage(ep.url, kw, 1, signal),
-    fetchPage(ep.url, kw, 2, signal),
+    fetchPage(ep.url, kw, 1, signal, diskType),
+    fetchPage(ep.url, kw, 2, signal, diskType),
   ]);
   /** @type {any[]} */
   const items = [];
@@ -181,6 +191,7 @@ export async function searchHunhepanFamily(kw, cloudTypes, timeoutMs = 12000) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   const typeSet = new Set(cloudTypes?.length ? cloudTypes : [...ALL_CLOUD_TYPES]);
+  const diskType = cloudTypes?.length === 1 ? UPSTREAM_TYPE[cloudTypes[0]] : "";
   /** @type {Record<string, number>} */
   const perSource = {};
   /** @type {Record<string, number>} */
@@ -190,7 +201,7 @@ export async function searchHunhepanFamily(kw, cloudTypes, timeoutMs = 12000) {
 
   try {
     const settled = await Promise.allSettled(
-      ENDPOINTS.map((ep) => searchEndpoint(ep, kw, controller.signal))
+      ENDPOINTS.map((ep) => searchEndpoint(ep, kw, controller.signal, diskType))
     );
 
     /** @type {import('../types.js').SearchHit[]} */

@@ -222,6 +222,54 @@
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
+
+  /**
+   * 海报标题必须用固定宽度的块级容器，不能放进 <button> 的百分比宽度里。
+   * Safari / WebKit 会把 button 内可换行文字收成 min-content（两三字一行），再被裁切。
+   */
+  .yl-poster-tile {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    box-sizing: border-box;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    text-align: center;
+  }
+  .yl-poster-tile--spotlight {
+    width: 8.5rem;
+    min-width: 8.5rem;
+    max-width: 8.5rem;
+    flex: 0 0 8.5rem;
+  }
+  .yl-poster-tile--dense {
+    width: 5.5rem;
+    min-width: 5.5rem;
+    max-width: 5.5rem;
+    flex: 0 0 5.5rem;
+  }
+  .yl-poster-caption {
+    display: block;
+    box-sizing: border-box;
+    margin-top: 0.5rem;
+    width: 100%;
+    max-width: 100%;
+    font-size: 12px;
+    line-height: 1.45;
+    color: #4b4844;
+    white-space: normal;
+    overflow: visible;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    -webkit-line-clamp: unset;
+    line-clamp: unset;
+    max-height: none;
+  }
+  .group:hover .yl-poster-caption {
+    color: var(--yunlan-stone);
+  }
 }
 
 ::-webkit-scrollbar {

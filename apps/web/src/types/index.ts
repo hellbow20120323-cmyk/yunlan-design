@@ -63,6 +63,14 @@ export interface FileItem {
   type: ResourceCategory;
 }
 
+export type SharePreviewStatus = 'ok' | 'error' | 'unsupported';
+
+export interface SharePreview {
+  status: SharePreviewStatus;
+  error?: string;
+  truncated?: boolean;
+}
+
 export interface ResourceItem {
   id: string;
   title: string;
@@ -80,6 +88,7 @@ export interface ResourceItem {
   totalFiles: number;
   metaPartial?: boolean;      // 文件数或体积为采样/未完全递归
   fileTree?: FileItem[];      // 内部文件清单预览
+  sharePreview?: SharePreview; // 夸克 / UC / 阿里云盘公开分享目录预览状态
   tags: string[];
   viewsCount: number;
   savesCount: number;

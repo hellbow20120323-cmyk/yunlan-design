@@ -305,6 +305,9 @@ export const SearchResultsTable: React.FC<SearchResultsTableProps> = ({
                       {item.totalFiles > 0
                         ? `${item.metaPartial ? '≥' : ''}${item.totalFiles}`
                         : '—'}
+                      {item.sharePreview?.status === 'ok' && item.fileTree && item.fileTree.length > 0 ? (
+                        <span className="ml-1 text-[10px] text-yunlan-muted">可预览</span>
+                      ) : null}
                     </td>
                     <td className="px-3 py-3 align-middle text-right tabular-nums text-yunlan-ink font-medium">
                       {item.sizeFormatted && item.sizeFormatted !== '—'
@@ -463,6 +466,9 @@ function MobileResultCard({
                 <span className="tabular-nums">
                   {item.metaPartial ? '≥' : ''}
                   {item.totalFiles} 文件
+                  {item.sharePreview?.status === 'ok' && item.fileTree && item.fileTree.length > 0
+                    ? ' · 可预览'
+                    : ''}
                 </span>
               </>
             )}

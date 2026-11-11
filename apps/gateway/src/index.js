@@ -32,6 +32,7 @@ import { consumeSearchPoint, getQuotaStatus } from "./points/quota.js";
 import { getVersionInfo, getVersionSummary } from "./version.js";
 import { resolveShareMetaBatch } from "./share-meta.js";
 import { getSubhdHotCached, scheduleSubhdHotDaily } from "./sources/subhd-hot.js";
+import { collectSuggestions, isSuggestableQuery, titlesFromHotPayload } from "./suggest.js";
 import { getDoubanPosterBytes, normalizeDoubanId } from "./sources/douban-poster.js";
 import { buildSitemapXml, sendSeoIndex } from "./seo.js";
 
@@ -96,6 +97,22 @@ async function handleTrendingHot(req, res) {
 const hotLimiter = rateLimit({ windowMs: 60_000, max: 60 });
 app.get("/api/hot/trending", hotLimiter, handleTrendingHot);
 app.get("/api/hot/subhd", hotLimiter, handleTrendingHot);
+
+const suggestLimiter = rateLimit({ windowMs: 60_000, max: 90 });
+app.get("/api/search/suggest", suggestLimiter, async (req, res) => {
+  const q = String(req.query.q || "").trim();
+  if (!isSuggestableQuery(q)) {
+    return res.json({ ok: true, items: [] });
+  }
+  try {
+    const hot = await getSubhdHotCached(false).catch(() => null);
+    const items = await collectSuggestions(q, titlesFromHotPayload(hot));
+    res.json({ ok: true, items });
+  } catch (err) {
+    console.warn("[suggest] 失败:", err instanceof Error ? err.message : err);
+    res.json({ ok: true, items: [] });
+  }
+});
 
 const posterLimiter = rateLimit({ windowMs: 60_000, max: 120 });
 app.get("/api/hot/poster/:doubanId", posterLimiter, async (req, res) => {

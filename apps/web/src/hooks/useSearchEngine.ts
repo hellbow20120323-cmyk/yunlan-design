@@ -17,25 +17,12 @@ import {
 } from '../types';
 import { SEARCH_PROVIDER_IDS } from '../constants/providers';
 import { SearchService } from '../services/searchService';
-import { fetchShareMetadata } from '../services/gatewayAdapter';
+import { applyShareMeta, fetchShareMetadata, isSharePreviewUrl } from '../services/gatewayAdapter';
 import { STORAGE_KEYS } from '../utils/storage';
 import { PointsStatus } from '../types/auth';
 
 const HISTORY_STORAGE_KEY = STORAGE_KEYS.searchHistory;
 const FAVORITES_STORAGE_KEY = STORAGE_KEYS.favorites;
-
-function formatBytes(bytes: number): string {
-  if (!bytes) return '—';
-  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
-  let value = bytes;
-  let index = 0;
-  while (value >= 1024 && index < units.length - 1) {
-    value /= 1024;
-    index += 1;
-  }
-  const digits = value >= 100 || index === 0 ? 0 : value >= 10 ? 1 : 2;
-  return `${value.toFixed(digits)} ${units[index]}`;
-}
 
 export function useSearchEngine(
   onPointsUpdate?: (points: PointsStatus) => void,
@@ -70,6 +57,10 @@ export function useSearchEngine(
   };
 
   const [filter, setFilter] = useState<SearchFilter>(getInitialFilterFromURL);
+  /** 只有提交过检索才切到结果页布局；输入/点海报填词不挪搜索框 */
+  const [hasSearched, setHasSearched] = useState(() =>
+    Boolean(getInitialFilterFromURL().query.trim())
+  );
   const [response, setResponse] = useState<SearchResultResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -153,33 +144,42 @@ export function useSearchEngine(
       }
       setPage(targetPage);
 
-      // 先展示搜索结果，再异步统计夸克/UC 分享中的文件数与总体积。
+      // 先展示搜索结果，再异步补全夸克/UC/阿里云盘公开分享的文件数、体积与目录预览。
       // 元数据请求不重复搜索，也不额外扣点；翻页新增的条目同样补全。
       if (res.items.length > 0) {
+        const pendingUrls = new Set(res.items.map((item) => item.shareUrl));
         void fetchShareMetadata(res.items)
           .then((metadata) => {
-            if (!Object.keys(metadata).length) return;
             setResponse((current) => {
               if (!current) return current;
               return {
                 ...current,
                 items: current.items.map((item) => {
                   const meta = metadata[item.shareUrl];
-                  if (!meta || meta.error) return item;
-                  const sizeBytes = meta.sizeBytes || item.sizeBytes;
-                  return {
-                    ...item,
-                    totalFiles: meta.fileCount || item.totalFiles,
-                    sizeBytes,
-                    sizeFormatted: formatBytes(sizeBytes),
-                    metaPartial: meta.partial,
-                  };
+                  if (meta) return applyShareMeta(item, meta);
+                  return item;
                 }),
               };
             });
           })
           .catch(() => {
-            // 搜索结果仍可正常使用；元数据解析失败时保留上游已有信息。
+            setResponse((current) => {
+              if (!current) return current;
+              return {
+                ...current,
+                items: current.items.map((item) => {
+                  if (!pendingUrls.has(item.shareUrl)) return item;
+                  if (item.sharePreview) return item;
+                  if (!isSharePreviewUrl(item.shareUrl)) {
+                    return item;
+                  }
+                  return {
+                    ...item,
+                    sharePreview: { status: 'error', error: '目录预览暂时不可用' },
+                  };
+                }),
+              };
+            });
           });
       }
 
@@ -228,10 +228,8 @@ export function useSearchEngine(
 
   // Filter setters
   const setQuery = useCallback((newQuery: string) => {
-    setFilter(prev => {
-      const next = { ...prev, query: newQuery };
-      return next;
-    });
+    setFilter((prev) => ({ ...prev, query: newQuery }));
+    if (!newQuery.trim()) setHasSearched(false);
   }, []);
 
   const handleSearchSubmit = useCallback(
@@ -240,6 +238,7 @@ export function useSearchEngine(
       if (!targetQ.trim()) return;
       const nextFilter = { ...filter, query: targetQ };
       setFilter(nextFilter);
+      setHasSearched(true);
       setSelectedItemIds(new Set());
       triggerSearch(nextFilter, 1, false, executeOptions);
     },
@@ -333,6 +332,7 @@ export function useSearchEngine(
   const clearSearch = useCallback(() => {
     setResponse(null);
     setError(null);
+    setHasSearched(false);
     setSelectedItemIds(new Set());
     setFilter((prev) => {
       const next = { ...prev, query: '' };
@@ -404,6 +404,7 @@ export function useSearchEngine(
 
   return {
     filter,
+    hasSearched,
     setQuery,
     handleSearchSubmit,
     handleForceRefreshSearch,

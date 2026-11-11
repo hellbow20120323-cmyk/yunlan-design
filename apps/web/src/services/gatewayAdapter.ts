@@ -6,6 +6,7 @@ import { clientIdHeader } from '../utils/storage';
 import { ALL_PROVIDER_IDS, SEARCH_PROVIDER_IDS } from '../constants/providers';
 import {
   DiskProviderId,
+  FileItem,
   ResourceCategory,
   ResourceItem,
   SearchFilter,
@@ -352,22 +353,83 @@ export async function fetchGatewaySearch(
   }
 }
 
+export interface ShareMetaFile {
+  name: string;
+  path: string;
+  sizeBytes: number;
+}
+
 export interface ResolvedShareMeta {
   fileCount: number;
   sizeBytes: number;
   partial: boolean;
+  treeTruncated?: boolean;
   provider: string;
   error?: string;
+  files?: ShareMetaFile[];
+}
+
+function extensionOf(name: string): string {
+  const base = name.split('/').pop() || name;
+  const dot = base.lastIndexOf('.');
+  if (dot <= 0) return '';
+  return base.slice(dot + 1).toLowerCase().slice(0, 8);
+}
+
+export function mapShareFilesToTree(files?: ShareMetaFile[]): FileItem[] {
+  if (!Array.isArray(files)) return [];
+  return [...files]
+    .sort((a, b) =>
+      String(a.path || a.name || '').localeCompare(String(b.path || b.name || ''), 'zh')
+    )
+    .slice(0, 40)
+    .map((file) => {
+      const name = String(file.path || file.name || '').slice(0, 240);
+      return {
+        name,
+        sizeBytes: Math.max(0, Number(file.sizeBytes) || 0),
+        sizeFormatted: formatBytes(Number(file.sizeBytes) || 0),
+        extension: extensionOf(name),
+        type: inferCategory(name),
+      };
+    });
+}
+
+export function applyShareMeta(item: ResourceItem, meta: ResolvedShareMeta): ResourceItem {
+  if (meta.error) {
+    return {
+      ...item,
+      sharePreview: { status: 'error', error: meta.error },
+    };
+  }
+  const sizeBytes = meta.sizeBytes || item.sizeBytes;
+  const truncated = Boolean(meta.partial || meta.treeTruncated);
+  return {
+    ...item,
+    totalFiles: meta.fileCount || item.totalFiles,
+    sizeBytes,
+    sizeFormatted: formatBytes(sizeBytes),
+    metaPartial: truncated,
+    fileTree: mapShareFilesToTree(meta.files),
+    sharePreview: {
+      status: 'ok',
+      truncated,
+    },
+  };
+}
+
+export const SHARE_PREVIEW_URL_RE =
+  /pan\.quark\.cn\/s\/|(?:drive|pan)\.uc\.cn\/s\/|(?:www\.)?(?:alipan|aliyundrive)\.com\/s\//i;
+
+export function isSharePreviewUrl(url: string): boolean {
+  return SHARE_PREVIEW_URL_RE.test(String(url || ''));
 }
 
 export async function fetchShareMetadata(
   items: Array<{ shareUrl: string; extractCode?: string }>
 ): Promise<Record<string, ResolvedShareMeta>> {
   const candidates = items
-    .filter(
-      (item) =>
-        /pan\.quark\.cn\/s\/|(?:drive|pan)\.uc\.cn\/s\//i.test(item.shareUrl)
-    )
+    .filter((item) => isSharePreviewUrl(item.shareUrl))
     .slice(0, 12);
   if (!candidates.length) return {};
 

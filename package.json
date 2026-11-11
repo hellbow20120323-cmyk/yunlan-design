@@ -8,6 +8,8 @@
     "dev:gateway": "npm run dev -w @yunlan/gateway",
     "dev:web": "npm run dev -w @yunlan/web",
     "build": "npm run build -w @yunlan/web",
+    "deploy": "bash deploy/deploy.sh",
+    "deploy:engine": "bash deploy/deploy.sh --engine",
     "start": "npm run start -w @yunlan/gateway",
     "test": "npm run test -w @yunlan/gateway",
     "smoke": "npm run smoke -w @yunlan/gateway",
