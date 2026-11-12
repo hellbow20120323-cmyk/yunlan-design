@@ -33,6 +33,21 @@ export const TOOL_PAGES = {
     description:
       "免费在线 Unix 时间戳转换工具，支持秒级与毫秒级时间戳，一键在时间戳、本地日期与 UTC ISO 之间互转，本地计算不上传。",
   },
+  dev: {
+    title: "文本与开发工具 - 编码转换、哈希、时间戳 | 云览",
+    description:
+      "云览文本与开发工具合集：文本统计与格式化、Unix 时间戳转换、Base64 / URL 编解码、JSON 格式化校验、哈希计算、随机密码生成、图片转 Base64。",
+  },
+  cycling: {
+    title: "骑行计算工具 - 齿比、踏频、轮组与功率 | 云览",
+    description:
+      "云览骑行计算工具合集：齿比与行进距离、踏频配速换算、链条节数、轮组周长、最佳胎压、爬坡坡度等级与骑行功率估算。",
+  },
+  brewing: {
+    title: "家酿啤酒计算工具 - ABV、IBU、SRM 与补糖 | 云览",
+    description:
+      "云览家酿啤酒计算工具合集：ABV 酒精度、IBU 苦度、SRM 色度、酵母投放量、装瓶补糖、桶装碳酸化、管路平衡、热量与 BAC 估算。",
+  },
   text: {
     title: "在线文本统计与格式化工具 - 字数统计、去重、排序 | 云览",
     description:

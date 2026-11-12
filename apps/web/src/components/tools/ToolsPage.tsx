@@ -1,5 +1,6 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
+  ArrowRight,
   Beer,
   Binary,
   Braces,
@@ -190,16 +191,19 @@ export type ToolSlug = (typeof TOOL_DEFS)[number]['slug'];
 export const TOOL_CATEGORIES = [
   {
     id: 'text',
+    path: 'dev',
     label: '文本与开发工具',
     desc: '文本处理、编码转换、哈希与时间戳等开发辅助',
   },
   {
     id: 'bike',
+    path: 'cycling',
     label: '骑行计算工具',
     desc: '齿比、踏频、轮组、胎压与功率估算',
   },
   {
     id: 'beer',
+    path: 'brewing',
     label: '啤酒与家酿计算工具',
     desc: '酿造、包装供酒与饮用热量估算',
   },
@@ -238,112 +242,290 @@ export const TOOLS_BY_CATEGORY = TOOL_CATEGORIES.map((category) => ({
   tools: TOOL_DEFS.filter((tool) => TOOL_CATEGORY_OF[tool.slug] === category.id),
 }));
 
+export function categoryPath(id: ToolCategoryId): string {
+  return TOOL_CATEGORIES.find((category) => category.id === id)?.path ?? '';
+}
+
+export function categoryFromTarget(target?: string | null): ToolCategoryId | null {
+  if (!target) return null;
+  const byPath = TOOL_CATEGORIES.find((category) => category.path === target);
+  if (byPath) return byPath.id;
+  return TOOL_CATEGORY_OF[target as ToolSlug] ?? null;
+}
+
+export function toolPath(slug: ToolSlug): string {
+  return `/tools/${categoryPath(TOOL_CATEGORY_OF[slug])}#${slug}`;
+}
+
 const cardButtonClass =
   'text-left rounded-[2px] border border-yunlan-hairline bg-yunlan-surface shadow-yunlan-card p-4 sm:p-5 hover:border-[#d8cbb8] hover:shadow-ink-wash transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-yunlan-cinnabar/30';
 
 interface ToolGridProps {
   onOpen: (slug: ToolSlug) => void;
+  /** 只渲染指定分类；不传则按分类分组展示全部 */
+  category?: ToolCategoryId;
 }
 
-export const ToolGrid: React.FC<ToolGridProps> = ({ onOpen }) => (
-  <div className="space-y-7 sm:space-y-8">
-    {TOOLS_BY_CATEGORY.map((category) => (
-      <section key={category.id}>
-        <div className="flex items-baseline justify-between gap-2">
-          <h2 className="font-yunlan-serif text-sm sm:text-base font-medium text-yunlan-ink">
-            {category.label}
-          </h2>
-          <span className="text-[11px] font-light text-yunlan-muted">
-            {category.tools.length} 个工具
-          </span>
-        </div>
-        <p className="mt-1 text-[11px] font-light text-yunlan-muted">{category.desc}</p>
-        <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          {category.tools.map((tool) => {
-            const Icon = tool.icon;
-            return (
-              <button
-                key={tool.slug}
-                type="button"
-                onClick={() => onOpen(tool.slug)}
-                className={cardButtonClass}
-              >
-                <span className="inline-flex items-center justify-center w-9 h-9 rounded-sm bg-[#f3efe6] text-[#9a7b4f]">
-                  <Icon className="w-4 h-4" strokeWidth={1.6} />
-                </span>
-                <span className="mt-3 block text-sm font-medium text-yunlan-ink">{tool.name}</span>
-                <span className="mt-1 block text-xs font-light leading-relaxed text-yunlan-muted">
-                  {tool.desc}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </section>
-    ))}
-  </div>
-);
+export const ToolGrid: React.FC<ToolGridProps> = ({ onOpen, category }) => {
+  const groups = category
+    ? TOOLS_BY_CATEGORY.filter((group) => group.id === category)
+    : TOOLS_BY_CATEGORY;
 
-const SectionGroupLabel: React.FC<{ id: ToolCategoryId }> = ({ id }) => {
-  const category = TOOL_CATEGORIES.find((item) => item.id === id);
-  if (!category) return null;
+  if (category) {
+    const tools = groups[0]?.tools ?? [];
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        {tools.map((tool) => {
+          const Icon = tool.icon;
+          return (
+            <button
+              key={tool.slug}
+              type="button"
+              onClick={() => onOpen(tool.slug)}
+              className={cardButtonClass}
+            >
+              <span className="inline-flex items-center justify-center w-9 h-9 rounded-sm bg-[#f3efe6] text-[#9a7b4f]">
+                <Icon className="w-4 h-4" strokeWidth={1.6} />
+              </span>
+              <span className="mt-3 block text-sm font-medium text-yunlan-ink">{tool.name}</span>
+              <span className="mt-1 block text-xs font-light leading-relaxed text-yunlan-muted">
+                {tool.desc}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
+
   return (
-    <div className="pt-2">
-      <h2 className="font-yunlan-serif text-sm sm:text-base font-medium text-yunlan-ink">
-        {category.label}
-      </h2>
-      <p className="mt-0.5 text-[11px] font-light text-yunlan-muted">{category.desc}</p>
+    <div className="space-y-7 sm:space-y-8">
+      {groups.map((group) => (
+        <section key={group.id}>
+          <div className="flex items-baseline justify-between gap-2">
+            <h2 className="font-yunlan-serif text-sm sm:text-base font-medium text-yunlan-ink">
+              {group.label}
+            </h2>
+            <span className="text-[11px] font-light text-yunlan-muted">
+              {group.tools.length} 个工具
+            </span>
+          </div>
+          <p className="mt-1 text-[11px] font-light text-yunlan-muted">{group.desc}</p>
+          <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            {group.tools.map((tool) => {
+              const Icon = tool.icon;
+              return (
+                <button
+                  key={tool.slug}
+                  type="button"
+                  onClick={() => onOpen(tool.slug)}
+                  className={cardButtonClass}
+                >
+                  <span className="inline-flex items-center justify-center w-9 h-9 rounded-sm bg-[#f3efe6] text-[#9a7b4f]">
+                    <Icon className="w-4 h-4" strokeWidth={1.6} />
+                  </span>
+                  <span className="mt-3 block text-sm font-medium text-yunlan-ink">{tool.name}</span>
+                  <span className="mt-1 block text-xs font-light leading-relaxed text-yunlan-muted">
+                    {tool.desc}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      ))}
     </div>
   );
 };
 
+const CATEGORY_ICONS = { text: Type, bike: Cog, beer: Beer } as const;
+
+const CategoryNav: React.FC<{
+  active: ToolCategoryId | null;
+  onChange: (id: ToolCategoryId | null) => void;
+}> = ({ active, onChange }) => (
+  <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+    <button
+      type="button"
+      onClick={() => onChange(null)}
+      className={`shrink-0 min-h-9 px-3 py-1.5 text-xs rounded-sm border transition-colors ${
+        active === null
+          ? 'bg-yunlan-cta text-white border-yunlan-cta'
+          : 'bg-yunlan-surface text-yunlan-stone border-yunlan-hairline hover:border-yunlan-stone/40'
+      }`}
+    >
+      全部分类
+    </button>
+    {TOOL_CATEGORIES.map((category) => (
+      <button
+        key={category.id}
+        type="button"
+        onClick={() => onChange(category.id)}
+        className={`shrink-0 min-h-9 px-3 py-1.5 text-xs rounded-sm border transition-colors ${
+          active === category.id
+            ? 'bg-yunlan-cta text-white border-yunlan-cta'
+            : 'bg-yunlan-surface text-yunlan-stone border-yunlan-hairline hover:border-yunlan-stone/40'
+        }`}
+      >
+        {category.label}
+      </button>
+    ))}
+  </div>
+);
+
 interface ToolsPageProps {
-  /** 从首页工具卡片进入时滚动到对应工具 */
+  /** 从首页工具卡片或导航菜单进入时定位到对应工具 */
   target?: string;
 }
 
 export const ToolsPage: React.FC<ToolsPageProps> = ({ target }) => {
+  const [active, setActive] = useState<ToolCategoryId | null>(() => categoryFromTarget(target));
+  const [pendingTool, setPendingTool] = useState<string | undefined>(() =>
+    target && TOOL_CATEGORY_OF[target as ToolSlug] ? target : undefined
+  );
+
   useEffect(() => {
-    const slug = target || window.location.hash.replace(/^#/, '');
-    if (!slug) return;
-    const el = document.getElementById(slug);
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (!target) return;
+    const category = categoryFromTarget(target);
+    if (!category) return;
+    setActive(category);
+    if (TOOL_CATEGORY_OF[target as ToolSlug]) {
+      setPendingTool(target);
+      window.history.replaceState(null, '', `/tools/${categoryPath(category)}#${target}`);
+    }
   }, [target]);
+
+  useEffect(() => {
+    if (!pendingTool) return;
+    const timer = window.setTimeout(() => {
+      document.getElementById(pendingTool)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      setPendingTool(undefined);
+    }, 80);
+    return () => window.clearTimeout(timer);
+  }, [pendingTool, active]);
+
+  const goCategory = (id: ToolCategoryId | null) => {
+    setActive(id);
+    setPendingTool(undefined);
+    window.history.pushState(null, '', id ? `/tools/${categoryPath(id)}` : '/tools');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const scrollTo = (slug: ToolSlug) => {
     document.getElementById(slug)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    window.history.replaceState(null, '', `/tools#${slug}`);
+    window.history.replaceState(null, '', `/tools/${categoryPath(TOOL_CATEGORY_OF[slug])}#${slug}`);
   };
+
+  const current = active ? TOOLS_BY_CATEGORY.find((item) => item.id === active) : null;
 
   return (
     <PageShell
       title="免费在线工具"
       subtitle="文档资料检索、文本处理、格式转换、骑行与家酿计算工具，全部在浏览器本地运行，文件不上传、无需注册。"
     >
-      <ToolGrid onOpen={scrollTo} />
+      <CategoryNav active={active} onChange={goCategory} />
 
-      <div className="mt-8 sm:mt-10 space-y-5 sm:space-y-6">
-        <SectionGroupLabel id="text" />
-        <TextTool />
-        <TimestampTool />
-        <CodecTool />
-        <JsonTool />
-        <HashTool />
-        <PasswordTool />
-        <ImageTool />
+      {!active && (
+        <>
+          <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+            {TOOLS_BY_CATEGORY.map((category) => {
+              const Icon = CATEGORY_ICONS[category.id];
+              return (
+                <button
+                  key={category.id}
+                  type="button"
+                  onClick={() => goCategory(category.id)}
+                  className={`${cardButtonClass} flex flex-col`}
+                >
+                  <span className="inline-flex items-center justify-center w-10 h-10 rounded-sm bg-[#f3efe6] text-[#9a7b4f]">
+                    <Icon className="w-4 h-4" strokeWidth={1.6} />
+                  </span>
+                  <span className="mt-3 block font-yunlan-serif text-base font-medium text-yunlan-ink">
+                    {category.label}
+                  </span>
+                  <span className="mt-1.5 block text-xs font-light leading-relaxed text-yunlan-muted">
+                    {category.desc}
+                  </span>
+                  <span className="mt-auto pt-4 inline-flex items-center gap-1 text-[11px] text-yunlan-stone">
+                    {category.tools.length} 个工具
+                    <ArrowRight className="w-3 h-3" />
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          <p className="mt-4 text-[11px] font-light text-yunlan-muted">
+            选择一个分类查看对应工具；也可以使用顶部「在线工具」菜单直接进入某个工具。
+          </p>
+        </>
+      )}
 
-        <SectionGroupLabel id="bike" />
-        <GearRatioTool />
-        <CadenceTool />
-        <ChainLengthTool />
-        <WheelCircTool />
-        <TirePressureTool />
-        <ClimbTool />
-        <PowerTool />
+      {current && (
+        <>
+          <div className="mt-6">
+            <h2 className="font-yunlan-serif text-lg sm:text-xl font-medium text-yunlan-ink">
+              {current.label}
+            </h2>
+            <p className="mt-1 text-[11px] font-light text-yunlan-muted">
+              {current.desc} · 共 {current.tools.length} 个工具
+            </p>
+          </div>
 
-        <SectionGroupLabel id="beer" />
-        <BeerTools />
-      </div>
+          <div className="mt-4">
+            <ToolGrid category={current.id} onOpen={scrollTo} />
+          </div>
+
+          <div className="mt-6 sm:mt-8 space-y-5 sm:space-y-6">
+            {current.id === 'text' && (
+              <>
+                <TextTool />
+                <TimestampTool />
+                <CodecTool />
+                <JsonTool />
+                <HashTool />
+                <PasswordTool />
+                <ImageTool />
+              </>
+            )}
+            {current.id === 'bike' && (
+              <>
+                <GearRatioTool />
+                <CadenceTool />
+                <ChainLengthTool />
+                <WheelCircTool />
+                <TirePressureTool />
+                <ClimbTool />
+                <PowerTool />
+              </>
+            )}
+            {current.id === 'beer' && <BeerTools />}
+          </div>
+
+          <div className="mt-8">
+            <p className="text-[11px] font-light text-yunlan-muted">其他分类</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {TOOLS_BY_CATEGORY.filter((category) => category.id !== current.id).map((category) => (
+                <button
+                  key={category.id}
+                  type="button"
+                  onClick={() => goCategory(category.id)}
+                  className="inline-flex items-center gap-1 min-h-8 px-2.5 py-1 text-xs rounded-sm border border-yunlan-hairline bg-yunlan-surface text-yunlan-stone hover:border-yunlan-stone/40 transition-colors"
+                >
+                  {category.label}（{category.tools.length}）
+                  <ArrowRight className="w-3 h-3" />
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => goCategory(null)}
+                className="inline-flex items-center gap-1 min-h-8 px-2.5 py-1 text-xs rounded-sm border border-yunlan-hairline bg-yunlan-surface text-yunlan-stone hover:border-yunlan-stone/40 transition-colors"
+              >
+                查看全部分类
+              </button>
+            </div>
+          </div>
+        </>
+      )}
 
       <div className={`${yunlanCardClass()} mt-6 p-5 flex items-start gap-3`}>
         <Wrench className="w-4 h-4 mt-0.5 text-[#9a7b4f] shrink-0" />

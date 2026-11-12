@@ -27,7 +27,7 @@ import { usePageSeo } from './hooks/usePageSeo';
 import { STORAGE_KEYS } from './utils/storage';
 import { useTrendingHot } from './hooks/useTrendingHot';
 import { useSiteConfig } from './hooks/useSiteConfig';
-import { ToolsPage, ToolGrid, ToolSlug } from './components/tools/ToolsPage';
+import { ToolsPage, ToolGrid, ToolSlug, toolPath } from './components/tools/ToolsPage';
 import { shuffleCopy } from './utils/shuffle';
 
 // 弹窗与抽屉按需加载：首屏不需要，首次打开时才下载对应代码
@@ -253,6 +253,7 @@ export default function App({ initialTab = 'search', initialTool }: AppProps = {
   const handleOpenTool = (slug: ToolSlug) => {
     setToolTarget(slug);
     setActiveTab('tools');
+    window.history.pushState(null, '', toolPath(slug));
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
