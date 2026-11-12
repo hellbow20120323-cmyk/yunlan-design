@@ -3,10 +3,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React from 'react';
-import { Compass, Database, Flame, Crown, Bookmark, Wrench, Search } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Compass, Database, Flame, Crown, Bookmark, Wrench, Search, ChevronDown } from 'lucide-react';
 import { BrandLogo } from './BrandLogo';
 import { UserQuotaPanel } from './UserQuotaPanel';
+import { TOOL_DEFS } from './tools/ToolsPage';
 import { AuthUser, PointsStatus } from '../types/auth';
 
 type TabId = 'search' | 'providers' | 'rankings' | 'guide' | 'tools';
@@ -25,6 +26,8 @@ interface HeaderProps {
   favoritesCount?: number;
   /** 搜索入口开关：关闭时只展示合规工具入口 */
   searchEnabled?: boolean;
+  /** 直接打开某个在线工具 */
+  onOpenTool?: (slug: string) => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -40,7 +43,29 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenFavorites,
   favoritesCount = 0,
   searchEnabled = true,
+  onOpenTool,
 }) => {
+  const [toolsOpen, setToolsOpen] = useState(false);
+  const toolsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!toolsOpen) return;
+    const handlePointerDown = (e: Event) => {
+      if (toolsRef.current && !toolsRef.current.contains(e.target as Node)) {
+        setToolsOpen(false);
+      }
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setToolsOpen(false);
+    };
+    document.addEventListener('pointerdown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [toolsOpen]);
+
   const navButtonClass = (active: boolean) =>
     `flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0 ${
       active ? 'text-yunlan-stone font-medium' : 'text-yunlan-muted hover:text-yunlan-ink'
@@ -72,13 +97,53 @@ export const Header: React.FC<HeaderProps> = ({
             <span>{searchEnabled ? '发现资源' : '资料检索'}</span>
           </button>
 
-          <button
-            onClick={() => setActiveTab('tools')}
-            className={navButtonClass(activeTab === 'tools')}
-          >
-            <Wrench className="w-4 h-4" />
-            <span>在线工具</span>
-          </button>
+          <div ref={toolsRef} className="relative shrink-0">
+            <button
+              type="button"
+              onClick={() => setToolsOpen((open) => !open)}
+              className={navButtonClass(activeTab === 'tools')}
+              aria-expanded={toolsOpen}
+              aria-haspopup="menu"
+            >
+              <Wrench className="w-4 h-4" />
+              <span>在线工具</span>
+              <ChevronDown
+                className={`w-3.5 h-3.5 transition-transform ${toolsOpen ? 'rotate-180' : ''}`}
+              />
+            </button>
+
+            {toolsOpen && (
+              <div
+                role="menu"
+                className="absolute left-0 top-full mt-2 w-60 rounded-[2px] border border-yunlan-hairline bg-yunlan-paper shadow-ink-wash py-1 z-50"
+              >
+                {TOOL_DEFS.map((tool) => {
+                  const Icon = tool.icon;
+                  return (
+                    <button
+                      key={tool.slug}
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        setToolsOpen(false);
+                        if (onOpenTool) onOpenTool(tool.slug);
+                        else window.location.href = `/tools#${tool.slug}`;
+                      }}
+                      className="w-full flex items-start gap-2.5 px-3 py-2.5 text-left hover:bg-yunlan-mist/60 transition-colors"
+                    >
+                      <Icon className="w-4 h-4 mt-0.5 text-[#9a7b4f] shrink-0" strokeWidth={1.6} />
+                      <span className="min-w-0">
+                        <span className="block text-[13px] text-yunlan-ink">{tool.name}</span>
+                        <span className="block mt-0.5 text-[11px] font-light text-yunlan-muted truncate">
+                          {tool.desc}
+                        </span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
 
           {searchEnabled && (
             <button

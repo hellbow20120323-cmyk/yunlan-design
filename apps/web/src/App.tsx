@@ -283,6 +283,7 @@ export default function App({ initialTab = 'search', initialTool }: AppProps = {
             : undefined
         }
         searchEnabled={searchEnabled}
+        onOpenTool={handleOpenTool}
       />
 
       {/* Main Viewport Content */}
