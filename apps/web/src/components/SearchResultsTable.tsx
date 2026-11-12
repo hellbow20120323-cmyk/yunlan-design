@@ -33,6 +33,12 @@ const CATEGORY_LABEL: Record<string, string> = {
   other: '其他',
 };
 
+/** 搜索入口关闭时不展示影视分类，避免工具站出现影视内容标识 */
+function categoryLabel(category: string, searchEnabled: boolean): string {
+  if (!searchEnabled && category === 'video') return '';
+  return CATEGORY_LABEL[category] || category;
+}
+
 interface SearchResultsTableProps {
   items: ResourceItem[];
   query: string;
@@ -49,6 +55,8 @@ interface SearchResultsTableProps {
   onShowToast: (msg: string) => void;
   onForceRefresh?: () => void;
   forceRefreshLoading?: boolean;
+  /** 搜索入口关闭时不展示影视分类标签 */
+  searchEnabled?: boolean;
 }
 
 function ProviderBadge({ item }: { item: ResourceItem }) {
@@ -125,6 +133,7 @@ export const SearchResultsTable: React.FC<SearchResultsTableProps> = ({
   onShowToast,
   onForceRefresh,
   forceRefreshLoading,
+  searchEnabled = true,
 }) => {
   const [tableSort, setTableSort] = useState<{ key: TableSortKey; asc: boolean }>({
     key: 'title',
@@ -243,6 +252,7 @@ export const SearchResultsTable: React.FC<SearchResultsTableProps> = ({
               onShowToast(`已复制提取码 ${item.extractCode}`);
             }}
             openLabel={openLabel(item)}
+            searchEnabled={searchEnabled}
           />
         ))}
       </div>
@@ -269,7 +279,7 @@ export const SearchResultsTable: React.FC<SearchResultsTableProps> = ({
           <tbody>
             {sorted.map((item) => {
               const valid = item.isValid && item.healthScore >= 60;
-              const cat = CATEGORY_LABEL[item.category] || item.category;
+              const cat = categoryLabel(item.category, searchEnabled);
               const sourceFull = item.source || item.uploader || '';
               return (
                 <React.Fragment key={item.id}>
@@ -413,6 +423,7 @@ function MobileResultCard({
   onCopy,
   onCopyCode,
   openLabel,
+  searchEnabled = true,
 }: {
   item: ResourceItem;
   menuOpen: boolean;
@@ -424,10 +435,11 @@ function MobileResultCard({
   onCopy: () => void;
   onCopyCode: () => void;
   openLabel: string;
+  searchEnabled?: boolean;
 }) {
   const p = DISK_PROVIDERS[item.diskProvider];
   const valid = item.isValid && item.healthScore >= 60;
-  const cat = CATEGORY_LABEL[item.category] || item.category;
+  const cat = categoryLabel(item.category, searchEnabled);
 
   return (
     <article className="px-3 py-3.5 bg-yunlan-surface">
@@ -473,7 +485,7 @@ function MobileResultCard({
               </>
             )}
             <span aria-hidden>·</span>
-            <span>{cat}</span>
+            {cat ? <span>{cat}</span> : null}
           </p>
         </div>
         <div className="relative shrink-0">
@@ -582,7 +594,7 @@ function ResultMetaStrip({
   const extraTags = item.tags?.filter((t) => t && t !== item.source).slice(0, 3) ?? [];
   return (
     <div className="flex flex-col gap-1.5 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-5 sm:gap-y-1">
-      <MetaItem label="类型">{cat}</MetaItem>
+      {cat ? <MetaItem label="类型">{cat}</MetaItem> : null}
       <MetaItem label="来源">{formatSource(item)}</MetaItem>
       {sourceFull && sourceFull !== formatSource(item) ? (
         <span className="hidden md:inline text-xs text-slate-400 truncate max-w-[200px]" title={sourceFull}>

@@ -39,6 +39,8 @@ interface FilterBarProps {
   modeLabel?: string;
   demoMode?: boolean;
   hideViewSwitcher?: boolean;
+  /** 搜索入口关闭时隐藏影视类目，站点只保留资料/软件等合规分类 */
+  searchEnabled?: boolean;
 }
 
 const getCategoryIcon = (iconName: string) => {
@@ -71,12 +73,17 @@ export const FilterBar: React.FC<FilterBarProps> = ({
   modeLabel,
   demoMode,
   hideViewSwitcher,
+  searchEnabled = true,
 }) => {
+  const categories = searchEnabled
+    ? CATEGORIES
+    : CATEGORIES.filter((cat) => cat.id !== 'video');
+
   return (
     <div className="w-full space-y-3 mb-4 sm:mb-6">
       {/* Category Tabs (Segmented control row) */}
       <div className="flex items-center gap-1.5 p-1 bg-[#f3f0ea]/80 border border-yunlan-hairline rounded-xl overflow-x-auto no-scrollbar snap-x snap-mandatory">
-        {CATEGORIES.map((cat) => {
+        {categories.map((cat) => {
           const isActive = currentCategory === cat.id;
           const count = categoriesCount ? categoriesCount[cat.id] : undefined;
 

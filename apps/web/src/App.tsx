@@ -143,6 +143,11 @@ export default function App({ initialTab = 'search', initialTool }: AppProps = {
     searchEnabled
   );
 
+  // 搜索入口关闭后不再停留或筛选影视类目
+  useEffect(() => {
+    if (!searchEnabled && filter.category === 'video') setCategory('all');
+  }, [searchEnabled, filter.category, setCategory]);
+
   // Modals & Drawers state
   const [detailItem, setDetailItem] = useState<ResourceItem | null>(null);
   const resolvedDetail = detailItem
@@ -381,6 +386,7 @@ export default function App({ initialTab = 'search', initialTool }: AppProps = {
                 tookMs={response?.tookMs || 0}
                 modeLabel={response?.modeLabel}
                 demoMode={response?.demoMode}
+                searchEnabled={searchEnabled}
               />
             </div>
             )}
@@ -467,6 +473,7 @@ export default function App({ initialTab = 'search', initialTool }: AppProps = {
                   onShowToast={handleShowToast}
                   onForceRefresh={handleForceRefreshSearch}
                   forceRefreshLoading={loading}
+                  searchEnabled={searchEnabled}
                 />
               )}
 
