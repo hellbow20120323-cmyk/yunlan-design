@@ -38,12 +38,14 @@ export const Footer: React.FC<FooterProps> = ({ onNavigateToTab, searchEnabled =
           </div>
 
           <div className="hidden md:flex items-center gap-6 flex-wrap text-xs">
-            <button
-              onClick={() => onNavigateToTab('search')}
-              className="hover:text-[#9a7b4f] transition-colors"
-            >
-              {searchEnabled ? '发现资源' : '资料检索'}
-            </button>
+            {searchEnabled && (
+              <button
+                onClick={() => onNavigateToTab('search')}
+                className="hover:text-[#9a7b4f] transition-colors"
+              >
+                发现资源
+              </button>
+            )}
             <button
               onClick={() => onNavigateToTab('tools')}
               className="hover:text-[#9a7b4f] transition-colors"

@@ -4,7 +4,7 @@
  */
 
 import React, { useEffect, useRef, useState } from 'react';
-import { Compass, Database, Flame, Crown, Bookmark, Wrench, Search, ChevronDown } from 'lucide-react';
+import { Compass, Database, Flame, Crown, Bookmark, Wrench, ChevronDown } from 'lucide-react';
 import { BrandLogo } from './BrandLogo';
 import { UserQuotaPanel } from './UserQuotaPanel';
 import { TOOLS_BY_CATEGORY } from './tools/ToolsPage';
@@ -89,13 +89,15 @@ export const Header: React.FC<HeaderProps> = ({
         </button>
 
         <nav className="hidden md:flex items-center gap-6 lg:gap-8 text-sm">
-          <button
-            onClick={() => setActiveTab('search')}
-            className={navButtonClass(activeTab === 'search')}
-          >
-            {searchEnabled ? <Compass className="w-4 h-4" /> : <Search className="w-4 h-4" />}
-            <span>{searchEnabled ? '发现资源' : '资料检索'}</span>
-          </button>
+          {searchEnabled && (
+            <button
+              onClick={() => setActiveTab('search')}
+              className={navButtonClass(activeTab === 'search')}
+            >
+              <Compass className="w-4 h-4" />
+              <span>发现资源</span>
+            </button>
+          )}
 
           <div ref={toolsRef} className="relative shrink-0">
             <button

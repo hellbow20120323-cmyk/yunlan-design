@@ -42,14 +42,14 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
 
   const tabs = searchEnabled
     ? [...BASE_TABS, ...SEARCH_TABS, GUIDE_TAB]
-    : [BASE_TABS[0], BASE_TABS[1], { ...GUIDE_TAB, label: '指南' }];
+    : [BASE_TABS[1], GUIDE_TAB];
 
   return (
     <nav
       className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-yunlan-hairline bg-yunlan-paper/95 backdrop-blur-md"
       aria-label="主导航"
     >
-      <div className={`grid ${searchEnabled ? 'grid-cols-5' : 'grid-cols-3'} h-14 yl-safe-bottom`}>
+      <div className={`grid ${searchEnabled ? 'grid-cols-5' : 'grid-cols-2'} h-14 yl-safe-bottom`}>
         {tabs.map((tab) => {
           const active = activeTab === tab.id;
           return (
