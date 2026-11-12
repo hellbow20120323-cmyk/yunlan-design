@@ -4,10 +4,11 @@
  */
 
 import React, { useEffect, useRef, useState } from 'react';
-import { Compass, Database, Flame, Crown, Bookmark, Wrench, ChevronDown } from 'lucide-react';
+import { Bike, Compass, Database, Flame, Crown, Bookmark, Wrench, ChevronDown } from 'lucide-react';
 import { BrandLogo } from './BrandLogo';
 import { UserQuotaPanel } from './UserQuotaPanel';
 import { TOOLS_BY_CATEGORY } from './tools/ToolsPage';
+import { VELO_HOME, VELO_ONLY_TOOLS } from '../constants/veloTools';
 import { AuthUser, PointsStatus } from '../types/auth';
 
 type TabId = 'search' | 'providers' | 'rankings' | 'guide' | 'tools';
@@ -67,23 +68,28 @@ export const Header: React.FC<HeaderProps> = ({
   }, [toolsOpen]);
 
   const navButtonClass = (active: boolean) =>
-    `flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0 ${
-      active ? 'text-yunlan-stone font-medium' : 'text-yunlan-muted hover:text-yunlan-ink'
+    `flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0 rounded-xl px-2.5 py-1.5 ${
+      active
+        ? 'text-[#C86D28] bg-[#FAF0E4] font-semibold'
+        : 'text-yunlan-muted hover:text-[#C86D28] hover:bg-[#FAF0E4]'
     }`;
 
   return (
-    <header className="sticky top-0 z-40 w-full backdrop-blur-md bg-yunlan-paper/90 border-b border-yunlan-hairline transition-colors yl-safe-top">
+    <header className="sticky top-0 z-40 w-full backdrop-blur-md bg-yunlan-paper/95 border-b border-yunlan-hairline transition-colors yl-safe-top">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-14 md:h-16 flex items-center justify-between gap-3 md:gap-8">
         <button
           type="button"
           onClick={() => (onGoHome ? onGoHome() : setActiveTab('search'))}
-          className="flex items-center gap-2 md:gap-2.5 text-left group focus:outline-none focus-visible:ring-2 focus-visible:ring-yunlan-cinnabar/30 rounded-sm p-1 min-h-11"
+          className="flex items-center gap-2 md:gap-2.5 text-left group focus:outline-none focus-visible:ring-2 focus-visible:ring-yunlan-cinnabar/30 rounded-xl p-1 min-h-11"
           title="返回首页"
         >
           <BrandLogo className="w-8 h-8 md:w-9 md:h-9 group-hover:shadow-ink-wash transition-shadow" />
           <div className="flex flex-col">
-            <span className="font-yunlan-serif text-[15px] md:text-base font-medium tracking-[0.15em] text-yunlan-ink whitespace-nowrap shrink-0 flex items-center gap-2">
-              云览 <span className="hidden sm:inline font-sans text-[11px] font-normal tracking-[0.22em] text-yunlan-muted">YUNLAN</span>
+            <span className="text-[15px] md:text-base font-black tracking-tight text-yunlan-ink whitespace-nowrap shrink-0 flex items-baseline gap-2 group-hover:text-[#C86D28] transition-colors">
+              自行车与家酿
+              <span className="hidden sm:inline font-mono text-[10px] font-bold tracking-[0.2em] text-[#8C4115]">
+                VELO &amp; BREW
+              </span>
             </span>
           </div>
         </button>
@@ -117,7 +123,7 @@ export const Header: React.FC<HeaderProps> = ({
             {toolsOpen && (
               <div
                 role="menu"
-                className="absolute left-0 top-full mt-2 w-64 max-h-[70vh] overflow-y-auto rounded-[2px] border border-yunlan-hairline bg-yunlan-paper shadow-ink-wash py-1 z-50"
+                className="absolute left-0 top-full mt-2 w-72 max-h-[70vh] overflow-y-auto rounded-2xl border border-yunlan-hairline bg-yunlan-surface shadow-ink-wash py-1 z-50"
               >
                 {TOOLS_BY_CATEGORY.map((category) => (
                   <div key={category.id}>
@@ -138,7 +144,7 @@ export const Header: React.FC<HeaderProps> = ({
                           }}
                           className="w-full flex items-start gap-2.5 px-3 py-2 text-left hover:bg-yunlan-mist/60 transition-colors"
                         >
-                          <Icon className="w-4 h-4 mt-0.5 text-[#9a7b4f] shrink-0" strokeWidth={1.6} />
+                          <Icon className="w-4 h-4 mt-0.5 text-[#C86D28] shrink-0" strokeWidth={1.6} />
                           <span className="min-w-0">
                             <span className="block text-[13px] text-yunlan-ink">{tool.name}</span>
                             <span className="block mt-0.5 text-[11px] font-light text-yunlan-muted truncate">
@@ -150,9 +156,42 @@ export const Header: React.FC<HeaderProps> = ({
                     })}
                   </div>
                 ))}
+
+                <div className="mt-1 pt-1 border-t border-yunlan-hairline">
+                  <p className="px-3 pt-2.5 pb-1 text-[10px] tracking-[0.18em] text-yunlan-muted/80">
+                    完整工坊 · 进阶工具
+                  </p>
+                  {VELO_ONLY_TOOLS.map((tool) => (
+                    <a
+                      key={tool.href}
+                      href={tool.href}
+                      className="flex items-start gap-2.5 px-3 py-2 text-left hover:bg-[#FAF0E4] transition-colors"
+                    >
+                      <span className="text-sm mt-0.5 shrink-0">{tool.icon}</span>
+                      <span className="min-w-0">
+                        <span className="block text-[13px] text-yunlan-ink">{tool.name}</span>
+                        <span className="block mt-0.5 text-[11px] font-light text-yunlan-muted truncate">
+                          {tool.desc}
+                        </span>
+                      </span>
+                    </a>
+                  ))}
+                  <a
+                    href={VELO_HOME}
+                    className="flex items-center justify-between px-3 py-2.5 mt-1 text-[12px] font-bold text-[#C86D28] hover:bg-[#FAF0E4] transition-colors"
+                  >
+                    <span>进入完整工坊（28 款）</span>
+                    <span>→</span>
+                  </a>
+                </div>
               </div>
             )}
           </div>
+
+          <a href={VELO_HOME} className={navButtonClass(false)}>
+            <Bike className="w-4 h-4" />
+            <span>完整工坊</span>
+          </a>
 
           {searchEnabled && (
             <button
@@ -212,7 +251,7 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 type="button"
                 onClick={onOpenPaywall}
-                className="hidden sm:flex items-center gap-1.5 px-3 min-h-9 text-xs font-semibold text-white bg-yunlan-cinnabar hover:bg-[#a83d45] rounded-[4px] transition-colors whitespace-nowrap active:translate-y-px"
+                className="hidden sm:flex items-center gap-1.5 px-3 min-h-9 text-xs font-semibold text-white bg-yunlan-cinnabar hover:bg-[#AF571B] rounded-xl transition-colors whitespace-nowrap active:translate-y-px"
                 title="月付 3 元起 · 有效期内搜索不扣积分"
               >
                 <Crown className="w-3.5 h-3.5" />

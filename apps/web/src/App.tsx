@@ -27,7 +27,8 @@ import { usePageSeo } from './hooks/usePageSeo';
 import { STORAGE_KEYS } from './utils/storage';
 import { useTrendingHot } from './hooks/useTrendingHot';
 import { useSiteConfig } from './hooks/useSiteConfig';
-import { ToolsPage, ToolGrid, ToolSlug, toolPath } from './components/tools/ToolsPage';
+import { ToolsPage, ToolSlug, toolPath } from './components/tools/ToolsPage';
+import { HomePortal } from './components/HomePortal';
 import { shuffleCopy } from './utils/shuffle';
 
 // 弹窗与抽屉按需加载：首屏不需要，首次打开时才下载对应代码
@@ -301,32 +302,27 @@ export default function App({ initialTab = 'search', initialTool }: AppProps = {
               }
             >
               <div className="flex-1 min-w-0">
-            {/* Hero Search Box */}
-            <HeroSearch
-              query={filter.query}
-              onQueryChange={setQuery}
-              onSearch={handleSearchSubmit}
-              compact={hasSearched}
-              loading={loading}
-              suggestKeywords={suggestKeywords}
-              history={history}
-              onSelectHistory={(q) => {
-                setQuery(q);
-                handleSearchSubmit(q);
-              }}
-              onClearHistory={clearHistory}
-              onRemoveHistoryItem={removeHistoryItem}
-              inputRef={searchInputRef}
-              searchEnabled={searchEnabled}
-            />
-
-            {!hasSearched && !searchEnabled && (
-              <div className="mt-2 mb-6">
-                <ToolGrid onOpen={handleOpenTool} />
-                <p className="mt-3 text-center text-[11px] text-yunlan-muted">
-                  全部工具在浏览器本地运行，输入内容不会上传服务器。
-                </p>
-              </div>
+            {/* 首页：搜索关闭时展示 Velo & Brew 工坊门户；开启时保持原有搜索入口 */}
+            {!hasSearched && !searchEnabled ? (
+              <HomePortal onOpenTool={handleOpenTool} />
+            ) : (
+              <HeroSearch
+                query={filter.query}
+                onQueryChange={setQuery}
+                onSearch={handleSearchSubmit}
+                compact={hasSearched}
+                loading={loading}
+                suggestKeywords={suggestKeywords}
+                history={history}
+                onSelectHistory={(q) => {
+                  setQuery(q);
+                  handleSearchSubmit(q);
+                }}
+                onClearHistory={clearHistory}
+                onRemoveHistoryItem={removeHistoryItem}
+                inputRef={searchInputRef}
+                searchEnabled={searchEnabled}
+              />
             )}
 
             {!hasSearched && searchEnabled && (

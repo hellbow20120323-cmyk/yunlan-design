@@ -11,8 +11,8 @@ import {
 } from "./seo.js";
 
 test("searchPageTitle 含关键词与条数", () => {
-  assert.equal(searchPageTitle("三体", 12), "三体 - 12条公开资料 | 云览");
-  assert.match(searchPageTitle("", 0), /云览/);
+  assert.equal(searchPageTitle("三体", 12), "三体 - 12条公开资料 | 自行车与家酿");
+  assert.match(searchPageTitle("", 0), /自行车与家酿/);
 });
 
 test("searchCanonical 编码查询词", () => {
@@ -30,7 +30,7 @@ test("applySeoToHtml 写入 title / description / canonical / json-ld", () => {
     prerender: true,
     searchEnabled: true,
   });
-  assert.match(out, /<title>三体 - 3条公开资料 \| 云览<\/title>/);
+  assert.match(out, /<title>三体 - 3条公开资料 \| 自行车与家酿<\/title>/);
   assert.match(out, /rel="canonical" href="https:\/\/panso\.hellbow\.xyz\/\?q=%E4%B8%89%E4%BD%93"/);
   assert.match(out, /application\/ld\+json/);
   assert.match(out, /<h1>三体 公开资料<\/h1>/);
@@ -42,7 +42,7 @@ test("搜索开关关闭时忽略查询词，工具页 / 支持页使用对应 m
     '<html><head><title>旧</title><meta name="description" content="x" /></head><body><div id="root"></div></body></html>';
   const off = applySeoToHtml(html, { kw: "三体", total: 3, prerender: true, searchEnabled: false });
   assert.doesNotMatch(off, /三体/);
-  assert.match(off, /免费在线文档与文本工具站/);
+  assert.match(off, /骑行计算、家酿啤酒与在线工具站/);
 
   const tools = applySeoToHtml(html, { path: "/tools/json", searchEnabled: false });
   assert.match(tools, /<title>JSON 格式化与校验工具/);

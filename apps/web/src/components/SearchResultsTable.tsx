@@ -231,7 +231,7 @@ export const SearchResultsTable: React.FC<SearchResultsTableProps> = ({
   );
 
   return (
-    <div className="rounded-[2px] border border-yunlan-hairline bg-yunlan-surface overflow-hidden shadow-yunlan-card">
+    <div className="rounded-2xl border border-yunlan-hairline bg-yunlan-surface overflow-hidden shadow-yunlan-card">
       {resultHeader}
 
       <div className="md:hidden divide-y divide-yunlan-hairline">
@@ -445,7 +445,7 @@ function MobileResultCard({
     <article className="px-3 py-3.5 bg-yunlan-surface">
       <div className="flex items-start gap-3">
         <span
-          className="w-9 h-9 rounded-[2px] flex items-center justify-center text-xs font-bold text-white shrink-0"
+          className="w-9 h-9 rounded-2xl flex items-center justify-center text-xs font-bold text-white shrink-0"
           style={{ backgroundColor: p?.color || '#64748b' }}
         >
           {p?.shortName?.slice(0, 2) || '?'}
@@ -500,7 +500,7 @@ function MobileResultCard({
           {menuOpen && (
             <div
               ref={menuRef}
-              className="absolute right-0 top-full z-20 mt-1 w-40 rounded-[2px] border border-yunlan-hairline bg-yunlan-paper shadow-ink-wash py-1 text-[13px]"
+              className="absolute right-0 top-full z-20 mt-1 w-40 rounded-2xl border border-yunlan-hairline bg-yunlan-paper shadow-ink-wash py-1 text-[13px]"
             >
               <button
                 type="button"

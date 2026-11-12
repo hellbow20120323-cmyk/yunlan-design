@@ -28,7 +28,7 @@ export const DiskNavigationGrid: React.FC<DiskNavigationGridProps> = ({
           return (
             <div
               key={id}
-              className={`${yunlanCardClass()} p-5 flex flex-col justify-between hover:border-[#d8cbb8]/80 transition-all group`}
+              className={`${yunlanCardClass()} p-5 flex flex-col justify-between hover:border-[#DC9B6B]/80 transition-all group`}
             >
               <div>
                 {/* Header */}
@@ -38,7 +38,7 @@ export const DiskNavigationGrid: React.FC<DiskNavigationGridProps> = ({
                       className="w-3.5 h-3.5 rounded-full" 
                       style={{ backgroundColor: p.color }} 
                     />
-                    <h3 className="text-base font-semibold text-[#3d3832] group-hover:text-[#9a7b4f] transition-colors">
+                    <h3 className="text-base font-semibold text-[#1C1917] group-hover:text-[#C86D28] transition-colors">
                       {p.name}
                     </h3>
                   </div>
@@ -80,7 +80,7 @@ export const DiskNavigationGrid: React.FC<DiskNavigationGridProps> = ({
               <div className="pt-3 border-t border-yunlan-hairline flex items-center justify-between gap-2">
                 <button
                   onClick={() => onSearchProvider(id)}
-                  className="flex items-center gap-1.5 min-h-11 px-3 py-1.5 text-xs font-medium text-[#9a7b4f] hover:bg-[#f3f0ea] rounded-lg transition-colors"
+                  className="flex items-center gap-1.5 min-h-11 px-3 py-1.5 text-xs font-medium text-[#C86D28] hover:bg-[#f3f0ea] rounded-lg transition-colors"
                 >
                   <Search className="w-3.5 h-3.5" />
                   <span>检索该网盘</span>

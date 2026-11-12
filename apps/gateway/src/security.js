@@ -39,13 +39,34 @@ const CSP = [
   "frame-ancestors 'none'",
 ].join("; ");
 
+/**
+ * /velo 完整静态工坊由单文件 HTML 构成：内联脚本、内联 onclick 与本地托管的
+ * Tailwind Play / Chart.js 均需要放行内联脚本。仅对该路径放宽，其余页面保持严格 CSP。
+ */
+const CSP_VELO = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline'",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "font-src 'self' https://fonts.gstatic.com data:",
+  "img-src 'self' data: blob: https:",
+  "connect-src 'self'",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+].join("; ");
+
+export function isVeloPath(pathname) {
+  return pathname === "/velo" || String(pathname || "").startsWith("/velo/");
+}
+
 export function securityHeaders(req, res, next) {
   res.setHeader("X-Content-Type-Options", "nosniff");
   res.setHeader("X-Frame-Options", "DENY");
   res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
   res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=()");
   res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
-  res.setHeader("Content-Security-Policy", CSP);
+  res.setHeader("Content-Security-Policy", isVeloPath(req.path) ? CSP_VELO : CSP);
   if (IS_PROD) {
     res.setHeader("Strict-Transport-Security", "max-age=15552000");
   }

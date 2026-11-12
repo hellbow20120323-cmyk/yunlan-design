@@ -258,7 +258,7 @@ export function toolPath(slug: ToolSlug): string {
 }
 
 const cardButtonClass =
-  'text-left rounded-[2px] border border-yunlan-hairline bg-yunlan-surface shadow-yunlan-card p-4 sm:p-5 hover:border-[#d8cbb8] hover:shadow-ink-wash transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-yunlan-cinnabar/30';
+  'text-left rounded-2xl border border-yunlan-hairline bg-yunlan-surface shadow-yunlan-card p-4 sm:p-5 hover:border-[#DC9B6B] hover:shadow-ink-wash transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-yunlan-cinnabar/30';
 
 interface ToolGridProps {
   onOpen: (slug: ToolSlug) => void;
@@ -284,7 +284,7 @@ export const ToolGrid: React.FC<ToolGridProps> = ({ onOpen, category }) => {
               onClick={() => onOpen(tool.slug)}
               className={cardButtonClass}
             >
-              <span className="inline-flex items-center justify-center w-9 h-9 rounded-sm bg-[#f3efe6] text-[#9a7b4f]">
+              <span className="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-[#FAF0E4] text-[#C86D28]">
                 <Icon className="w-4 h-4" strokeWidth={1.6} />
               </span>
               <span className="mt-3 block text-sm font-medium text-yunlan-ink">{tool.name}</span>
@@ -321,7 +321,7 @@ export const ToolGrid: React.FC<ToolGridProps> = ({ onOpen, category }) => {
                   onClick={() => onOpen(tool.slug)}
                   className={cardButtonClass}
                 >
-                  <span className="inline-flex items-center justify-center w-9 h-9 rounded-sm bg-[#f3efe6] text-[#9a7b4f]">
+                  <span className="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-[#FAF0E4] text-[#C86D28]">
                     <Icon className="w-4 h-4" strokeWidth={1.6} />
                   </span>
                   <span className="mt-3 block text-sm font-medium text-yunlan-ink">{tool.name}</span>
@@ -420,10 +420,25 @@ export const ToolsPage: React.FC<ToolsPageProps> = ({ target }) => {
 
   return (
     <PageShell
-      title="免费在线工具"
-      subtitle="文档资料检索、文本处理、格式转换、骑行与家酿计算工具，全部在浏览器本地运行，文件不上传、无需注册。"
+      title="在线工具工坊"
+      subtitle="骑行工程、精酿配方与实用开发工具，全部在浏览器本地运行，文件不上传、无需注册。"
     >
-      <CategoryNav active={active} onChange={goCategory} />
+      <a
+        href="/velo"
+        className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-[#E8DEC8] bg-[#FAF0E4] px-5 py-4 hover:border-[#C86D28]/60 hover:shadow-yunlan-card transition-all"
+      >
+        <span>
+          <span className="block text-sm font-bold text-[#8C4115]">完整工坊 · 28 款进阶工具</span>
+          <span className="mt-1 block text-[11px] text-yunlan-muted">
+            职业赛段推演、自由车架涂装、BJCP 风味雷达、复古酒标与水牌、正则测试与文本差异比对
+          </span>
+        </span>
+        <span className="shrink-0 text-xs font-bold text-[#C86D28]">进入完整工坊 →</span>
+      </a>
+
+      <div className="mt-5">
+        <CategoryNav active={active} onChange={goCategory} />
+      </div>
 
       {!active && (
         <>
@@ -437,10 +452,10 @@ export const ToolsPage: React.FC<ToolsPageProps> = ({ target }) => {
                   onClick={() => goCategory(category.id)}
                   className={`${cardButtonClass} flex flex-col`}
                 >
-                  <span className="inline-flex items-center justify-center w-10 h-10 rounded-sm bg-[#f3efe6] text-[#9a7b4f]">
+                  <span className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-[#FAF0E4] text-[#C86D28]">
                     <Icon className="w-4 h-4" strokeWidth={1.6} />
                   </span>
-                  <span className="mt-3 block font-yunlan-serif text-base font-medium text-yunlan-ink">
+                  <span className="mt-3 block text-base font-bold text-yunlan-ink">
                     {category.label}
                   </span>
                   <span className="mt-1.5 block text-xs font-light leading-relaxed text-yunlan-muted">
@@ -463,7 +478,7 @@ export const ToolsPage: React.FC<ToolsPageProps> = ({ target }) => {
       {current && (
         <>
           <div className="mt-6">
-            <h2 className="font-yunlan-serif text-lg sm:text-xl font-medium text-yunlan-ink">
+            <h2 className="text-lg sm:text-xl font-black text-yunlan-ink">
               {current.label}
             </h2>
             <p className="mt-1 text-[11px] font-light text-yunlan-muted">
@@ -528,7 +543,7 @@ export const ToolsPage: React.FC<ToolsPageProps> = ({ target }) => {
       )}
 
       <div className={`${yunlanCardClass()} mt-6 p-5 flex items-start gap-3`}>
-        <Wrench className="w-4 h-4 mt-0.5 text-[#9a7b4f] shrink-0" />
+        <Wrench className="w-4 h-4 mt-0.5 text-[#C86D28] shrink-0" />
         <p className="text-xs font-light leading-relaxed text-yunlan-muted">
           所有工具均为纯前端实现，输入内容仅在当前浏览器标签页内处理，刷新后即清空。若页面长时间无响应，请减少单次处理的文本或图片体积。
         </p>

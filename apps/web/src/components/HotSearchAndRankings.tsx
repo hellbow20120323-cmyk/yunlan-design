@@ -57,7 +57,7 @@ export const HotSearchAndRankings: React.FC<HotSearchAndRankingsProps> = ({
             <button
               key={item.keyword}
               onClick={() => onSelectKeyword(item.keyword, item.category)}
-              className="flex items-center justify-between min-h-11 p-2.5 rounded-xl border border-yunlan-hairline hover:border-[#d8cbb8] bg-[#faf8f5] hover:bg-[#f3f0ea] transition-all text-left group"
+              className="flex items-center justify-between min-h-11 p-2.5 rounded-xl border border-yunlan-hairline hover:border-[#DC9B6B] bg-[#FAF7F2] hover:bg-[#f3f0ea] transition-all text-left group"
             >
               <div className="flex items-center gap-2 min-w-0">
                 <span className={`text-xs font-bold tabular-nums w-4 shrink-0 ${
@@ -65,11 +65,11 @@ export const HotSearchAndRankings: React.FC<HotSearchAndRankingsProps> = ({
                 }`}>
                   {idx + 1}
                 </span>
-                <span className="text-xs text-[#4a4540] group-hover:text-[#9a7b4f] font-medium truncate">
+                <span className="text-xs text-[#4a4540] group-hover:text-[#C86D28] font-medium truncate">
                   {item.keyword}
                 </span>
               </div>
-              <ArrowUpRight className="w-3 h-3 text-yunlan-muted group-hover:text-[#9a7b4f] shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <ArrowUpRight className="w-3 h-3 text-yunlan-muted group-hover:text-[#C86D28] shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
             </button>
           ))}
         </div>

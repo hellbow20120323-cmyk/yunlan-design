@@ -25,15 +25,16 @@ export const Footer: React.FC<FooterProps> = ({ onNavigateToTab, searchEnabled =
           <div>
             <div className="flex items-center gap-2.5 mb-1.5">
               <BrandLogo className="w-8 h-8" />
-              <span className="font-semibold text-[#3d3832] text-sm">云览 Yunlan</span>
-              <span className="text-xs text-[#a88858]">
-                {searchEnabled ? '· 专业多网盘聚合资源搜索' : '· 免费在线工具'}
+              <span className="font-bold text-[#1C1917] text-sm">自行车与家酿</span>
+              <span className="font-mono text-[10px] font-bold tracking-[0.18em] text-[#8C4115]">VELO &amp; BREW</span>
+              <span className="text-xs text-[#9E6B38]">
+                {searchEnabled ? '· 骑行工程与公开资料检索' : '· 骑行 · 精酿 · 在线工具'}
               </span>
             </div>
             <p className="text-xs text-yunlan-muted max-w-lg leading-relaxed font-light">
               {searchEnabled
-                ? '本站仅提供公开云盘分享链接的第三方索引与转存跳转服务，不直接存储、上传或修改任何文件。'
-                : '本站提供免费的在线文本处理、格式转换与公开资料检索工具，所有工具均在浏览器本地运行，不上传文件、无需注册。'}
+                ? '本站提供公开资料索引与在线工具，所有工具均在浏览器本地运行；不直接存储、上传或修改任何文件。'
+                : '骑行工程、精酿配方与实用开发工具，全部基于现代浏览器本地运行，不上传文件、无需注册。'}
             </p>
           </div>
 
@@ -41,21 +42,24 @@ export const Footer: React.FC<FooterProps> = ({ onNavigateToTab, searchEnabled =
             {searchEnabled && (
               <button
                 onClick={() => onNavigateToTab('search')}
-                className="hover:text-[#9a7b4f] transition-colors"
+                className="hover:text-[#C86D28] transition-colors"
               >
                 发现资源
               </button>
             )}
             <button
               onClick={() => onNavigateToTab('tools')}
-              className="hover:text-[#9a7b4f] transition-colors"
+              className="hover:text-[#C86D28] transition-colors"
             >
               在线工具
             </button>
+            <a href="/velo" className="hover:text-[#C86D28] transition-colors">
+              完整工坊
+            </a>
             {searchEnabled && (
               <button
                 onClick={() => onNavigateToTab('providers')}
-                className="hover:text-[#9a7b4f] transition-colors"
+                className="hover:text-[#C86D28] transition-colors"
               >
                 网盘导航
               </button>
@@ -63,20 +67,20 @@ export const Footer: React.FC<FooterProps> = ({ onNavigateToTab, searchEnabled =
             {searchEnabled && (
               <button
                 onClick={() => onNavigateToTab('rankings')}
-                className="hover:text-[#9a7b4f] transition-colors"
+                className="hover:text-[#C86D28] transition-colors"
               >
                 全网风云榜
               </button>
             )}
             <button
               onClick={() => onNavigateToTab('guide')}
-              className="hover:text-[#9a7b4f] transition-colors"
+              className="hover:text-[#C86D28] transition-colors"
             >
               使用指南
             </button>
             <a
               href="/support"
-              className="hover:text-[#9a7b4f] transition-colors"
+              className="hover:text-[#C86D28] transition-colors"
             >
               支持与申请
             </a>
@@ -109,8 +113,8 @@ export const Footer: React.FC<FooterProps> = ({ onNavigateToTab, searchEnabled =
 
           <div>
             <span>
-              © {new Date().getFullYear()} 云览 YUNLAN ·{' '}
-              {searchEnabled ? '跨平台多网盘聚合引擎' : '免费在线工具站'}
+              © {new Date().getFullYear()} 自行车与家酿 VELO &amp; BREW ·{' '}
+              {searchEnabled ? '骑行工程与公开资料检索' : '骑行 · 精酿 · 在线工具'}
             </span>
           </div>
         </div>

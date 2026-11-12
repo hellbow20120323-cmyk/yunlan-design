@@ -39,7 +39,7 @@ export const BatchActionBar: React.FC<BatchActionBarProps> = ({
   };
 
   const handleExportMarkdown = () => {
-    const md = `# 云览资源分享清单 (${new Date().toLocaleDateString()})\n\n` +
+    const md = `# 自行车与家酿资源分享清单 (${new Date().toLocaleDateString()})\n\n` +
       selectedItems.map((item) => {
         const codePart = item.extractCode ? ` | 提取码: \`${item.extractCode}\`` : ' | 免密码';
         return `- [${item.title}](${item.shareUrl}) - **${item.sizeFormatted}**${codePart}`;

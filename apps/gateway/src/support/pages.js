@@ -82,10 +82,10 @@ ${script ? `<script src="${script}" defer></script>` : ""}
 
 export function renderRelayPage({ token, app }) {
   return layout({
-    title: "云览 · 申请中转页",
+    title: "自行车与家酿 · 申请中转页",
     body: `
 <div class="card">
-  <h1>云览 · 申请中转页</h1>
+  <h1>自行车与家酿 · 申请中转页</h1>
   <p class="meta">申请邮箱：${escapeHtml(maskEmail(app.email))} · 本链接仅可访问一次</p>
   <div class="notice">
     声明：自愿支持站点维护与审核结果、权限发放没有任何绑定，不强制支持。本站没有到账回调，也不会自动开通任何权限。
@@ -103,7 +103,7 @@ export function renderRelayPage({ token, app }) {
   </div>
   <p style="margin-top:18px;font-size:12px;color:#7a766f;">只有选择 A 后的页面才会展示赞赏码；邮件、首页与表单页均不展示。审核结果完全由人工终审决定。</p>
 </div>
-<div class="footer">云览 Yunlan</div>`,
+<div class="footer">自行车与家酿 VELO & BREW</div>`,
   });
 }
 
@@ -143,11 +143,11 @@ export function renderResultPage({ app, choice, uploads = [], qrAvailable = fals
       : "";
 
   return layout({
-    title: "云览 · 申请状态",
+    title: "自行车与家酿 · 申请状态",
     script: "/relay/app.js",
     body: `
 <div class="card">
-  <h1>云览 · 申请状态</h1>
+  <h1>自行车与家酿 · 申请状态</h1>
   <p class="meta">申请邮箱：${escapeHtml(maskEmail(app.email))} · 提交时间：${escapeHtml(fmtTime(app.createdAt))}</p>
   <p>当前状态：<span class="status ${statusClass}">${statusText}</span></p>
   <div class="notice">自愿支持与审核结果、权限发放没有任何绑定。所有审核均由人工完成，系统不会自动放行。</div>
@@ -155,46 +155,46 @@ export function renderResultPage({ app, choice, uploads = [], qrAvailable = fals
   ${uploadBlock}
   <p style="margin-top:18px;font-size:12px;color:#7a766f;">此页面可在 30 天内通过本机浏览器再次打开。若更换设备或清理了浏览器，请联系站长重新发送链接（链接仅可访问一次）。</p>
 </div>
-<div class="footer">云览 Yunlan</div>`,
+<div class="footer">自行车与家酿 VELO & BREW</div>`,
   });
 }
 
 export function renderUsedPage() {
   return layout({
-    title: "云览 · 链接已使用",
+    title: "自行车与家酿 · 链接已使用",
     body: `
 <div class="card">
   <h1>该链接已被使用</h1>
   <p>一次性中转链接仅允许访问一次。若为本人操作，可打开申请状态页查看进度；如需重新获取链接，请联系站长。</p>
   <div class="actions"><a class="btn primary" href="/relay/status">查看申请状态</a></div>
 </div>
-<div class="footer">云览 Yunlan</div>`,
+<div class="footer">自行车与家酿 VELO & BREW</div>`,
   });
 }
 
 export function renderExpiredPage() {
   return layout({
-    title: "云览 · 链接已失效",
+    title: "自行车与家酿 · 链接已失效",
     body: `
 <div class="card">
   <h1>链接已失效</h1>
   <p>该链接不存在、已过期或已被使用。一次性中转链接有效期为 24 小时，且仅可访问一次。</p>
   <div class="actions"><a class="btn" href="/support">重新提交申请</a></div>
 </div>
-<div class="footer">云览 Yunlan</div>`,
+<div class="footer">自行车与家酿 VELO & BREW</div>`,
   });
 }
 
 export function renderMessagePage(title, message) {
   return layout({
-    title: `云览 · ${title}`,
+    title: `自行车与家酿 · ${title}`,
     body: `
 <div class="card">
   <h1>${escapeHtml(title)}</h1>
   <p>${escapeHtml(message)}</p>
   <div class="actions"><a class="btn" href="/support">返回申请页</a></div>
 </div>
-<div class="footer">云览 Yunlan</div>`,
+<div class="footer">自行车与家酿 VELO & BREW</div>`,
   });
 }
 
@@ -496,11 +496,11 @@ export const RELAY_JS = `
 export function renderAdminPage() {
   return layout({
     admin: true,
-    title: "云览 · 申请审核后台",
+    title: "自行车与家酿 · 申请审核后台",
     script: "/support/admin.js",
     body: `
 <div class="card">
-  <h1>云览 · 申请审核后台</h1>
+  <h1>自行车与家酿 · 申请审核后台</h1>
   <p class="meta">所有结论必须人工点击提交；系统只提供候选推荐，不存在自动放行。</p>
   <div id="login">
     <label for="token">管理员凭证（ADMIN_TOKEN）</label>
@@ -528,7 +528,7 @@ export function renderAdminPage() {
         <div id="candidate-list" class="list"></div>
         <h2>导入账单</h2>
         <p class="meta">CSV 列顺序：到账时间, 备注, 金额, 交易单号（可选）。备注含 4 位口令权重最高；到账时间与申请时间相差 ±60 秒为次要权重。</p>
-        <textarea id="csv" placeholder="2026-11-11 10:00:00,云览 1234,5,4200001234"></textarea>
+        <textarea id="csv" placeholder="2026-11-11 10:00:00,自行车与家酿 1234,5,4200001234"></textarea>
         <div class="toolbar"><button id="import-btn" type="button">导入并生成候选</button></div>
         <div id="import-msg" class="msg"></div>
         <h2>赞赏码设置</h2>

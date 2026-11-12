@@ -10,9 +10,9 @@ import { searchMulti } from "./sources/aggregate.js";
 
 export const PUBLIC_ORIGIN = (process.env.PUBLIC_ORIGIN || "https://panso.hellbow.xyz").replace(/\/$/, "");
 
-export const DEFAULT_TITLE = "云览 YUNLAN - 免费在线文档与文本工具站";
+export const DEFAULT_TITLE = "自行车与家酿 VELO & BREW - 骑行计算、家酿啤酒与在线工具站";
 export const DEFAULT_DESCRIPTION =
-  "云览提供免费的在线文档资料检索、文本统计与格式化、Base64 / URL 编解码、JSON 格式化校验、图片转 Base64 等工具，全部在浏览器本地处理，无需注册。";
+  "自行车与家酿提供骑行工程计算、手工车架涂装、精酿啤酒配方与文本开发工具，全部在浏览器本地运行，不上传文件、无需注册。";
 
 /** 搜索入口开关：false 时站点对外只呈现工具页，搜索相关路由与内容全部隐藏 */
 export function isSearchEnabled() {
@@ -24,137 +24,137 @@ export function isSearchEnabled() {
 /** 合规工具页的标题与描述（同时用于 sitemap 与页面 meta） */
 export const TOOL_PAGES = {
   "": {
-    title: "免费在线工具 - 文档检索、文本处理、格式转换 | 云览",
+    title: "自行车与家酿 VELO & BREW - 骑行计算、家酿啤酒与在线工具站",
     description:
-      "云览免费在线工具箱：Unix 时间戳转换、文本统计与格式化、Base64 / URL 编解码、JSON 格式化校验、哈希计算、随机密码生成、图片转 Base64，以及骑行与家酿啤酒计算器，全部本地处理。",
+      "骑行工程计算、手工车架涂装、精酿啤酒配方与文本开发工具，全部在浏览器本地运行，不上传文件、无需注册。",
   },
   timestamp: {
-    title: "Unix 时间戳转换工具 - 时间戳与日期互转 | 云览",
+    title: "Unix 时间戳转换工具 - 时间戳与日期互转 | 自行车与家酿",
     description:
       "免费在线 Unix 时间戳转换工具，支持秒级与毫秒级时间戳，一键在时间戳、本地日期与 UTC ISO 之间互转，本地计算不上传。",
   },
   dev: {
-    title: "文本与开发工具 - 编码转换、哈希、时间戳 | 云览",
+    title: "文本与开发工具 - 编码转换、哈希、时间戳 | 自行车与家酿",
     description:
-      "云览文本与开发工具合集：文本统计与格式化、Unix 时间戳转换、Base64 / URL 编解码、JSON 格式化校验、哈希计算、随机密码生成、图片转 Base64。",
+      "自行车与家酿文本与开发工具合集：文本统计与格式化、Unix 时间戳转换、Base64 / URL 编解码、JSON 格式化校验、哈希计算、随机密码生成、图片转 Base64。",
   },
   cycling: {
-    title: "骑行计算工具 - 齿比、踏频、轮组与功率 | 云览",
+    title: "骑行计算工具 - 齿比、踏频、轮组与功率 | 自行车与家酿",
     description:
-      "云览骑行计算工具合集：齿比与行进距离、踏频配速换算、链条节数、轮组周长、最佳胎压、爬坡坡度等级与骑行功率估算。",
+      "自行车与家酿骑行计算工具合集：齿比与行进距离、踏频配速换算、链条节数、轮组周长、最佳胎压、爬坡坡度等级与骑行功率估算。",
   },
   brewing: {
-    title: "家酿啤酒计算工具 - ABV、IBU、SRM 与补糖 | 云览",
+    title: "家酿啤酒计算工具 - ABV、IBU、SRM 与补糖 | 自行车与家酿",
     description:
-      "云览家酿啤酒计算工具合集：ABV 酒精度、IBU 苦度、SRM 色度、酵母投放量、装瓶补糖、桶装碳酸化、管路平衡、热量与 BAC 估算。",
+      "自行车与家酿家酿啤酒计算工具合集：ABV 酒精度、IBU 苦度、SRM 色度、酵母投放量、装瓶补糖、桶装碳酸化、管路平衡、热量与 BAC 估算。",
   },
   text: {
-    title: "在线文本统计与格式化工具 - 字数统计、去重、排序 | 云览",
+    title: "在线文本统计与格式化工具 - 字数统计、去重、排序 | 自行车与家酿",
     description:
       "免费在线文本处理工具：实时统计字数、字符数与行数，一键去除空行、去重、排序、大小写转换，纯浏览器本地处理。",
   },
   base64: {
-    title: "Base64 与 URL 编码解码工具 - 在线转换 | 云览",
+    title: "Base64 与 URL 编码解码工具 - 在线转换 | 自行车与家酿",
     description:
       "免费在线 Base64 / URL 编解码工具，支持中文 UTF-8，编码解码结果实时生成，数据仅在浏览器本地处理。",
   },
   json: {
-    title: "JSON 格式化与校验工具 - 在线美化、压缩 | 云览",
+    title: "JSON 格式化与校验工具 - 在线美化、压缩 | 自行车与家酿",
     description:
       "免费在线 JSON 工具：一键格式化美化、压缩、语法校验并定位错误，适合接口调试与配置整理，本地处理不上传。",
   },
   image: {
-    title: "图片转 Base64 在线工具 - 本地转换 | 云览",
+    title: "图片转 Base64 在线工具 - 本地转换 | 自行车与家酿",
     description:
       "免费在线图片转 Base64 工具，支持 PNG / JPG / GIF / WebP，直接生成 Data URL，可复制用于 HTML 或 CSS，图片不上传服务器。",
   },
   hash: {
-    title: "在线文本哈希计算工具 - SHA-1 / SHA-256 / SHA-512 | 云览",
+    title: "在线文本哈希计算工具 - SHA-1 / SHA-256 / SHA-512 | 自行车与家酿",
     description:
       "免费在线哈希计算工具，支持 SHA-1、SHA-256、SHA-384、SHA-512 文本摘要，十六进制结果实时生成，全部在浏览器本地计算。",
   },
   password: {
-    title: "随机密码生成器 - 在线生成强密码 | 云览",
+    title: "随机密码生成器 - 在线生成强密码 | 自行车与家酿",
     description:
       "免费在线随机密码生成器，可自定义长度与大小写字母、数字、符号组合，使用浏览器加密随机数生成，密码不离开本地。",
   },
   gear: {
-    title: "自行车齿比与行进距离计算器 - Gear Inches | 云览",
+    title: "自行车齿比与行进距离计算器 - Gear Inches | 自行车与家酿",
     description:
       "免费在线自行车齿比计算器，输入牙盘与飞轮齿数即可得到齿比、Gear Inches 与每踩踏一圈的前进距离。",
   },
   cadence: {
-    title: "踏频与速度换算器 - 自行车配速计算 | 云览",
+    title: "踏频与速度换算器 - 自行车配速计算 | 自行车与家酿",
     description:
       "免费在线踏频换算工具，根据踏频、齿比与轮胎周长估算理论车速，并可对比不同踏频区间的速度。",
   },
   chain: {
-    title: "自行车链条节数计算器 - 链长精确计算 | 云览",
+    title: "自行车链条节数计算器 - 链长精确计算 | 自行车与家酿",
     description:
       "免费在线链条节数计算器，按最大牙盘、最大飞轮与后下叉长度估算链条节数与长度，支持带后拨车架。",
   },
   wheel: {
-    title: "轮组与外胎真实周长计算器 - 码表设置 | 云览",
+    title: "轮组与外胎真实周长计算器 - 码表设置 | 自行车与家酿",
     description:
       "免费在线轮组周长计算器，按轮圈 BSD 与外胎宽度计算滚动直径、真实周长与每公里圈数，方便码表设置。",
   },
   pressure: {
-    title: "自行车轮胎最佳胎压计算器 - 前后轮建议 | 云览",
+    title: "自行车轮胎最佳胎压计算器 - 前后轮建议 | 自行车与家酿",
     description:
       "免费在线公路车胎压计算器，按人车总重量、胎宽与真空胎设置估算前后轮推荐胎压，兼顾滚阻与舒适性。",
   },
   climb: {
-    title: "爬坡坡度与等级判定计算器 | 云览",
+    title: "爬坡坡度与等级判定计算器 | 自行车与家酿",
     description:
       "免费在线爬坡计算器，输入累计爬升与坡段长度，计算平均坡度、倾角与 HC/1/2/3/4 级爬坡等级。",
   },
   power: {
-    title: "骑行功率估算器 - Watts 与 W/kg | 云览",
+    title: "骑行功率估算器 - Watts 与 W/kg | 自行车与家酿",
     description:
       "免费在线骑行功率估算工具，按体重、车速、坡度与风阻估算所需 Watts 与功率体重比，并拆分风阻、滚阻与重力。",
   },
   abv: {
-    title: "ABV 酒精度计算器 - OG/FG 换算 | 云览",
+    title: "ABV 酒精度计算器 - OG/FG 换算 | 自行车与家酿",
     description:
       "免费在线啤酒酒精度计算器，输入初始比重与最终比重即可计算 ABV，支持 SG 与 Brix 糖度切换。",
   },
   ibu: {
-    title: "IBU 苦度计算器 - Tinseth 公式 | 云览",
+    title: "IBU 苦度计算器 - Tinseth 公式 | 自行车与家酿",
     description:
       "免费在线 IBU 苦度计算器，按批次体积、OG、啤酒花重量、Alpha 酸与煮沸时间用 Tinseth 公式累加苦度，支持多组酒花。",
   },
   srm: {
-    title: "SRM / EBC 啤酒颜色计算器 - Morey 公式 | 云览",
+    title: "SRM / EBC 啤酒颜色计算器 - Morey 公式 | 自行车与家酿",
     description:
       "免费在线啤酒色度计算器，按麦芽重量与 Lovibond 色值用 Morey 公式估算 SRM / EBC，并提供成品颜色预览。",
   },
   yeast: {
-    title: "酵母投放量计算器 - 细胞数与扩培建议 | 云览",
+    title: "酵母投放量计算器 - 细胞数与扩培建议 | 自行车与家酿",
     description:
       "免费在线酵母投放量计算器，按麦汁体积、OG、干/液体酵母与生产日期估算所需细胞数、包装数量与是否需要 Starter。",
   },
   priming: {
-    title: "装瓶补糖计算器 - CO2 体积换算 | 云览",
+    title: "装瓶补糖计算器 - CO2 体积换算 | 自行车与家酿",
     description:
       "免费在线啤酒装瓶补糖计算器，按体积、发酵温度与目标 CO2 体积计算葡萄糖、蔗糖与干麦芽精用量，附风格预设。",
   },
   keg: {
-    title: "生啤强制碳酸化计算器 - PSI 查表 | 云览",
+    title: "生啤强制碳酸化计算器 - PSI 查表 | 自行车与家酿",
     description:
       "免费在线桶装啤酒碳酸化计算器，按冷藏温度与目标 CO2 体积给出建议 PSI，并提供温度 × 体积查表矩阵。",
   },
   line: {
-    title: "生啤管路长度平衡计算器 | 云览",
+    title: "生啤管路长度平衡计算器 | 自行车与家酿",
     description:
       "免费在线酒管长度计算器，按酒桶压力、高度差与软管内径推荐管长，减少倒酒泡沫。",
   },
   calories: {
-    title: "啤酒热量计算器 - 酒精与碳水拆分 | 云览",
+    title: "啤酒热量计算器 - 酒精与碳水拆分 | 自行车与家酿",
     description:
       "免费在线啤酒热量计算器，按 OG、FG 与饮用体积计算总热量，并拆分酒精与碳水化合物贡献。",
   },
   bac: {
-    title: "BAC 血液酒精浓度估算器 - Widmark 公式 | 云览",
+    title: "BAC 血液酒精浓度估算器 - Widmark 公式 | 自行车与家酿",
     description:
       "免费在线 BAC 估算工具，按性别、体重、饮酒量与时长用 Widmark 公式估算峰值与当前血液酒精浓度，仅供了解代谢，不具法律效力。",
   },
@@ -189,14 +189,14 @@ export function searchPageTitle(kw, total) {
   const q = String(kw || "").trim();
   if (!q) return DEFAULT_TITLE;
   const n = Number.isFinite(total) && total >= 0 ? total : null;
-  return n == null ? `${q} - 公开资料检索 | 云览` : `${q} - ${n}条公开资料 | 云览`;
+  return n == null ? `${q} - 公开资料检索 | 自行车与家酿` : `${q} - ${n}条公开资料 | 自行车与家酿`;
 }
 
 export function searchPageDescription(kw, total) {
   const q = String(kw || "").trim();
   if (!q) return DEFAULT_DESCRIPTION;
   const n = Number.isFinite(total) && total > 0 ? `${total} 条` : "多条";
-  return `在云览检索「${q}」相关的公开文档与资料索引，共 ${n} 结果，支持格式筛选与有效性标注。`;
+  return `在自行车与家酿检索「${q}」相关的公开文档与资料索引，共 ${n} 结果，支持格式筛选与有效性标注。`;
 }
 
 export function searchCanonical(kw) {
@@ -230,8 +230,8 @@ function websiteJsonLd() {
   return {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    name: "云览",
-    alternateName: "YUNLAN",
+    name: "自行车与家酿",
+    alternateName: "VELO & BREW",
     url: `${PUBLIC_ORIGIN}/`,
     description: DEFAULT_DESCRIPTION,
     potentialAction: {
@@ -331,7 +331,7 @@ export function applySeoToHtml(html, opts = {}) {
   out = upsertMeta(out, "property", "og:description", description);
   out = upsertMeta(out, "property", "og:url", canonical);
   out = upsertMeta(out, "property", "og:type", "website");
-  out = upsertMeta(out, "property", "og:site_name", "云览");
+  out = upsertMeta(out, "property", "og:site_name", "自行车与家酿");
   out = upsertMeta(out, "property", "og:locale", "zh_CN");
   out = upsertMeta(out, "property", "og:image", `${PUBLIC_ORIGIN}/logo.png`);
   out = upsertMeta(out, "name", "twitter:card", "summary_large_image");
@@ -452,7 +452,7 @@ export async function sendSeoIndex(req, res) {
  */
 export function buildSitemapXml(hotItems = [], opts = {}) {
   const searchEnabled = opts.searchEnabled ?? isSearchEnabled();
-  const urls = [`${PUBLIC_ORIGIN}/`, `${PUBLIC_ORIGIN}/tools`];
+  const urls = [`${PUBLIC_ORIGIN}/`, `${PUBLIC_ORIGIN}/tools`, `${PUBLIC_ORIGIN}/velo`];
   const seen = new Set();
   for (const slug of TOOL_SLUGS) {
     urls.push(`${PUBLIC_ORIGIN}/tools/${slug}`);

@@ -93,7 +93,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
               onClick={() => onSelectCategory(cat.id)}
               className={`flex items-center gap-1.5 px-3 min-h-11 py-2 text-xs font-medium rounded-lg whitespace-nowrap shrink-0 snap-start transition-all cursor-pointer ${
                 isActive
-                  ? 'bg-[#fffcf8] text-[#9a7b4f] font-semibold shadow-sm border border-[#e5dccf]/80'
+                  ? 'bg-[#fffcf8] text-[#C86D28] font-semibold shadow-sm border border-[#e5dccf]/80'
                   : 'text-yunlan-muted hover:text-[#4a4540]'
               }`}
             >
@@ -102,7 +102,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
               {count !== undefined && count > 0 && (
                 <span className={`text-[11px] tabular-nums px-1.5 py-0.2 rounded-full ${
                   isActive 
-                    ? 'bg-[#f3f0ea] text-[#9a7b4f]' 
+                    ? 'bg-[#f3f0ea] text-[#C86D28]' 
                     : 'bg-[#ebe6de] text-yunlan-muted'
                 }`}>
                   {count}

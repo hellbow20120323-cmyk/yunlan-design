@@ -29,7 +29,7 @@ export const UsageGuide: React.FC<UsageGuideProps> = ({ searchEnabled = true }) 
         {/* Card 1: Advanced Search Syntax */}
         {searchEnabled && (
         <div className={`${yunlanCardClass()} p-6 space-y-3`}>
-          <div className="flex items-center gap-2 text-[#9a7b4f] font-semibold text-sm">
+          <div className="flex items-center gap-2 text-[#C86D28] font-semibold text-sm">
             <Search className="w-4 h-4" />
             <span>智能搜索语法技巧</span>
           </div>
@@ -38,15 +38,15 @@ export const UsageGuide: React.FC<UsageGuideProps> = ({ searchEnabled = true }) 
           </p>
           <div className="space-y-2 text-xs font-mono">
             <div className={codeBlock}>
-              <span className="text-[#9a7b4f] font-semibold">流浪地球 4K HDR</span>
+              <span className="text-[#C86D28] font-semibold">流浪地球 4K HDR</span>
               <span className="text-slate-500 font-sans block text-xs mt-0.5">多关键词空格隔开，自动取交集</span>
             </div>
             <div className={codeBlock}>
-              <span className="text-[#9a7b4f] font-semibold">Python 教程 -广告</span>
+              <span className="text-[#C86D28] font-semibold">Python 教程 -广告</span>
               <span className="text-slate-500 font-sans block text-xs mt-0.5">减号代表排除包含特定干扰词的资源</span>
             </div>
             <div className={codeBlock}>
-              <span className="text-[#9a7b4f] font-semibold">考研数学 ext:pdf</span>
+              <span className="text-[#C86D28] font-semibold">考研数学 ext:pdf</span>
               <span className="text-slate-500 font-sans block text-xs mt-0.5">限制目标格式只看 PDF 文档或 MKV 视频</span>
             </div>
           </div>
@@ -55,7 +55,7 @@ export const UsageGuide: React.FC<UsageGuideProps> = ({ searchEnabled = true }) 
 
         {/* Card 2: Keyboard shortcuts */}
         <div className={`${yunlanCardClass()} p-6 space-y-3`}>
-          <div className="flex items-center gap-2 text-[#9a7b4f] font-semibold text-sm">
+          <div className="flex items-center gap-2 text-[#C86D28] font-semibold text-sm">
             <Keyboard className="w-4 h-4" />
             <span>高效快捷键操作</span>
           </div>

@@ -98,7 +98,7 @@ export const PasswordTool: React.FC = () => {
               key={key}
               className={`inline-flex items-center gap-1.5 min-h-9 px-3 py-1.5 text-xs rounded-sm border cursor-pointer transition-colors ${
                 enabled[key]
-                  ? 'bg-[#f3efe6] border-yunlan-stone/40 text-yunlan-ink'
+                  ? 'bg-[#FAF0E4] border-yunlan-stone/40 text-yunlan-ink'
                   : 'bg-yunlan-surface border-yunlan-hairline text-yunlan-muted'
               }`}
             >

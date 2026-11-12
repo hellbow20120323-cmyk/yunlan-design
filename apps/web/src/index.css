@@ -2,53 +2,56 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /**
- * 水墨色阶重映射
+ * Velo & Brew 暖纸色阶重映射
  * 组件里大量使用 slate / cyan / amber / emerald / red 等 Tailwind 默认色阶（冷灰、青、橙）。
- * 在主题层统一替换为偏暖的墨色、石青、赭金、青玉、朱砂，全站一次性与水墨风格对齐，
- * 同时把最浅的辅助文字（slate-400）加深一档，提升小字号的可读对比度。
+ * 在主题层统一替换为暖纸底、石色文字与铜琥珀强调色，全站一次性与自行车与家酿风格对齐。
  */
 @theme {
-  --color-slate-50: #f7f7f6;
-  --color-slate-100: #efede9;
-  --color-slate-200: #e4e1db;
-  --color-slate-300: #d1cdc6;
-  --color-slate-400: #7a766f;
-  --color-slate-500: #5f5b56;
-  --color-slate-600: #4b4844;
-  --color-slate-700: #413e3a;
-  --color-slate-800: #2f2d2a;
-  --color-slate-850: #272523;
-  --color-slate-900: #2a2826;
-  --color-slate-950: #1d1b1a;
+  --color-slate-50: #faf7f2;
+  --color-slate-100: #f5efe6;
+  --color-slate-200: #e8e3d9;
+  --color-slate-300: #d6cfc2;
+  --color-slate-400: #8a8378;
+  --color-slate-500: #6b655c;
+  --color-slate-600: #57524a;
+  --color-slate-700: #413c35;
+  --color-slate-800: #292524;
+  --color-slate-850: #231f1c;
+  --color-slate-900: #1c1917;
+  --color-slate-950: #12100e;
 
-  /* 石青：链接 / 信息色 */
-  --color-cyan-400: #4f8fc9;
-  --color-cyan-500: #2b73b6;
-  --color-cyan-600: #1661ab;
-  --color-cyan-700: #124f8a;
-  --color-blue-500: #2f6fae;
-  --color-blue-600: #1661ab;
+  /* 铜琥珀：链接 / 信息 / 主强调色 */
+  --color-cyan-400: #dc9b6b;
+  --color-cyan-500: #c86d28;
+  --color-cyan-600: #af571b;
+  --color-cyan-700: #8c4115;
+  --color-blue-500: #c86d28;
+  --color-blue-600: #af571b;
 
-  /* 赭金：收藏 / 热榜 / VIP */
-  --color-amber-300: #e6bd6c;
-  --color-amber-400: #d9a441;
-  --color-amber-500: #b8862f;
-  --color-amber-600: #9a6f24;
-  --color-amber-700: #7a561b;
-  --color-orange-400: #cf7a45;
-  --color-orange-500: #bf6430;
+  /* 铜琥珀 / 金：收藏 / 热榜 / VIP */
+  --color-amber-200: #f4dece;
+  --color-amber-300: #ebc3a4;
+  --color-amber-400: #e5a93c;
+  --color-amber-500: #c86d28;
+  --color-amber-600: #af571b;
+  --color-amber-700: #8c4115;
+  --color-orange-400: #dc9b6b;
+  --color-orange-500: #c86d28;
 
   /* 青玉：成功 */
   --color-emerald-400: #5fae92;
   --color-emerald-500: #3f9577;
-  --color-emerald-600: #2f7d63;
+  --color-emerald-600: #2f6a50;
 
-  --color-yunlan-cinnabar: #c04851;
+  --color-yunlan-cinnabar: #c86d28;
 
   /* 字重：中文在 300 细体下笔画发虚，light 统一按常规字重渲染 */
   --font-weight-light: 400;
 
-  /* 朱砂：危险 / 强调 */
+  /* 圆角：让 rounded-sm 更接近 Velo & Brew 的柔和圆角 */
+  --radius-sm: 0.75rem;
+
+  /* 陶土红：危险 / 错误 */
   --color-red-400: #d0646c;
   --color-red-500: #c04851;
   --color-red-600: #a83d45;
@@ -56,14 +59,14 @@
 
 @layer base {
   :root {
-    --yunlan-paper: #f7f7f6;
-    --yunlan-mist: #eae8e3;
-    --yunlan-surface: #fafaf9;
-    --yunlan-ink: #2a2826;
-    --yunlan-ink-muted: #5f5b56;
-    --yunlan-ink-faint: #85817a;
-    --yunlan-cinnabar: #c04851;
-    --yunlan-stone: #1661ab;
+    --yunlan-paper: #faf7f2;
+    --yunlan-mist: #f5efe6;
+    --yunlan-surface: #ffffff;
+    --yunlan-ink: #1c1917;
+    --yunlan-ink-muted: #6b655c;
+    --yunlan-ink-faint: #8a8378;
+    --yunlan-cinnabar: #c86d28;
+    --yunlan-stone: #8c4115;
     --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
       'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
     --font-serif: 'Noto Serif SC', 'Source Han Serif SC', 'Noto Serif CJK SC', 'Songti SC', 'STSong',
@@ -87,9 +90,9 @@
     text-rendering: optimizeLegibility;
   }
 
-  /* 水墨选区 */
+  /* 暖铜选区 */
   ::selection {
-    background: rgba(192, 72, 81, 0.18);
+    background: rgba(200, 109, 40, 0.22);
     color: var(--yunlan-ink);
   }
 
@@ -134,7 +137,7 @@
   [role='button'],
   summary {
     touch-action: manipulation;
-    -webkit-tap-highlight-color: rgba(42, 40, 38, 0.08);
+    -webkit-tap-highlight-color: rgba(200, 109, 40, 0.1);
   }
 
   .dark body {
@@ -145,7 +148,8 @@
 
 @layer utilities {
   .font-yunlan-serif {
-    font-family: var(--font-serif);
+    /* 类名保留作为兼容 shim：Velo & Brew 标题使用无衬线粗体 */
+    font-family: var(--font-sans);
   }
 
   .bg-yunlan-ivory,
@@ -178,26 +182,26 @@
   }
 
   .border-yunlan-hairline {
-    border-color: rgba(42, 40, 38, 0.1);
+    border-color: #e8e3d9;
   }
 
   .border-yunlan-ink-wash {
-    border-color: rgba(42, 40, 38, 0.16);
+    border-color: #d6cfc2;
   }
 
-  /** 常态：几乎贴纸；悬停：水墨晕染 */
+  /** 常态：几乎贴纸；悬停：暖纸柔和投影 */
   .shadow-yunlan-card {
-    box-shadow: 0 1px 0 rgba(42, 40, 38, 0.04);
+    box-shadow: 0 1px 2px rgba(28, 25, 23, 0.04);
   }
 
   .shadow-yunlan-feather {
-    box-shadow: 0 2px 12px -6px rgba(42, 40, 38, 0.06);
+    box-shadow: 0 2px 12px -6px rgba(140, 65, 21, 0.1);
   }
 
   .shadow-ink-wash {
     box-shadow:
-      0 8px 28px -6px rgba(42, 40, 38, 0.14),
-      0 2px 8px -2px rgba(42, 40, 38, 0.08);
+      0 10px 30px -12px rgba(140, 65, 21, 0.2),
+      0 2px 8px -2px rgba(28, 25, 23, 0.06);
   }
 
   .bg-yunlan-cta {
@@ -206,7 +210,7 @@
   }
 
   .bg-yunlan-cta:hover {
-    background-color: #a83d45;
+    background-color: #af571b;
   }
 
   /** @deprecated 保留兼容，映射朱砂 */

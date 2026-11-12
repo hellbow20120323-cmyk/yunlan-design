@@ -106,36 +106,40 @@ export const HeroSearch: React.FC<HeroSearchProps> = ({
 
   return (
     <div className={`w-full max-w-3xl mx-auto ${compact ? 'pt-3 pb-2 md:pt-10 md:pb-5' : 'pt-8 pb-3 sm:pt-12 sm:pb-5'}`}>
-      <div className={`${compact ? 'hidden md:block' : ''} text-center mb-7 sm:mb-12`}>
-        <p className="text-[11px] sm:text-xs font-sans font-normal tracking-[0.35em] text-yunlan-muted mb-4 sm:mb-5">
-          云览 · YUNLAN
-        </p>
+      <div className={`${compact ? 'hidden md:block' : ''} text-center mb-6 sm:mb-9`}>
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FAF0E4] border border-[#E8DEC8] text-[#8C4115] text-[11px] font-bold tracking-wide mb-4 sm:mb-5">
+          <span>🚴 VELO &amp; BREW 🍺</span>
+          <span className="text-[#DC9B6B]">·</span>
+          <span>骑行物理与精酿工坊</span>
+        </div>
         <h1
-          className="font-yunlan-serif text-[1.45rem] sm:text-[2.1rem] lg:text-[2.35rem] font-medium tracking-[0.12em] sm:tracking-[0.22em] text-yunlan-ink"
+          className="text-[1.7rem] sm:text-[2.2rem] lg:text-[2.5rem] font-black tracking-tight text-yunlan-ink"
           style={{ textWrap: 'balance' }}
         >
-          {searchEnabled ? '万象云盘，一览尽搜' : '免费在线工具'}
+          自行车与家酿
         </h1>
-        <p className="mt-3 sm:mt-5 text-[13px] sm:text-sm font-sans text-yunlan-muted max-w-md mx-auto leading-[1.85] tracking-wide px-2">
+        <p className="mt-3 sm:mt-5 text-[13px] sm:text-sm font-sans text-yunlan-muted max-w-xl mx-auto leading-[1.85] tracking-wide px-2">
           {searchEnabled
-            ? '收录海量文件索引 · 十大云盘协同 · 智能排重与有效性标注'
-            : '文档检索 · 格式转换 · 文本处理，浏览器本地运行，数据不上传'}
+            ? '骑行工程、精酿配方与实用工具，以及公开资料检索；全部浏览器本地运行，数据不上传'
+            : '骑行工程、精酿配方与实用工具，全部在浏览器本地运行，数据不上传'}
         </p>
       </div>
 
       <div ref={containerRef} className="relative z-20 w-full mb-0">
         <form
           onSubmit={handleSubmit}
-          className={`relative flex flex-col sm:flex-row sm:items-end gap-3 sm:gap-5 px-1 pb-1 transition-colors duration-300 ${
-            isFocused ? 'border-b-2 border-yunlan-cinnabar' : 'border-b border-yunlan-ink-wash'
-          }`}
+          className={`relative flex flex-col sm:flex-row sm:items-center gap-2 rounded-2xl border p-1.5 transition-all duration-200 ${
+            isFocused
+              ? 'border-[#C86D28] ring-2 ring-[#C86D28]/20 shadow-ink-wash'
+              : 'border-[#E8DEC8] hover:border-[#DC9B6B] shadow-yunlan-card'
+          } bg-yunlan-surface`}
         >
-          <div className="flex flex-1 items-center gap-3 min-w-0 py-2 sm:py-3">
+          <div className="flex flex-1 items-center gap-2.5 min-w-0 px-2.5">
             <Search
               className={`w-[18px] h-[18px] shrink-0 transition-colors ${
-                isFocused ? 'text-yunlan-cinnabar' : 'text-yunlan-muted'
+                isFocused ? 'text-[#C86D28]' : 'text-yunlan-muted'
               }`}
-              strokeWidth={1.5}
+              strokeWidth={1.8}
             />
             <input
               ref={inputRef}
@@ -162,7 +166,7 @@ export const HeroSearch: React.FC<HeroSearchProps> = ({
                 onQueryChange(e.currentTarget.value);
               }}
               placeholder={searchEnabled ? '搜索剧集、资料、软件、音乐…' : '检索公开文档与资料…'}
-              className="w-full text-base sm:text-[15px] font-sans font-light text-yunlan-ink placeholder:text-[#8f8b85] bg-transparent focus:outline-none min-h-11"
+              className="w-full text-sm sm:text-[15px] font-sans text-yunlan-ink placeholder:text-[#A8A29E] bg-transparent focus:outline-none min-h-10"
             />
             {query && (
               <button
@@ -183,7 +187,7 @@ export const HeroSearch: React.FC<HeroSearchProps> = ({
             <button
               type="submit"
               disabled={loading || !query.trim()}
-              className="flex-1 sm:flex-none min-h-11 px-6 sm:px-8 py-2.5 sm:py-2 text-sm font-sans font-medium tracking-[0.2em] bg-yunlan-cta rounded-sm shadow-yunlan-feather hover:shadow-ink-wash active:scale-[0.99] transition-all disabled:opacity-50"
+              className="flex-1 sm:flex-none min-h-10 px-6 sm:px-7 py-2 text-sm font-bold tracking-wide bg-[#C86D28] hover:bg-[#AF571B] text-white rounded-xl shadow-yunlan-feather hover:shadow-ink-wash active:scale-[0.99] transition-all disabled:opacity-50"
             >
               {loading ? (
                 <span className="inline-flex items-center justify-center gap-2">
@@ -202,7 +206,7 @@ export const HeroSearch: React.FC<HeroSearchProps> = ({
                   setIsFocused(false);
                   onSearch(undefined, { forceRefresh: true });
                 }}
-                className="inline-flex items-center justify-center gap-1.5 min-h-11 min-w-11 px-3 sm:px-4 py-2.5 sm:py-2 text-xs font-sans font-medium tracking-wide text-yunlan-stone border border-yunlan-hairline bg-yunlan-surface rounded-sm hover:border-yunlan-stone/40 hover:shadow-yunlan-feather transition-all disabled:opacity-50"
+                className="inline-flex items-center justify-center gap-1.5 min-h-10 min-w-11 px-3 sm:px-4 py-2 text-xs font-sans font-medium tracking-wide text-[#8C4115] border border-yunlan-hairline bg-yunlan-surface rounded-xl hover:border-[#DC9B6B] hover:bg-[#FAF0E4] transition-all disabled:opacity-50"
                 title="跳过上游缓存，重新聚合各数据源（耗时更长，仍扣搜索积分）"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} strokeWidth={1.75} />

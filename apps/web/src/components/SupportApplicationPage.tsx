@@ -167,20 +167,20 @@ const SupportApplicationPage: React.FC = () => {
         <div className="max-w-3xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           <a href="/" className="flex items-center gap-2 min-h-11">
             <BrandLogo className="w-7 h-7" />
-            <span className="font-semibold text-sm text-[#3d3832]">云览 Yunlan</span>
+            <span className="font-bold text-sm text-[#1C1917]">自行车与家酿</span>
           </a>
           <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={() => setRetrieveOpen(true)}
-              className="inline-flex items-center gap-1.5 text-xs text-[#1661ab] min-h-11"
+              className="inline-flex items-center gap-1.5 text-xs text-[#C86D28] min-h-11"
             >
               <Search className="w-3.5 h-3.5" />
               找回您的申请
             </button>
             <a
               href="/"
-              className="inline-flex items-center gap-1.5 text-xs text-yunlan-muted hover:text-[#9a7b4f] min-h-11"
+              className="inline-flex items-center gap-1.5 text-xs text-yunlan-muted hover:text-[#C86D28] min-h-11"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               返回首页
@@ -192,7 +192,7 @@ const SupportApplicationPage: React.FC = () => {
       <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
         <div className="rounded-2xl border border-yunlan-hairline bg-yunlan-surface p-5 sm:p-7 shadow-sm">
           <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-full bg-[#1661ab]/10 text-[#1661ab] flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-full bg-[#C86D28]/10 text-[#C86D28] flex items-center justify-center shrink-0">
               <Mail className="w-5 h-5" />
             </div>
             <div className="min-w-0">
@@ -218,7 +218,7 @@ const SupportApplicationPage: React.FC = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="用于找回申请，不用于其他用途"
-                className="w-full min-h-11 px-3 rounded-lg border border-yunlan-hairline bg-white text-sm outline-none focus:border-[#1661ab]"
+                className="w-full min-h-11 px-3 rounded-lg border border-yunlan-hairline bg-white text-sm outline-none focus:border-[#C86D28]"
               />
               <p className="mt-1.5 text-[11px] text-slate-500">
                 邮箱仅作为本次申请的唯一标识；提交成功后口令会直接显示在本页，无需等待邮件。
@@ -230,7 +230,7 @@ const SupportApplicationPage: React.FC = () => {
                 type="checkbox"
                 checked={optIn}
                 onChange={(e) => setOptIn(e.target.checked)}
-                className="mt-0.5 w-4 h-4 accent-[#1661ab]"
+                className="mt-0.5 w-4 h-4 accent-[#C86D28]"
               />
               <span className="text-xs leading-relaxed text-slate-600">
                 我同意接收一封兜底通知邮件（只含认领口令与找回链接，不含赞赏码）。
@@ -298,7 +298,7 @@ const SupportApplicationPage: React.FC = () => {
 
             <div className="mt-4 rounded-xl border border-yunlan-hairline bg-yunlan-paper/60 p-4 text-center">
               <p className="text-[11px] text-slate-500">认领口令</p>
-              <p className="mt-1 text-3xl font-bold tracking-[0.35em] text-[#3d3832]">{credential.code}</p>
+              <p className="mt-1 text-3xl font-bold tracking-[0.35em] text-[#1C1917]">{credential.code}</p>
               <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
                 口令仅用于账单备注辅助核对，不是审核通过的必要条件。请自行留存。
               </p>
@@ -366,7 +366,7 @@ const SupportApplicationPage: React.FC = () => {
                       value={tradeNo}
                       onChange={(e) => setTradeNo(e.target.value)}
                       placeholder="例如微信转账单号"
-                      className="mt-1 w-full min-h-10 px-3 rounded-lg border border-yunlan-hairline bg-white text-sm outline-none focus:border-[#1661ab]"
+                      className="mt-1 w-full min-h-10 px-3 rounded-lg border border-yunlan-hairline bg-white text-sm outline-none focus:border-[#C86D28]"
                     />
                   </label>
                   <label className="block text-[11px] text-slate-500">
@@ -434,7 +434,7 @@ const SupportApplicationPage: React.FC = () => {
               value={retrieveEmail}
               onChange={(e) => setRetrieveEmail(e.target.value)}
               placeholder="申请邮箱"
-              className="mt-3 w-full min-h-11 px-3 rounded-lg border border-yunlan-hairline bg-white text-sm outline-none focus:border-[#1661ab]"
+              className="mt-3 w-full min-h-11 px-3 rounded-lg border border-yunlan-hairline bg-white text-sm outline-none focus:border-[#C86D28]"
             />
             {retrieveError && <p className="mt-2 text-xs text-red-500">{retrieveError}</p>}
             <button

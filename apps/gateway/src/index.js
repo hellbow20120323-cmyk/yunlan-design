@@ -490,6 +490,18 @@ app.use(
   })
 );
 
+// 完整静态工坊：/velo/ 直接托管 public/velo/index.html（构建后位于 dist/velo/）
+// 静态中间件设置了 index:false，目录索引不会自动生效，这里显式返回入口文件。
+// 无斜杠的 /velo 已由 express.static 自动 301 到 /velo/。
+app.get("/velo/", (_req, res) => {
+  res.setHeader("Cache-Control", "no-cache");
+  res.sendFile(path.join(WEB_DIST, "velo", "index.html"), (err) => {
+    if (err && !res.headersSent) {
+      res.status(404).json({ error: "工坊页面未构建，请先 npm run build" });
+    }
+  });
+});
+
 app.use("/api", (_req, res) => {
   res.status(404).json({ ok: false, error: "接口不存在" });
 });

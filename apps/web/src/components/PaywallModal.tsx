@@ -72,9 +72,9 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({
 
   const mailtoHref =
     payment?.contactEmail && orderId
-      ? `mailto:${payment.contactEmail}?subject=${encodeURIComponent(`云览会员开通申请 ${orderId}`)}&body=${encodeURIComponent(
+      ? `mailto:${payment.contactEmail}?subject=${encodeURIComponent(`自行车与家酿会员开通申请 ${orderId}`)}&body=${encodeURIComponent(
           [
-            '你好，我已为云览 VIP 完成付款，申请开通：',
+            '你好，我已为自行车与家酿 VIP 完成付款，申请开通：',
             '',
             `订单号：${orderId}`,
             `套餐：${payment.planLabel}`,

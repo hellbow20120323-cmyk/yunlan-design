@@ -86,7 +86,7 @@ export const HotTrendGrid: React.FC<HotTrendGridProps> = ({
     ? Array.from({ length: singleRow ? 10 : dense ? (embedded ? 12 : 20) : 12 }).map((_, i) => (
         <div
           key={i}
-          className={`aspect-[27/40] yl-skeleton shrink-0 rounded-[2px] ${
+          className={`aspect-[27/40] yl-skeleton shrink-0 rounded-2xl ${
             singleRow ? 'yl-poster-tile--spotlight' : dense ? 'yl-poster-tile--dense' : ''
           }`}
         />

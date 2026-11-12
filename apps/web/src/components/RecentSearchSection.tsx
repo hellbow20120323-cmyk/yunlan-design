@@ -31,7 +31,7 @@ export const RecentSearchSection: React.FC<RecentSearchSectionProps> = ({
         <Clock className="w-4 h-4 text-[#b8956b]" />
         <h2 className="text-sm font-semibold text-[#4a4540]">最新搜索</h2>
       </div>
-      <div className="p-3 rounded-[2px] border border-yunlan-hairline bg-yunlan-surface/98 shadow-yunlan-feather">
+      <div className="p-3 rounded-2xl border border-yunlan-hairline bg-yunlan-surface/98 shadow-yunlan-feather">
         <div className="flex items-center justify-between text-xs text-yunlan-muted mb-2">
           <span className="flex items-center gap-1.5 font-medium">
             <History className="w-3.5 h-3.5" />

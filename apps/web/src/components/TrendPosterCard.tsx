@@ -46,7 +46,7 @@ export const TrendPosterCard: React.FC<{
   const tag = kindLabel(item.kind);
 
   const poster = (
-    <div className="relative overflow-hidden bg-yunlan-mist aspect-[27/40] w-full rounded-[2px] shadow-yunlan-card transition-shadow duration-500 ease-out group-hover:shadow-ink-wash">
+    <div className="relative overflow-hidden bg-yunlan-mist aspect-[27/40] w-full rounded-2xl shadow-yunlan-card transition-shadow duration-500 ease-out group-hover:shadow-ink-wash">
       <img
         src={item.imageUrl}
         alt={item.keyword}

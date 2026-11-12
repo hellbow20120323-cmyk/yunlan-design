@@ -1,9 +1,9 @@
 import { useEffect } from 'react';
 
 const ORIGIN = 'https://panso.hellbow.xyz';
-const DEFAULT_TITLE = '云览 YUNLAN - 免费在线文档与文本工具站';
+const DEFAULT_TITLE = '自行车与家酿 VELO & BREW - 骑行计算、家酿啤酒与在线工具站';
 const DEFAULT_DESCRIPTION =
-  '云览提供免费的在线文档资料检索、文本统计与格式化、Base64 / URL 编解码、JSON 格式化校验、图片转 Base64 等工具，全部在浏览器本地处理，无需注册。';
+  '自行车与家酿提供骑行工程计算、手工车架涂装、精酿啤酒配方与文本开发工具，全部在浏览器本地运行，不上传文件、无需注册。';
 
 function upsertMeta(attr: 'name' | 'property', key: string, content: string) {
   const sel = `meta[${attr}="${key}"]`;
@@ -31,10 +31,10 @@ export function usePageSeo(query: string, total: number | null, searchEnabled = 
   useEffect(() => {
     const q = searchEnabled ? query.trim() : '';
     const title = q
-      ? `${q} - ${total != null && total >= 0 ? total : '…'}条公开资料 | 云览`
+      ? `${q} - ${total != null && total >= 0 ? total : '…'}条公开资料 | 自行车与家酿`
       : DEFAULT_TITLE;
     const description = q
-      ? `在云览检索「${q}」相关的公开文档与资料索引${
+      ? `在自行车与家酿检索「${q}」相关的公开文档与资料索引${
           total != null && total > 0 ? `，共 ${total} 条结果` : ''
         }。`
       : DEFAULT_DESCRIPTION;
@@ -45,7 +45,7 @@ export function usePageSeo(query: string, total: number | null, searchEnabled = 
     upsertMeta('property', 'og:title', title);
     upsertMeta('property', 'og:description', description);
     upsertMeta('property', 'og:url', canonical);
-    upsertMeta('property', 'og:site_name', '云览');
+    upsertMeta('property', 'og:site_name', '自行车与家酿');
     upsertMeta('property', 'og:locale', 'zh_CN');
     upsertMeta('property', 'og:image', `${ORIGIN}/logo.png`);
     upsertMeta('name', 'twitter:title', title);

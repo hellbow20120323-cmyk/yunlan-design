@@ -19,8 +19,8 @@ const QuickSearch: React.FC = () => {
 
   return (
     <form onSubmit={handleSubmit} role="search" className="mt-4 sm:mt-5 max-w-xl">
-      <div className="flex items-center gap-2 rounded-[2px] border border-yunlan-hairline bg-yunlan-surface px-2.5 py-1.5 shadow-yunlan-card focus-within:border-[#d8cbb8] transition-colors">
-        <Search className="w-4 h-4 text-[#9a7b4f] shrink-0" strokeWidth={1.8} />
+      <div className="flex items-center gap-2 rounded-2xl border border-yunlan-hairline bg-yunlan-surface px-2.5 py-1.5 shadow-yunlan-card focus-within:border-[#DC9B6B] transition-colors">
+        <Search className="w-4 h-4 text-[#C86D28] shrink-0" strokeWidth={1.8} />
         <input
           type="search"
           value={query}
@@ -31,7 +31,7 @@ const QuickSearch: React.FC = () => {
         />
         <button
           type="submit"
-          className="shrink-0 min-h-8 px-3 text-xs font-medium text-white bg-yunlan-cta rounded-sm hover:bg-[#a83d45] transition-colors"
+          className="shrink-0 min-h-8 px-3 text-xs font-medium text-white bg-yunlan-cta rounded-sm hover:bg-[#AF571B] transition-colors"
         >
           搜索
         </button>
@@ -60,10 +60,10 @@ export const PageShell: React.FC<PageShellProps> = ({
   return (
     <div className={`w-full ${maxClass} mx-auto py-5 sm:py-10 ${className}`}>
       <header className="mb-5 sm:mb-10">
-        <p className="text-[11px] font-sans font-normal tracking-[0.28em] text-yunlan-muted mb-2 sm:mb-3">
-          YUNLAN
+        <p className="text-[11px] font-mono font-normal tracking-[0.28em] text-yunlan-muted mb-2 sm:mb-3">
+          VELO &amp; BREW
         </p>
-        <h1 className="font-yunlan-serif text-lg sm:text-2xl font-medium tracking-[0.08em] sm:tracking-[0.12em] text-yunlan-ink">
+        <h1 className="text-lg sm:text-2xl font-black tracking-tight text-yunlan-ink">
           {title}
         </h1>
         {subtitle ? (
@@ -78,7 +78,7 @@ export const PageShell: React.FC<PageShellProps> = ({
   );
 };
 
-/** 内容区卡片 — 与侧栏/搜索框一致的纸质感 */
+/** 内容区卡片 — 与静态工坊一致的白底暖边圆角卡片 */
 export function yunlanCardClass(extra = '') {
-  return `rounded-[2px] border border-yunlan-hairline bg-yunlan-surface shadow-yunlan-card ${extra}`.trim();
+  return `rounded-2xl border border-yunlan-hairline bg-yunlan-surface shadow-yunlan-card ${extra}`.trim();
 }

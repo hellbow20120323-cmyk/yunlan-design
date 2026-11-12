@@ -58,7 +58,7 @@ export const JsonTool: React.FC = () => {
               setInput(e.target.value);
               setHint('');
             }}
-            placeholder='{"name":"云览","tools":["text","json"]}'
+            placeholder='{"name":"自行车与家酿","tools":["text","json"]}'
             spellCheck={false}
             aria-label="JSON 输入"
           />
@@ -83,7 +83,7 @@ export const JsonTool: React.FC = () => {
             setPretty(true);
             setHint('');
           }}
-          className={`${actionClass} ${pretty ? 'border-yunlan-stone/50 bg-[#f3efe6]' : ''}`}
+          className={`${actionClass} ${pretty ? 'border-yunlan-stone/50 bg-[#FAF0E4]' : ''}`}
         >
           <AlignLeft className="w-3.5 h-3.5" /> 美化
         </button>
@@ -93,7 +93,7 @@ export const JsonTool: React.FC = () => {
             setPretty(false);
             setHint('');
           }}
-          className={`${actionClass} ${!pretty ? 'border-yunlan-stone/50 bg-[#f3efe6]' : ''}`}
+          className={`${actionClass} ${!pretty ? 'border-yunlan-stone/50 bg-[#FAF0E4]' : ''}`}
         >
           <Minimize2 className="w-3.5 h-3.5" /> 压缩
         </button>

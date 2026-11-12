@@ -427,7 +427,7 @@ export class SearchService {
         tags: [keyword, ...tpl.tags],
         viewsCount: 12000 + idx * 3400,
         savesCount: 5400 + idx * 1200,
-        uploader: `云览社区达人_${provider.shortName}`
+        uploader: `自行车与家酿社区达人_${provider.shortName}`
       });
     });
 

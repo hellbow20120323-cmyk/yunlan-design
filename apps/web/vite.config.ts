@@ -9,7 +9,23 @@ export default defineConfig(() => {
     build: {
       assetsDir: 'yl',
     },
-    plugins: [react(), tailwindcss()],
+    plugins: [
+      react(),
+      tailwindcss(),
+      {
+        // 开发环境下让 /velo 与线上网关保持一致，直接返回静态工坊入口
+        name: 'velo-pretty-url',
+        configureServer(server) {
+          server.middlewares.use((req, _res, next) => {
+            const url = req.url || '';
+            if (url === '/velo' || url === '/velo/') {
+              req.url = '/velo/index.html';
+            }
+            next();
+          });
+        },
+      },
+    ],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),

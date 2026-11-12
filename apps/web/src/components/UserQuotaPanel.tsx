@@ -99,7 +99,7 @@ export const UserQuotaPanel: React.FC<UserQuotaPanelProps> = ({
               }}
               className={`w-full mb-2 min-h-11 py-2 rounded-lg font-semibold text-white ${
                 low
-                  ? 'bg-yunlan-cinnabar hover:bg-[#a83d45]'
+                  ? 'bg-yunlan-cinnabar hover:bg-[#AF571B]'
                   : 'bg-slate-900 hover:bg-slate-800'
               }`}
             >

@@ -91,13 +91,13 @@ export const SearchRefinePanel: React.FC<SearchRefinePanelProps> = ({
                 className={`flex items-center gap-2 px-3 min-h-11 py-2 rounded-xl text-xs font-medium border transition-all ${
                   selected
                     ? 'border-[#d4c4a8] bg-[#f3f0ea] text-[#4a4540]'
-                    : 'border-yunlan-hairline bg-[#faf8f5] text-yunlan-muted hover:border-[#d8cbb8] hover:text-[#5c564e]'
+                    : 'border-yunlan-hairline bg-[#FAF7F2] text-yunlan-muted hover:border-[#DC9B6B] hover:text-[#5c564e]'
                 }`}
               >
                 <ProviderMark id={id} />
                 <span className="truncate">{provider.shortName}</span>
                 {count !== undefined && count > 0 && (
-                  <span className="ml-auto text-[11px] tabular-nums text-[#9a7b4f]">{count}</span>
+                  <span className="ml-auto text-[11px] tabular-nums text-[#C86D28]">{count}</span>
                 )}
               </button>
             );
@@ -108,7 +108,7 @@ export const SearchRefinePanel: React.FC<SearchRefinePanelProps> = ({
       <div>
         <p className="text-xs font-semibold tracking-wide text-[#8a8278] mb-2.5">大小</p>
         <div className="flex flex-wrap items-center gap-2 text-xs text-[#5c564e]">
-          <div className="flex items-center rounded-xl border border-yunlan-hairline bg-[#faf8f5] overflow-hidden">
+          <div className="flex items-center rounded-xl border border-yunlan-hairline bg-[#FAF7F2] overflow-hidden">
             <input
               type="number"
               min={0}
@@ -132,7 +132,7 @@ export const SearchRefinePanel: React.FC<SearchRefinePanelProps> = ({
             </select>
           </div>
           <span className="text-yunlan-muted">~</span>
-          <div className="flex items-center rounded-xl border border-yunlan-hairline bg-[#faf8f5] overflow-hidden">
+          <div className="flex items-center rounded-xl border border-yunlan-hairline bg-[#FAF7F2] overflow-hidden">
             <input
               type="text"
               inputMode="decimal"

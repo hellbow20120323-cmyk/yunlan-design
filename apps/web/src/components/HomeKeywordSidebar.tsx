@@ -136,7 +136,7 @@ export const HomeKeywordSidebar: React.FC<HomeKeywordSidebarProps> = ({
       className={`w-full lg:w-[280px] shrink-0 ${className}`}
       aria-label="热门分类快捷搜索"
     >
-      <div className="lg:sticky lg:top-24 rounded-[2px] border border-yunlan-hairline bg-yunlan-surface/95 backdrop-blur-sm shadow-yunlan-card overflow-hidden">
+      <div className="lg:sticky lg:top-24 rounded-2xl border border-yunlan-hairline bg-yunlan-surface/95 backdrop-blur-sm shadow-yunlan-card overflow-hidden">
         <header className="px-4 pt-3 pb-2.5 sm:pt-4 sm:pb-3 border-b border-yunlan-hairline">
           <p className="text-[11px] font-sans tracking-[0.28em] text-yunlan-muted">INDEX</p>
           <h2 className="mt-1 font-yunlan-serif text-base font-medium tracking-[0.08em] text-yunlan-ink">

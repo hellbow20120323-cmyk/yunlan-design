@@ -43,7 +43,7 @@ export const SearchSuggestList: React.FC<SearchSuggestListProps> = ({
     <ul
       id={listId}
       role="listbox"
-      className="absolute left-0 right-0 z-50 mt-2 max-h-[min(20rem,50vh)] overflow-y-auto rounded-[2px] border border-yunlan-hairline bg-yunlan-surface shadow-yunlan-feather"
+      className="absolute left-0 right-0 z-50 mt-2 max-h-[min(20rem,50vh)] overflow-y-auto rounded-2xl border border-yunlan-hairline bg-yunlan-surface shadow-yunlan-feather"
     >
       {items.map((item, index) => (
         <li key={`${item.source}-${item.text}`} role="presentation">
