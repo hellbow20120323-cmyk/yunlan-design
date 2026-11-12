@@ -1,10 +1,13 @@
-import React from 'react';
-import { ArrowRight, Wrench } from 'lucide-react';
+import React, { useState } from 'react';
+import { ArrowRight, Search, Wrench } from 'lucide-react';
 import { ToolGrid, ToolSlug } from './tools/ToolsPage';
 import { VELO_HOME, VELO_ONLY_TOOLS } from '../constants/veloTools';
 
 interface HomePortalProps {
   onOpenTool: (slug: ToolSlug) => void;
+  onSearch?: (query: string) => void;
+  inputRef?: React.RefObject<HTMLInputElement | null>;
+  loading?: boolean;
 }
 
 const HERO_IMAGE = '/velo/yl/images/velo_brew_workshop_hero_1794474296150.jpg';
@@ -12,7 +15,15 @@ const CYCLING_IMAGE = '/velo/yl/images/road_bike_mountain_summit_1794474297936.j
 const BREW_IMAGE = '/velo/yl/images/craft_beer_glass_hops_1794474296178.jpg';
 
 /** 首页门户：按 Velo & Brew 工坊首页的版式重建，业务入口仍指向现有 React 工具 */
-export const HomePortal: React.FC<HomePortalProps> = ({ onOpenTool }) => {
+export const HomePortal: React.FC<HomePortalProps> = ({ onOpenTool, onSearch, inputRef, loading = false }) => {
+  const [query, setQuery] = useState('');
+
+  const submitSearch = (event: React.FormEvent) => {
+    event.preventDefault();
+    const keyword = query.trim();
+    if (keyword && onSearch) onSearch(keyword);
+  };
+
   return (
     <div className="py-4 sm:py-6 space-y-8">
       {/* Hero */}
@@ -30,6 +41,36 @@ export const HomePortal: React.FC<HomePortalProps> = ({ onOpenTool }) => {
             公路赛道物理力学推演、手工车架涂装定制、全谷物精酿啤酒配方计算与实用开发工具箱。
             全部基于现代浏览器本地纯前端引擎极速计算，零数据上传、永久免费。
           </p>
+
+          {onSearch && (
+            <form
+              onSubmit={submitSearch}
+              className="flex items-stretch gap-2 max-w-xl rounded-2xl border border-[#E8DEC8] bg-yunlan-surface p-1.5 shadow-yunlan-card transition-all focus-within:border-[#C86D28] focus-within:ring-2 focus-within:ring-[#C86D28]/20"
+            >
+              <div className="flex flex-1 items-center gap-2.5 min-w-0 px-2.5">
+                <Search className="w-[18px] h-[18px] shrink-0 text-[#C86D28]" strokeWidth={1.8} />
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  enterKeyHint="search"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  autoComplete="off"
+                  placeholder="搜索资料、工具或关键词…"
+                  className="w-full min-h-10 bg-transparent text-sm sm:text-[15px] text-yunlan-ink placeholder:text-[#A8A29E] focus:outline-none"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={loading || !query.trim()}
+                className="shrink-0 min-h-10 px-5 sm:px-6 rounded-xl bg-[#C86D28] hover:bg-[#AF571B] text-white text-sm font-bold shadow-yunlan-feather transition-colors disabled:opacity-50"
+              >
+                {loading ? '检索中' : '搜索'}
+              </button>
+            </form>
+          )}
 
           <div className="flex flex-wrap gap-2 text-[11px] sm:text-xs font-medium text-yunlan-ink pt-1">
             <span className="px-3 py-1.5 rounded-xl bg-yunlan-surface border border-yunlan-hairline flex items-center gap-1.5">

@@ -163,6 +163,14 @@ export default function App({ initialTab = 'search', initialTool }: AppProps = {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+  /** 任意页面点击搜索入口：回到搜索页并把焦点放到输入框 */
+  const handleOpenSearch = useCallback(() => {
+    setActiveTab('search');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.setTimeout(() => searchInputRef.current?.focus({ preventScroll: true }), 80);
+  }, []);
+
   const keyboardOpen = useVisualViewportKeyboard();
   const [minSizeUnit, setMinSizeUnit] = useState<'MB' | 'GB'>('MB');
   const [maxSizeUnit, setMaxSizeUnit] = useState<'MB' | 'GB'>('GB');
@@ -286,6 +294,7 @@ export default function App({ initialTab = 'search', initialTool }: AppProps = {
         }
         searchEnabled={searchEnabled}
         onOpenTool={handleOpenTool}
+        onOpenSearch={handleOpenSearch}
       />
 
       {/* Main Viewport Content */}
@@ -304,7 +313,12 @@ export default function App({ initialTab = 'search', initialTool }: AppProps = {
               <div className="flex-1 min-w-0">
             {/* 首页：搜索关闭时展示 Velo & Brew 工坊门户；开启时保持原有搜索入口 */}
             {!hasSearched && !searchEnabled ? (
-              <HomePortal onOpenTool={handleOpenTool} />
+              <HomePortal
+                onOpenTool={handleOpenTool}
+                onSearch={handleSearchSubmit}
+                inputRef={searchInputRef}
+                loading={loading}
+              />
             ) : (
               <HeroSearch
                 query={filter.query}

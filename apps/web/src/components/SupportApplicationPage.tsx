@@ -170,6 +170,14 @@ const SupportApplicationPage: React.FC = () => {
             <span className="font-bold text-sm text-[#1C1917]">自行车与家酿</span>
           </a>
           <div className="flex items-center gap-3">
+            <a
+              href="/"
+              className="inline-flex items-center gap-1.5 text-xs text-yunlan-muted hover:text-[#C86D28] min-h-11"
+              title="返回首页并搜索资料"
+            >
+              <Search className="w-3.5 h-3.5" />
+              搜索
+            </a>
             <button
               type="button"
               onClick={() => setRetrieveOpen(true)}

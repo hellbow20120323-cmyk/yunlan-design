@@ -4,7 +4,7 @@
  */
 
 import React, { useEffect, useRef, useState } from 'react';
-import { Bike, Compass, Database, Flame, Crown, Bookmark, Wrench, ChevronDown } from 'lucide-react';
+import { Bike, Compass, Database, Flame, Crown, Bookmark, Wrench, ChevronDown, Search } from 'lucide-react';
 import { BrandLogo } from './BrandLogo';
 import { UserQuotaPanel } from './UserQuotaPanel';
 import { TOOLS_BY_CATEGORY } from './tools/ToolsPage';
@@ -29,6 +29,8 @@ interface HeaderProps {
   searchEnabled?: boolean;
   /** 直接打开某个在线工具 */
   onOpenTool?: (slug: string) => void;
+  /** 任意页面唤起主搜索入口 */
+  onOpenSearch?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -45,6 +47,7 @@ export const Header: React.FC<HeaderProps> = ({
   favoritesCount = 0,
   searchEnabled = true,
   onOpenTool,
+  onOpenSearch,
 }) => {
   const [toolsOpen, setToolsOpen] = useState(false);
   const toolsRef = useRef<HTMLDivElement>(null);
@@ -222,6 +225,17 @@ export const Header: React.FC<HeaderProps> = ({
         </nav>
 
         <div className="flex items-center gap-1 sm:gap-3 shrink-0">
+          <button
+            type="button"
+            onClick={() => (onOpenSearch ? onOpenSearch() : setActiveTab('search'))}
+            className="flex items-center gap-1.5 rounded-xl border border-[#E8DEC8] bg-yunlan-surface px-2.5 sm:px-3 min-h-9 text-xs font-semibold text-yunlan-muted hover:border-[#C86D28]/60 hover:text-[#C86D28] hover:bg-[#FAF0E4] transition-colors"
+            title="搜索资料与工具"
+            aria-label="搜索资料与工具"
+          >
+            <Search className="w-4 h-4" />
+            <span className="hidden sm:inline">搜索</span>
+          </button>
+
           {onOpenFavorites && (
             <button
               type="button"

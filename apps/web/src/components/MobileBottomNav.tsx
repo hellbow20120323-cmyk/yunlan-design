@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { BookOpen, Compass, Database, Flame, Wrench } from 'lucide-react';
+import { BookOpen, Compass, Database, Flame, Wrench, Search } from 'lucide-react';
 
 type TabId = 'search' | 'providers' | 'rankings' | 'guide' | 'tools';
 
@@ -32,6 +32,13 @@ const GUIDE_TAB: { id: TabId; label: string; icon: React.ReactNode } = {
   icon: <BookOpen className="w-[18px] h-[18px]" strokeWidth={1.75} />,
 };
 
+/** 搜索入口关闭时仍保留一个明确的搜索入口 */
+const SEARCH_ENTRY_TAB: { id: TabId; label: string; icon: React.ReactNode } = {
+  id: 'search',
+  label: '搜索',
+  icon: <Search className="w-[18px] h-[18px]" strokeWidth={1.75} />,
+};
+
 export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   activeTab,
   onNavigate,
@@ -42,14 +49,14 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
 
   const tabs = searchEnabled
     ? [...BASE_TABS, ...SEARCH_TABS, GUIDE_TAB]
-    : [BASE_TABS[1], GUIDE_TAB];
+    : [SEARCH_ENTRY_TAB, BASE_TABS[1], GUIDE_TAB];
 
   return (
     <nav
       className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-yunlan-hairline bg-yunlan-paper/95 backdrop-blur-md"
       aria-label="主导航"
     >
-      <div className={`grid ${searchEnabled ? 'grid-cols-5' : 'grid-cols-2'} h-14 yl-safe-bottom`}>
+      <div className={`grid ${searchEnabled ? 'grid-cols-5' : 'grid-cols-3'} h-14 yl-safe-bottom`}>
         {tabs.map((tab) => {
           const active = activeTab === tab.id;
           return (
