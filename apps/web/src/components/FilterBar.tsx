@@ -39,7 +39,7 @@ interface FilterBarProps {
   modeLabel?: string;
   demoMode?: boolean;
   hideViewSwitcher?: boolean;
-  /** 搜索入口关闭时隐藏影视类目，站点只保留资料/软件等合规分类 */
+  /** 搜索入口关闭时隐藏影视/音乐/游戏类目，站点只保留资料、软件等合规分类 */
   searchEnabled?: boolean;
 }
 
@@ -77,7 +77,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
 }) => {
   const categories = searchEnabled
     ? CATEGORIES
-    : CATEGORIES.filter((cat) => cat.id !== 'video');
+    : CATEGORIES.filter((cat) => !['video', 'music', 'game'].includes(cat.id));
 
   return (
     <div className="w-full space-y-3 mb-4 sm:mb-6">

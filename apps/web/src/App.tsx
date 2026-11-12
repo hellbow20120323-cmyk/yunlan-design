@@ -143,9 +143,14 @@ export default function App({ initialTab = 'search', initialTool }: AppProps = {
     searchEnabled
   );
 
-  // 搜索入口关闭后不再停留或筛选影视类目
+  // 搜索入口关闭后不再停留或筛选影视/音乐/游戏类目
   useEffect(() => {
-    if (!searchEnabled && filter.category === 'video') setCategory('all');
+    if (
+      !searchEnabled &&
+      ['video', 'music', 'game'].includes(filter.category)
+    ) {
+      setCategory('all');
+    }
   }, [searchEnabled, filter.category, setCategory]);
 
   // Modals & Drawers state

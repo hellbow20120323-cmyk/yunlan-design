@@ -33,9 +33,9 @@ const CATEGORY_LABEL: Record<string, string> = {
   other: '其他',
 };
 
-/** 搜索入口关闭时不展示影视分类，避免工具站出现影视内容标识 */
+/** 搜索入口关闭时不展示影视/音乐/游戏分类，避免工具站出现娱乐内容标识 */
 function categoryLabel(category: string, searchEnabled: boolean): string {
-  if (!searchEnabled && category === 'video') return '';
+  if (!searchEnabled && ['video', 'music', 'game'].includes(category)) return '';
   return CATEGORY_LABEL[category] || category;
 }
 
