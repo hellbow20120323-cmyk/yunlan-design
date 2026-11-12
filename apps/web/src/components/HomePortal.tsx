@@ -7,9 +7,9 @@ interface HomePortalProps {
   onOpenTool: (slug: ToolSlug) => void;
 }
 
-const HERO_IMAGE = '/velo/assets/images/velo_brew_workshop_hero_1794474296150.jpg';
-const CYCLING_IMAGE = '/velo/assets/images/road_bike_mountain_summit_1794474297936.jpg';
-const BREW_IMAGE = '/velo/assets/images/craft_beer_glass_hops_1794474296178.jpg';
+const HERO_IMAGE = '/velo/yl/images/velo_brew_workshop_hero_1794474296150.jpg';
+const CYCLING_IMAGE = '/velo/yl/images/road_bike_mountain_summit_1794474297936.jpg';
+const BREW_IMAGE = '/velo/yl/images/craft_beer_glass_hops_1794474296178.jpg';
 
 /** 首页门户：按 Velo & Brew 工坊首页的版式重建，业务入口仍指向现有 React 工具 */
 export const HomePortal: React.FC<HomePortalProps> = ({ onOpenTool }) => {
