@@ -26,7 +26,12 @@ export const TOOL_PAGES = {
   "": {
     title: "免费在线工具 - 文档检索、文本处理、格式转换 | 云览",
     description:
-      "云览免费在线工具箱：文本统计与格式化、Base64 / URL 编解码、JSON 格式化校验、图片转 Base64，以及公开文档资料检索，全部本地处理，不上传文件。",
+      "云览免费在线工具箱：Unix 时间戳转换、文本统计与格式化、Base64 / URL 编解码、JSON 格式化校验、哈希计算、随机密码生成、图片转 Base64，以及公开文档资料检索，全部本地处理。",
+  },
+  timestamp: {
+    title: "Unix 时间戳转换工具 - 时间戳与日期互转 | 云览",
+    description:
+      "免费在线 Unix 时间戳转换工具，支持秒级与毫秒级时间戳，一键在时间戳、本地日期与 UTC ISO 之间互转，本地计算不上传。",
   },
   text: {
     title: "在线文本统计与格式化工具 - 字数统计、去重、排序 | 云览",
@@ -47,6 +52,16 @@ export const TOOL_PAGES = {
     title: "图片转 Base64 在线工具 - 本地转换 | 云览",
     description:
       "免费在线图片转 Base64 工具，支持 PNG / JPG / GIF / WebP，直接生成 Data URL，可复制用于 HTML 或 CSS，图片不上传服务器。",
+  },
+  hash: {
+    title: "在线文本哈希计算工具 - SHA-1 / SHA-256 / SHA-512 | 云览",
+    description:
+      "免费在线哈希计算工具，支持 SHA-1、SHA-256、SHA-384、SHA-512 文本摘要，十六进制结果实时生成，全部在浏览器本地计算。",
+  },
+  password: {
+    title: "随机密码生成器 - 在线生成强密码 | 云览",
+    description:
+      "免费在线随机密码生成器，可自定义长度与大小写字母、数字、符号组合，使用浏览器加密随机数生成，密码不离开本地。",
   },
 };
 
