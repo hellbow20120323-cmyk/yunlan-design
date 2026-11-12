@@ -9,16 +9,25 @@ import { PageShell, yunlanCardClass } from './PageShell';
 
 const codeBlock = 'p-2.5 rounded-lg bg-[#f3f0ea] border border-yunlan-hairline';
 
-export const UsageGuide: React.FC = () => {
+interface UsageGuideProps {
+  searchEnabled?: boolean;
+}
+
+export const UsageGuide: React.FC<UsageGuideProps> = ({ searchEnabled = true }) => {
   return (
     <PageShell
       maxWidth="4xl"
-      title="使用指南与高级检索技巧"
-      subtitle="掌握高效搜索指令，更快找到高质量原盘、工具与完整教程"
+      title={searchEnabled ? '使用指南与高级检索技巧' : '使用指南与工具说明'}
+      subtitle={
+        searchEnabled
+          ? '掌握高效搜索指令，更快找到高质量原盘、工具与完整教程'
+          : '了解在线工具的使用方式，所有处理均在浏览器本地完成'
+      }
     >
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
         
         {/* Card 1: Advanced Search Syntax */}
+        {searchEnabled && (
         <div className={`${yunlanCardClass()} p-6 space-y-3`}>
           <div className="flex items-center gap-2 text-[#9a7b4f] font-semibold text-sm">
             <Search className="w-4 h-4" />
@@ -42,6 +51,7 @@ export const UsageGuide: React.FC = () => {
             </div>
           </div>
         </div>
+        )}
 
         {/* Card 2: Keyboard shortcuts */}
         <div className={`${yunlanCardClass()} p-6 space-y-3`}>
@@ -50,7 +60,9 @@ export const UsageGuide: React.FC = () => {
             <span>高效快捷键操作</span>
           </div>
           <p className="text-xs text-yunlan-muted font-light leading-relaxed">
-            桌面端可用键盘导航；手机端请用底部「发现 / 网盘 / 榜单 / 指南」切换页面。
+            {searchEnabled
+              ? '桌面端可用键盘导航；手机端请用底部「发现 / 工具 / 网盘 / 榜单 / 指南」切换页面。'
+              : '桌面端可用键盘快速定位搜索框；手机端请用底部「首页 / 工具 / 指南」切换页面。'}
           </p>
           <div className="space-y-2 text-xs">
             <div className={`flex items-center justify-between p-2 ${codeBlock}`}>
@@ -75,6 +87,7 @@ export const UsageGuide: React.FC = () => {
         </div>
 
         {/* Card 3: Link Health Checking */}
+        {searchEnabled && (
         <div className={`${yunlanCardClass()} p-6 space-y-3`}>
           <div className="flex items-center gap-2 text-[#8a9a6e] font-semibold text-sm">
             <FileCheck className="w-4 h-4" />
@@ -84,6 +97,7 @@ export const UsageGuide: React.FC = () => {
             系统会定期对收录的公开分享链接执行轻量级心跳探针，过滤掉已被原作者取消或官方清理的失效资源。若在浏览过程中遇到失效链接，可随时点击卡片详情中的「报错失效链接」，系统将优先复核并自动剔除。
           </p>
         </div>
+        )}
 
         {/* Card 4: Disclaimer & Compliance */}
         <div className={`${yunlanCardClass()} p-6 space-y-3`}>
@@ -92,7 +106,9 @@ export const UsageGuide: React.FC = () => {
             <span>合规声明与免责须知</span>
           </div>
           <p className="text-xs text-yunlan-muted font-light leading-relaxed">
-            本站仅为面向网络公开分享链接的非盈利性索引引擎，本身不存储、不上传、不断点续传任何实际文件内容。夸克、UC 与阿里云盘可预览公开分享目录（文件名与大小），下载与转存仍跳转各网盘官网。如发现任何侵犯您合法权益的链接，欢迎联系处理。
+            {searchEnabled
+              ? '本站仅为面向网络公开分享链接的非盈利性索引引擎，本身不存储、不上传、不断点续传任何实际文件内容。夸克、UC 与阿里云盘可预览公开分享目录（文件名与大小），下载与转存仍跳转各网盘官网。如发现任何侵犯您合法权益的链接，欢迎联系处理。'
+              : '本站提供的文本处理、格式转换等工具均在浏览器本地运行，不收集、不上传用户输入的内容。资料检索仅索引公开可访问的信息，本站不存储任何文件。如发现任何侵犯您合法权益的内容，欢迎联系处理。'}
           </p>
         </div>
 

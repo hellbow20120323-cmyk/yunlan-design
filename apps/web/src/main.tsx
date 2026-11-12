@@ -8,4 +8,10 @@ migrateLegacyStorage();
 
 const pathname = window.location.pathname.replace(/\/+$/, '') || '/';
 const root = createRoot(document.getElementById('root')!);
-root.render(pathname === '/support' ? <SupportApplicationPage /> : <App />);
+
+const toolsMatch = /^\/tools(?:\/([a-z0-9-]+))?$/.exec(pathname);
+if (toolsMatch) {
+  root.render(<App initialTab="tools" initialTool={toolsMatch[1]} />);
+} else {
+  root.render(pathname === '/support' ? <SupportApplicationPage /> : <App />);
+}

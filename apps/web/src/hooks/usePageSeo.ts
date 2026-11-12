@@ -1,9 +1,9 @@
 import { useEffect } from 'react';
 
 const ORIGIN = 'https://panso.hellbow.xyz';
-const DEFAULT_TITLE = '云览 YUNLAN - 聚合云盘资源搜索引擎';
+const DEFAULT_TITLE = '云览 YUNLAN - 免费在线文档与文本工具站';
 const DEFAULT_DESCRIPTION =
-  '万象云盘，一览尽搜。专业高效的多网盘聚合搜索引擎，支持夸克网盘、阿里云盘、百度网盘、迅雷云盘、123云盘等主流平台，提供极速检索、文件预览、有效性检测与批量保存。';
+  '云览提供免费的在线文档资料检索、文本统计与格式化、Base64 / URL 编解码、JSON 格式化校验、图片转 Base64 等工具，全部在浏览器本地处理，无需注册。';
 
 function upsertMeta(attr: 'name' | 'property', key: string, content: string) {
   const sel = `meta[${attr}="${key}"]`;
@@ -27,14 +27,14 @@ function upsertLink(rel: string, href: string) {
 }
 
 /** 搜索完成后更新标题、描述、canonical（JSON-LD 由网关写入 HTML，避免 CSP 拦内联脚本） */
-export function usePageSeo(query: string, total: number | null) {
+export function usePageSeo(query: string, total: number | null, searchEnabled = true) {
   useEffect(() => {
-    const q = query.trim();
+    const q = searchEnabled ? query.trim() : '';
     const title = q
-      ? `${q} - ${total != null && total >= 0 ? total : '…'}条网盘资源 | 云览`
+      ? `${q} - ${total != null && total >= 0 ? total : '…'}条公开资料 | 云览`
       : DEFAULT_TITLE;
     const description = q
-      ? `在云览搜索「${q}」，聚合夸克、阿里云盘、百度网盘、迅雷、123 等网盘公开分享${
+      ? `在云览检索「${q}」相关的公开文档与资料索引${
           total != null && total > 0 ? `，共 ${total} 条结果` : ''
         }。`
       : DEFAULT_DESCRIPTION;
@@ -55,5 +55,5 @@ export function usePageSeo(query: string, total: number | null) {
     return () => {
       document.title = DEFAULT_TITLE;
     };
-  }, [query, total]);
+  }, [query, total, searchEnabled]);
 }

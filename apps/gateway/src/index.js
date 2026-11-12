@@ -40,7 +40,7 @@ import { resolveShareMetaBatch } from "./share-meta.js";
 import { getSubhdHotCached, scheduleSubhdHotDaily } from "./sources/subhd-hot.js";
 import { collectSuggestions, isSuggestableQuery, titlesFromHotPayload } from "./suggest.js";
 import { getDoubanPosterBytes, normalizeDoubanId } from "./sources/douban-poster.js";
-import { buildSitemapXml, sendSeoIndex } from "./seo.js";
+import { buildSitemapXml, isSearchEnabled, sendSeoIndex } from "./seo.js";
 
 const PORT = Number(process.env.PORT || 8787);
 const ENGINE_URL = (process.env.ENGINE_URL || "").trim();
@@ -50,6 +50,8 @@ const ENGINE_FORCE_REFRESH = ["1", "true", "yes"].includes(
   String(process.env.ENGINE_FORCE_REFRESH || "").toLowerCase()
 );
 const VERSION = getVersionSummary();
+/** 搜索入口开关（环境变量 SEARCH_ENABLED，false = 对外完全隐藏搜索） */
+const SEARCH_ENABLED = isSearchEnabled();
 
 const HOST = (process.env.HOST || "127.0.0.1").trim();
 
@@ -106,6 +108,12 @@ app.get("/api/points", (req, res) => {
     ok: true,
     points: getQuotaStatus({ userId: session?.uid, clientId }),
   });
+});
+
+/** 前端运行时配置：改环境变量重启即可生效，无需重新构建 */
+app.get("/api/site-config", (_req, res) => {
+  res.setHeader("Cache-Control", "public, max-age=60");
+  res.json({ ok: true, searchEnabled: SEARCH_ENABLED });
 });
 
 async function handleTrendingHot(req, res) {
@@ -209,6 +217,7 @@ app.get("/api/health", rateLimit({ windowMs: 60_000, max: 120 }), async (req, re
     demoMode,
     liveReady,
     modeLabel,
+    searchEnabled: SEARCH_ENABLED,
     engineConfigured: Boolean(ENGINE_URL),
     engineOk: engine ? engine.ok : null,
     extSourcesEnabled: ENABLE_EXT,
@@ -446,6 +455,20 @@ app.post("/api/search", searchLimiter, (req, res) => {
   handleSearch(req, res).catch((e) => searchFailed(res, e));
 });
 
+app.get("/robots.txt", (_req, res) => {
+  const lines = ["User-agent: *", "Allow: /", "Disallow: /api/"];
+  if (SEARCH_ENABLED) {
+    lines.push("Disallow: /support", "Disallow: /support/");
+  } else {
+    // 搜索入口关闭：不收录任何查询结果页，站点只保留工具页
+    lines.push("Disallow: /support", "Disallow: /support/", "Disallow: /?q=", "Disallow: /*?q=");
+  }
+  lines.push("", `Sitemap: https://panso.hellbow.xyz/sitemap.xml`);
+  res.setHeader("Content-Type", "text/plain; charset=utf-8");
+  res.setHeader("Cache-Control", "public, max-age=3600");
+  res.type("text/plain").send(`${lines.join("\n")}\n`);
+});
+
 /**
  * 静态资源缓存策略：
  * - 构建产物目录 /yl/ 带内容哈希 → 一年 immutable
@@ -473,11 +496,14 @@ app.use("/api", (_req, res) => {
 
 app.get("/sitemap.xml", async (_req, res) => {
   try {
-    const hot = await getSubhdHotCached(false).catch(() => null);
-    const keywords = [...(hot?.movies || []), ...(hot?.tv || []), ...(hot?.items || [])];
+    let keywords = [];
+    if (SEARCH_ENABLED) {
+      const hot = await getSubhdHotCached(false).catch(() => null);
+      keywords = [...(hot?.movies || []), ...(hot?.tv || []), ...(hot?.items || [])];
+    }
     res.setHeader("Content-Type", "application/xml; charset=utf-8");
     res.setHeader("Cache-Control", "public, max-age=3600");
-    res.send(buildSitemapXml(keywords));
+    res.send(buildSitemapXml(keywords, { searchEnabled: SEARCH_ENABLED }));
   } catch (err) {
     console.warn("[seo] sitemap 失败:", err instanceof Error ? err.message : err);
     res.status(500).type("text/plain").send("sitemap unavailable");

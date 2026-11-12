@@ -26,6 +26,8 @@ import { useVisualViewportKeyboard } from './hooks/useVisualViewportKeyboard';
 import { usePageSeo } from './hooks/usePageSeo';
 import { STORAGE_KEYS } from './utils/storage';
 import { useTrendingHot } from './hooks/useTrendingHot';
+import { useSiteConfig } from './hooks/useSiteConfig';
+import { ToolsPage, ToolGrid, ToolSlug } from './components/tools/ToolsPage';
 import { shuffleCopy } from './utils/shuffle';
 
 // 弹窗与抽屉按需加载：首屏不需要，首次打开时才下载对应代码
@@ -40,9 +42,17 @@ const PaywallModal = lazy(() =>
   import('./components/PaywallModal').then((m) => ({ default: m.PaywallModal }))
 );
 
-export default function App() {
+type TabId = 'search' | 'providers' | 'rankings' | 'guide' | 'tools';
+
+interface AppProps {
+  initialTab?: TabId;
+  initialTool?: string;
+}
+
+export default function App({ initialTab = 'search', initialTool }: AppProps = {}) {
   const auth = useAuth();
-  const trendingHot = useTrendingHot();
+  const { searchEnabled } = useSiteConfig();
+  const trendingHot = useTrendingHot(searchEnabled);
 
   const hotSpotlightPosters = useMemo(() => {
     const movies = trendingHot.data?.movies ?? [];
@@ -82,7 +92,15 @@ export default function App() {
   }, []);
 
   // Active navigation tab
-  const [activeTab, setActiveTab] = useState<'search' | 'providers' | 'rankings' | 'guide'>('search');
+  const [activeTab, setActiveTab] = useState<TabId>(initialTab);
+  const [toolTarget, setToolTarget] = useState<string | undefined>(initialTool);
+
+  // 搜索入口关闭时，不允许停留在网盘/榜单页
+  useEffect(() => {
+    if (!searchEnabled && (activeTab === 'providers' || activeTab === 'rankings')) {
+      setActiveTab('search');
+    }
+  }, [searchEnabled, activeTab]);
 
   // Search Engine state hook
   const {
@@ -119,7 +137,11 @@ export default function App() {
     setIsPaywallOpen(true);
   });
 
-  usePageSeo(hasSearched ? filter.query : '', response && hasSearched ? response.total : null);
+  usePageSeo(
+    hasSearched ? filter.query : '',
+    response && hasSearched ? response.total : null,
+    searchEnabled
+  );
 
   // Modals & Drawers state
   const [detailItem, setDetailItem] = useState<ResourceItem | null>(null);
@@ -197,6 +219,7 @@ export default function App() {
 
   const handleGoHome = () => {
     setActiveTab('search');
+    setToolTarget(undefined);
     clearSearch();
     setDetailItem(null);
     clearSelection();
@@ -205,12 +228,21 @@ export default function App() {
     searchInputRef.current?.blur();
   };
 
-  const handleNavigateTab = (tab: 'search' | 'providers' | 'rankings' | 'guide') => {
+  const handleNavigateTab = (tab: TabId) => {
     if (tab === 'search') {
       handleGoHome();
       return;
     }
+    if (tab === 'tools') {
+      setToolTarget(undefined);
+    }
     setActiveTab(tab);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleOpenTool = (slug: ToolSlug) => {
+    setToolTarget(slug);
+    setActiveTab('tools');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -232,10 +264,15 @@ export default function App() {
         authLoading={auth.loading}
         onOpenAuth={() => setIsAuthOpen(true)}
         onLogout={() => auth.logout()}
-        onOpenPaywall={() => {
-          setPaywallReason('今日积分已用完，选择套餐开通 VIP 后可继续搜索');
-          setIsPaywallOpen(true);
-        }}
+        onOpenPaywall={
+          searchEnabled
+            ? () => {
+                setPaywallReason('今日积分已用完，选择套餐开通 VIP 后可继续搜索');
+                setIsPaywallOpen(true);
+              }
+            : undefined
+        }
+        searchEnabled={searchEnabled}
       />
 
       {/* Main Viewport Content */}
@@ -268,9 +305,19 @@ export default function App() {
               onClearHistory={clearHistory}
               onRemoveHistoryItem={removeHistoryItem}
               inputRef={searchInputRef}
+              searchEnabled={searchEnabled}
             />
 
-            {!hasSearched && (
+            {!hasSearched && !searchEnabled && (
+              <div className="mt-2 mb-6">
+                <ToolGrid onOpen={handleOpenTool} />
+                <p className="mt-3 text-center text-[11px] text-yunlan-muted">
+                  全部工具在浏览器本地运行，输入内容不会上传服务器。
+                </p>
+              </div>
+            )}
+
+            {!hasSearched && searchEnabled && (
               <HomeKeywordSidebar
                 className="mt-3 lg:hidden"
                 onPickKeyword={(keyword, category) => {
@@ -281,7 +328,7 @@ export default function App() {
               />
             )}
 
-            {!hasSearched && (
+            {!hasSearched && searchEnabled && (
             <HotTrendGrid
               className="mt-6 sm:mt-8"
               singleRow
@@ -444,7 +491,7 @@ export default function App() {
             </div>
             ) : null}
 
-            {!hasSearched && (trendingHot.loading ||
+            {!hasSearched && searchEnabled && (trendingHot.loading ||
               (trendingHot.data?.movies?.length ?? 0) > 0 ||
               (trendingHot.data?.tv?.length ?? 0) > 0) && (
               <section className="mt-10 sm:mt-12 pt-8 pb-6 border-t border-yunlan-hairline w-full max-w-[1100px] mx-auto">
@@ -480,7 +527,7 @@ export default function App() {
 
               </div>
 
-              {!hasSearched && (
+              {!hasSearched && searchEnabled && (
                 <HomeKeywordSidebar
                   className="hidden lg:block lg:pt-4 shrink-0"
                   onPickKeyword={(keyword, category) => {
@@ -495,18 +542,23 @@ export default function App() {
         )}
 
         {/* TAB 2: Providers Matrix */}
-        {activeTab === 'providers' && (
+        {searchEnabled && activeTab === 'providers' && (
           <DiskNavigationGrid onSearchProvider={handleSearchProviderFromGrid} />
         )}
 
         {/* TAB 3: Hot Rankings */}
-        {activeTab === 'rankings' && (
+        {searchEnabled && activeTab === 'rankings' && (
           <HotSearchAndRankings onSelectKeyword={handleSelectKeywordFromRankings} />
         )}
 
         {/* TAB 4: Usage Guide */}
         {activeTab === 'guide' && (
-          <UsageGuide />
+          <UsageGuide searchEnabled={searchEnabled} />
+        )}
+
+        {/* TAB 5: Online Tools */}
+        {activeTab === 'tools' && (
+          <ToolsPage target={toolTarget} />
         )}
 
       </main>
@@ -579,12 +631,13 @@ export default function App() {
       )}
       </Suspense>
 
-      <Footer onNavigateToTab={handleNavigateTab} />
+      <Footer onNavigateToTab={handleNavigateTab} searchEnabled={searchEnabled} />
 
       <MobileBottomNav
         activeTab={activeTab}
         onNavigate={handleNavigateTab}
         hidden={keyboardOpen}
+        searchEnabled={searchEnabled}
       />
 
     </div>

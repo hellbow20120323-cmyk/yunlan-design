@@ -4,14 +4,16 @@
  */
 
 import React from 'react';
-import { Compass, Database, Flame, Crown, Bookmark } from 'lucide-react';
+import { Compass, Database, Flame, Crown, Bookmark, Wrench, Search } from 'lucide-react';
 import { BrandLogo } from './BrandLogo';
 import { UserQuotaPanel } from './UserQuotaPanel';
 import { AuthUser, PointsStatus } from '../types/auth';
 
+type TabId = 'search' | 'providers' | 'rankings' | 'guide' | 'tools';
+
 interface HeaderProps {
-  activeTab: 'search' | 'providers' | 'rankings' | 'guide';
-  setActiveTab: (tab: 'search' | 'providers' | 'rankings' | 'guide') => void;
+  activeTab: TabId;
+  setActiveTab: (tab: TabId) => void;
   onGoHome?: () => void;
   user?: AuthUser | null;
   points?: PointsStatus | null;
@@ -21,6 +23,8 @@ interface HeaderProps {
   onOpenPaywall?: () => void;
   onOpenFavorites?: () => void;
   favoritesCount?: number;
+  /** 搜索入口开关：关闭时只展示合规工具入口 */
+  searchEnabled?: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -35,7 +39,13 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenPaywall,
   onOpenFavorites,
   favoritesCount = 0,
+  searchEnabled = true,
 }) => {
+  const navButtonClass = (active: boolean) =>
+    `flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0 ${
+      active ? 'text-yunlan-stone font-medium' : 'text-yunlan-muted hover:text-yunlan-ink'
+    }`;
+
   return (
     <header className="sticky top-0 z-40 w-full backdrop-blur-md bg-yunlan-paper/90 border-b border-yunlan-hairline transition-colors yl-safe-top">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-14 md:h-16 flex items-center justify-between gap-3 md:gap-8">
@@ -53,50 +63,46 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </button>
 
-        <nav className="hidden md:flex items-center gap-8 text-sm">
+        <nav className="hidden md:flex items-center gap-6 lg:gap-8 text-sm">
           <button
             onClick={() => setActiveTab('search')}
-            className={`flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0 ${
-              activeTab === 'search'
-                ? 'text-yunlan-stone font-medium'
-                : 'text-yunlan-muted hover:text-yunlan-ink'
-            }`}
+            className={navButtonClass(activeTab === 'search')}
           >
-            <Compass className="w-4 h-4" />
-            <span>发现资源</span>
+            {searchEnabled ? <Compass className="w-4 h-4" /> : <Search className="w-4 h-4" />}
+            <span>{searchEnabled ? '发现资源' : '资料检索'}</span>
           </button>
 
           <button
-            onClick={() => setActiveTab('providers')}
-            className={`flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0 ${
-              activeTab === 'providers'
-                ? 'text-yunlan-stone font-medium'
-                : 'text-yunlan-muted hover:text-yunlan-ink'
-            }`}
+            onClick={() => setActiveTab('tools')}
+            className={navButtonClass(activeTab === 'tools')}
           >
-            <Database className="w-4 h-4" />
-            <span>网盘引擎</span>
+            <Wrench className="w-4 h-4" />
+            <span>在线工具</span>
           </button>
 
-          <button
-            onClick={() => setActiveTab('rankings')}
-            className={`flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0 ${
-              activeTab === 'rankings'
-                ? 'text-yunlan-stone font-medium'
-                : 'text-yunlan-muted hover:text-yunlan-ink'
-            }`}
-          >
-            <Flame className="w-4 h-4" />
-            <span>热门榜单</span>
-          </button>
+          {searchEnabled && (
+            <button
+              onClick={() => setActiveTab('providers')}
+              className={navButtonClass(activeTab === 'providers')}
+            >
+              <Database className="w-4 h-4" />
+              <span>网盘引擎</span>
+            </button>
+          )}
+
+          {searchEnabled && (
+            <button
+              onClick={() => setActiveTab('rankings')}
+              className={navButtonClass(activeTab === 'rankings')}
+            >
+              <Flame className="w-4 h-4" />
+              <span>热门榜单</span>
+            </button>
+          )}
 
           <button
             onClick={() => setActiveTab('guide')}
-            className={`flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0 ${
-              activeTab === 'guide'
-                ? 'text-yunlan-stone font-medium'
-                : 'text-yunlan-muted hover:text-yunlan-ink'
-            }`}
+            className={navButtonClass(activeTab === 'guide')}
           >
             <span>使用指南</span>
           </button>

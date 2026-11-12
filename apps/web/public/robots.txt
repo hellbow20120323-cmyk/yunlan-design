@@ -1,5 +1,9 @@
 User-agent: *
 Allow: /
 Disallow: /api/
+Disallow: /support
+Disallow: /support/
+Disallow: /?q=
+Disallow: /*?q=
 
 Sitemap: https://panso.hellbow.xyz/sitemap.xml

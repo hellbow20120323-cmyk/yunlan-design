@@ -24,6 +24,8 @@ interface HeroSearchProps {
   inputRef?: React.RefObject<HTMLInputElement | null>;
   compact?: boolean;
   suggestKeywords?: string[];
+  /** 搜索入口开关关闭时，首页改为工具站定位 */
+  searchEnabled?: boolean;
 }
 
 export const HeroSearch: React.FC<HeroSearchProps> = ({
@@ -38,6 +40,7 @@ export const HeroSearch: React.FC<HeroSearchProps> = ({
   inputRef,
   compact = false,
   suggestKeywords = [],
+  searchEnabled = true,
 }) => {
   const [isFocused, setIsFocused] = useState(false);
   const [composing, setComposing] = useState(false);
@@ -48,7 +51,7 @@ export const HeroSearch: React.FC<HeroSearchProps> = ({
     query,
     suggestKeywords,
     historyQueries,
-    isFocused && !composing
+    isFocused && !composing && searchEnabled
   );
 
   useEffect(() => {
@@ -111,10 +114,12 @@ export const HeroSearch: React.FC<HeroSearchProps> = ({
           className="font-yunlan-serif text-[1.45rem] sm:text-[2.1rem] lg:text-[2.35rem] font-medium tracking-[0.12em] sm:tracking-[0.22em] text-yunlan-ink"
           style={{ textWrap: 'balance' }}
         >
-          万象云盘，一览尽搜
+          {searchEnabled ? '万象云盘，一览尽搜' : '免费在线工具'}
         </h1>
         <p className="mt-3 sm:mt-5 text-[13px] sm:text-sm font-sans text-yunlan-muted max-w-md mx-auto leading-[1.85] tracking-wide px-2">
-          收录海量文件索引 · 十大云盘协同 · 智能排重与有效性标注
+          {searchEnabled
+            ? '收录海量文件索引 · 十大云盘协同 · 智能排重与有效性标注'
+            : '文档检索 · 格式转换 · 文本处理，浏览器本地运行，数据不上传'}
         </p>
       </div>
 
@@ -156,7 +161,7 @@ export const HeroSearch: React.FC<HeroSearchProps> = ({
                 setComposing(false);
                 onQueryChange(e.currentTarget.value);
               }}
-              placeholder="搜索剧集、资料、软件、音乐…"
+              placeholder={searchEnabled ? '搜索剧集、资料、软件、音乐…' : '检索公开文档与资料…'}
               className="w-full text-base sm:text-[15px] font-sans font-light text-yunlan-ink placeholder:text-[#8f8b85] bg-transparent focus:outline-none min-h-11"
             />
             {query && (
@@ -189,19 +194,21 @@ export const HeroSearch: React.FC<HeroSearchProps> = ({
                 '搜索'
               )}
             </button>
-            <button
-              type="button"
-              disabled={loading || !query.trim()}
-              onClick={() => {
-                setIsFocused(false);
-                onSearch(undefined, { forceRefresh: true });
-              }}
-              className="inline-flex items-center justify-center gap-1.5 min-h-11 min-w-11 px-3 sm:px-4 py-2.5 sm:py-2 text-xs font-sans font-medium tracking-wide text-yunlan-stone border border-yunlan-hairline bg-yunlan-surface rounded-sm hover:border-yunlan-stone/40 hover:shadow-yunlan-feather transition-all disabled:opacity-50"
-              title="跳过上游缓存，重新聚合各数据源（耗时更长，仍扣搜索积分）"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} strokeWidth={1.75} />
-              <span className="sm:inline">刷新</span>
-            </button>
+            {searchEnabled && (
+              <button
+                type="button"
+                disabled={loading || !query.trim()}
+                onClick={() => {
+                  setIsFocused(false);
+                  onSearch(undefined, { forceRefresh: true });
+                }}
+                className="inline-flex items-center justify-center gap-1.5 min-h-11 min-w-11 px-3 sm:px-4 py-2.5 sm:py-2 text-xs font-sans font-medium tracking-wide text-yunlan-stone border border-yunlan-hairline bg-yunlan-surface rounded-sm hover:border-yunlan-stone/40 hover:shadow-yunlan-feather transition-all disabled:opacity-50"
+                title="跳过上游缓存，重新聚合各数据源（耗时更长，仍扣搜索积分）"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} strokeWidth={1.75} />
+                <span className="sm:inline">刷新</span>
+              </button>
+            )}
           </div>
         </form>
 
