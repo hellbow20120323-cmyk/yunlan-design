@@ -48,6 +48,7 @@ ENGINE_URL=http://127.0.0.1:8888 npm run dev # 网关 :8787 + Web :5173
 | `ENGINE_FORCE_REFRESH` | `1` 时每次搜索都跳过引擎缓存 | `0` |
 | `DEMO_MODE` | `1` 强制演示数据 | `0` |
 | `ENABLE_EXT_SOURCES` | 混合盘系等额外源 | `1` |
+| `SEARCH_ENABLED` | 搜索入口开关：`false` 时前端只展示资料检索 / 在线工具，隐藏网盘、榜单与影视热榜，robots/sitemap 只保留工具页；后端搜索代码保留，改回 `true` 重启即恢复 | `1` |
 | `YUNLAN_DATA_DIR` | 运行数据目录 | `<仓库根>/.data` |
 | `HOST` | 网关监听地址（生产经 nginx 反代，勿直接暴露） | `127.0.0.1` |
 | `AUTH_SECRET` | 登录会话签名密钥，≥32 字符。**生产缺失将拒绝启动**；开发缺失则每次启动随机生成 | 无 |
