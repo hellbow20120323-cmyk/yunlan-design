@@ -187,6 +187,57 @@ export const TOOL_DEFS = [
 
 export type ToolSlug = (typeof TOOL_DEFS)[number]['slug'];
 
+export const TOOL_CATEGORIES = [
+  {
+    id: 'text',
+    label: '文本与开发工具',
+    desc: '文本处理、编码转换、哈希与时间戳等开发辅助',
+  },
+  {
+    id: 'bike',
+    label: '骑行计算工具',
+    desc: '齿比、踏频、轮组、胎压与功率估算',
+  },
+  {
+    id: 'beer',
+    label: '啤酒与家酿计算工具',
+    desc: '酿造、包装供酒与饮用热量估算',
+  },
+] as const;
+
+export type ToolCategoryId = (typeof TOOL_CATEGORIES)[number]['id'];
+
+const TOOL_CATEGORY_OF: Record<ToolSlug, ToolCategoryId> = {
+  text: 'text',
+  timestamp: 'text',
+  base64: 'text',
+  json: 'text',
+  hash: 'text',
+  password: 'text',
+  image: 'text',
+  gear: 'bike',
+  cadence: 'bike',
+  chain: 'bike',
+  wheel: 'bike',
+  pressure: 'bike',
+  climb: 'bike',
+  power: 'bike',
+  abv: 'beer',
+  ibu: 'beer',
+  srm: 'beer',
+  yeast: 'beer',
+  priming: 'beer',
+  keg: 'beer',
+  line: 'beer',
+  calories: 'beer',
+  bac: 'beer',
+};
+
+export const TOOLS_BY_CATEGORY = TOOL_CATEGORIES.map((category) => ({
+  ...category,
+  tools: TOOL_DEFS.filter((tool) => TOOL_CATEGORY_OF[tool.slug] === category.id),
+}));
+
 const cardButtonClass =
   'text-left rounded-[2px] border border-yunlan-hairline bg-yunlan-surface shadow-yunlan-card p-4 sm:p-5 hover:border-[#d8cbb8] hover:shadow-ink-wash transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-yunlan-cinnabar/30';
 
@@ -195,28 +246,56 @@ interface ToolGridProps {
 }
 
 export const ToolGrid: React.FC<ToolGridProps> = ({ onOpen }) => (
-  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-    {TOOL_DEFS.map((tool) => {
-      const Icon = tool.icon;
-      return (
-        <button
-          key={tool.slug}
-          type="button"
-          onClick={() => onOpen(tool.slug)}
-          className={cardButtonClass}
-        >
-          <span className="inline-flex items-center justify-center w-9 h-9 rounded-sm bg-[#f3efe6] text-[#9a7b4f]">
-            <Icon className="w-4 h-4" strokeWidth={1.6} />
+  <div className="space-y-7 sm:space-y-8">
+    {TOOLS_BY_CATEGORY.map((category) => (
+      <section key={category.id}>
+        <div className="flex items-baseline justify-between gap-2">
+          <h2 className="font-yunlan-serif text-sm sm:text-base font-medium text-yunlan-ink">
+            {category.label}
+          </h2>
+          <span className="text-[11px] font-light text-yunlan-muted">
+            {category.tools.length} 个工具
           </span>
-          <span className="mt-3 block text-sm font-medium text-yunlan-ink">{tool.name}</span>
-          <span className="mt-1 block text-xs font-light leading-relaxed text-yunlan-muted">
-            {tool.desc}
-          </span>
-        </button>
-      );
-    })}
+        </div>
+        <p className="mt-1 text-[11px] font-light text-yunlan-muted">{category.desc}</p>
+        <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          {category.tools.map((tool) => {
+            const Icon = tool.icon;
+            return (
+              <button
+                key={tool.slug}
+                type="button"
+                onClick={() => onOpen(tool.slug)}
+                className={cardButtonClass}
+              >
+                <span className="inline-flex items-center justify-center w-9 h-9 rounded-sm bg-[#f3efe6] text-[#9a7b4f]">
+                  <Icon className="w-4 h-4" strokeWidth={1.6} />
+                </span>
+                <span className="mt-3 block text-sm font-medium text-yunlan-ink">{tool.name}</span>
+                <span className="mt-1 block text-xs font-light leading-relaxed text-yunlan-muted">
+                  {tool.desc}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+    ))}
   </div>
 );
+
+const SectionGroupLabel: React.FC<{ id: ToolCategoryId }> = ({ id }) => {
+  const category = TOOL_CATEGORIES.find((item) => item.id === id);
+  if (!category) return null;
+  return (
+    <div className="pt-2">
+      <h2 className="font-yunlan-serif text-sm sm:text-base font-medium text-yunlan-ink">
+        {category.label}
+      </h2>
+      <p className="mt-0.5 text-[11px] font-light text-yunlan-muted">{category.desc}</p>
+    </div>
+  );
+};
 
 interface ToolsPageProps {
   /** 从首页工具卡片进入时滚动到对应工具 */
@@ -243,8 +322,8 @@ export const ToolsPage: React.FC<ToolsPageProps> = ({ target }) => {
     >
       <ToolGrid onOpen={scrollTo} />
 
-      <div className="mt-6 sm:mt-8 space-y-5 sm:space-y-6">
-        <p className="text-[11px] font-sans tracking-[0.22em] text-yunlan-muted">文本与开发工具</p>
+      <div className="mt-8 sm:mt-10 space-y-5 sm:space-y-6">
+        <SectionGroupLabel id="text" />
         <TextTool />
         <TimestampTool />
         <CodecTool />
@@ -253,7 +332,7 @@ export const ToolsPage: React.FC<ToolsPageProps> = ({ target }) => {
         <PasswordTool />
         <ImageTool />
 
-        <p className="pt-2 text-[11px] font-sans tracking-[0.22em] text-yunlan-muted">骑行计算工具</p>
+        <SectionGroupLabel id="bike" />
         <GearRatioTool />
         <CadenceTool />
         <ChainLengthTool />
@@ -262,7 +341,7 @@ export const ToolsPage: React.FC<ToolsPageProps> = ({ target }) => {
         <ClimbTool />
         <PowerTool />
 
-        <p className="pt-2 text-[11px] font-sans tracking-[0.22em] text-yunlan-muted">啤酒与家酿计算工具</p>
+        <SectionGroupLabel id="beer" />
         <BeerTools />
       </div>
 

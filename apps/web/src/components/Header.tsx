@@ -7,7 +7,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Compass, Database, Flame, Crown, Bookmark, Wrench, Search, ChevronDown } from 'lucide-react';
 import { BrandLogo } from './BrandLogo';
 import { UserQuotaPanel } from './UserQuotaPanel';
-import { TOOL_DEFS } from './tools/ToolsPage';
+import { TOOLS_BY_CATEGORY } from './tools/ToolsPage';
 import { AuthUser, PointsStatus } from '../types/auth';
 
 type TabId = 'search' | 'providers' | 'rankings' | 'guide' | 'tools';
@@ -115,32 +115,39 @@ export const Header: React.FC<HeaderProps> = ({
             {toolsOpen && (
               <div
                 role="menu"
-                className="absolute left-0 top-full mt-2 w-60 max-h-[70vh] overflow-y-auto rounded-[2px] border border-yunlan-hairline bg-yunlan-paper shadow-ink-wash py-1 z-50"
+                className="absolute left-0 top-full mt-2 w-64 max-h-[70vh] overflow-y-auto rounded-[2px] border border-yunlan-hairline bg-yunlan-paper shadow-ink-wash py-1 z-50"
               >
-                {TOOL_DEFS.map((tool) => {
-                  const Icon = tool.icon;
-                  return (
-                    <button
-                      key={tool.slug}
-                      type="button"
-                      role="menuitem"
-                      onClick={() => {
-                        setToolsOpen(false);
-                        if (onOpenTool) onOpenTool(tool.slug);
-                        else window.location.href = `/tools#${tool.slug}`;
-                      }}
-                      className="w-full flex items-start gap-2.5 px-3 py-2.5 text-left hover:bg-yunlan-mist/60 transition-colors"
-                    >
-                      <Icon className="w-4 h-4 mt-0.5 text-[#9a7b4f] shrink-0" strokeWidth={1.6} />
-                      <span className="min-w-0">
-                        <span className="block text-[13px] text-yunlan-ink">{tool.name}</span>
-                        <span className="block mt-0.5 text-[11px] font-light text-yunlan-muted truncate">
-                          {tool.desc}
-                        </span>
-                      </span>
-                    </button>
-                  );
-                })}
+                {TOOLS_BY_CATEGORY.map((category) => (
+                  <div key={category.id}>
+                    <p className="px-3 pt-2.5 pb-1 text-[10px] tracking-[0.18em] text-yunlan-muted/80">
+                      {category.label}
+                    </p>
+                    {category.tools.map((tool) => {
+                      const Icon = tool.icon;
+                      return (
+                        <button
+                          key={tool.slug}
+                          type="button"
+                          role="menuitem"
+                          onClick={() => {
+                            setToolsOpen(false);
+                            if (onOpenTool) onOpenTool(tool.slug);
+                            else window.location.href = `/tools#${tool.slug}`;
+                          }}
+                          className="w-full flex items-start gap-2.5 px-3 py-2 text-left hover:bg-yunlan-mist/60 transition-colors"
+                        >
+                          <Icon className="w-4 h-4 mt-0.5 text-[#9a7b4f] shrink-0" strokeWidth={1.6} />
+                          <span className="min-w-0">
+                            <span className="block text-[13px] text-yunlan-ink">{tool.name}</span>
+                            <span className="block mt-0.5 text-[11px] font-light text-yunlan-muted truncate">
+                              {tool.desc}
+                            </span>
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                ))}
               </div>
             )}
           </div>
