@@ -1,16 +1,25 @@
 import React, { useEffect } from 'react';
 import {
+  Beer,
   Binary,
   Braces,
   CircleDot,
   Clock,
   Cog,
+  Droplets,
   Fingerprint,
+  Flame,
+  FlaskConical,
   Gauge,
+  GlassWater,
+  HeartPulse,
   Image as ImageIcon,
   KeyRound,
   Link2,
   Mountain,
+  Palette,
+  Ruler,
+  TestTube,
   Type,
   Wind,
   Wrench,
@@ -33,6 +42,7 @@ import {
   TirePressureTool,
   WheelCircTool,
 } from './BikeTools';
+import { BeerTools } from './BeerTools';
 
 export const TOOL_DEFS = [
   {
@@ -119,6 +129,60 @@ export const TOOL_DEFS = [
     desc: '按体重、速度与坡度估算 Watts 与 W/kg。',
     icon: Zap,
   },
+  {
+    slug: 'abv',
+    name: 'ABV 酒精度计算',
+    desc: '按 OG / FG 计算酒精度，支持 SG 与 Brix。',
+    icon: Beer,
+  },
+  {
+    slug: 'ibu',
+    name: 'IBU 苦度计算',
+    desc: 'Tinseth 公式，多组啤酒花动态累加。',
+    icon: FlaskConical,
+  },
+  {
+    slug: 'srm',
+    name: 'SRM / EBC 颜色',
+    desc: 'Morey 公式估算色度并预览成品颜色。',
+    icon: Palette,
+  },
+  {
+    slug: 'yeast',
+    name: '酵母投放量',
+    desc: '按体积、OG 与酵母日期估算细胞数与扩培。',
+    icon: TestTube,
+  },
+  {
+    slug: 'priming',
+    name: '装瓶补糖计算',
+    desc: '按温度与目标 CO2 计算葡萄糖、蔗糖与 DME。',
+    icon: Droplets,
+  },
+  {
+    slug: 'keg',
+    name: '生啤强制碳酸化',
+    desc: '按温度与 CO2 体积查表得到建议 PSI。',
+    icon: GlassWater,
+  },
+  {
+    slug: 'line',
+    name: '管路长度平衡',
+    desc: '按压力、高度差与管径推荐酒管长度。',
+    icon: Ruler,
+  },
+  {
+    slug: 'calories',
+    name: '啤酒热量计算',
+    desc: '拆分酒精与碳水热量，支持毫升与品脱。',
+    icon: Flame,
+  },
+  {
+    slug: 'bac',
+    name: 'BAC 血液酒精估算',
+    desc: 'Widmark 公式估算 BAC 峰值，附免责声明。',
+    icon: HeartPulse,
+  },
 ] as const;
 
 export type ToolSlug = (typeof TOOL_DEFS)[number]['slug'];
@@ -175,7 +239,7 @@ export const ToolsPage: React.FC<ToolsPageProps> = ({ target }) => {
   return (
     <PageShell
       title="免费在线工具"
-      subtitle="文档资料检索、文本处理、格式转换与骑行计算工具，全部在浏览器本地运行，文件不上传、无需注册。"
+      subtitle="文档资料检索、文本处理、格式转换、骑行与家酿计算工具，全部在浏览器本地运行，文件不上传、无需注册。"
     >
       <ToolGrid onOpen={scrollTo} />
 
@@ -197,6 +261,9 @@ export const ToolsPage: React.FC<ToolsPageProps> = ({ target }) => {
         <TirePressureTool />
         <ClimbTool />
         <PowerTool />
+
+        <p className="pt-2 text-[11px] font-sans tracking-[0.22em] text-yunlan-muted">啤酒与家酿计算工具</p>
+        <BeerTools />
       </div>
 
       <div className={`${yunlanCardClass()} mt-6 p-5 flex items-start gap-3`}>

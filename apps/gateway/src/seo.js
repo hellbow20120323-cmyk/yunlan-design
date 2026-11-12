@@ -26,7 +26,7 @@ export const TOOL_PAGES = {
   "": {
     title: "免费在线工具 - 文档检索、文本处理、格式转换 | 云览",
     description:
-      "云览免费在线工具箱：Unix 时间戳转换、文本统计与格式化、Base64 / URL 编解码、JSON 格式化校验、哈希计算、随机密码生成、图片转 Base64，以及公开文档资料检索，全部本地处理。",
+      "云览免费在线工具箱：Unix 时间戳转换、文本统计与格式化、Base64 / URL 编解码、JSON 格式化校验、哈希计算、随机密码生成、图片转 Base64，以及骑行与家酿啤酒计算器，全部本地处理。",
   },
   timestamp: {
     title: "Unix 时间戳转换工具 - 时间戳与日期互转 | 云览",
@@ -97,6 +97,51 @@ export const TOOL_PAGES = {
     title: "骑行功率估算器 - Watts 与 W/kg | 云览",
     description:
       "免费在线骑行功率估算工具，按体重、车速、坡度与风阻估算所需 Watts 与功率体重比，并拆分风阻、滚阻与重力。",
+  },
+  abv: {
+    title: "ABV 酒精度计算器 - OG/FG 换算 | 云览",
+    description:
+      "免费在线啤酒酒精度计算器，输入初始比重与最终比重即可计算 ABV，支持 SG 与 Brix 糖度切换。",
+  },
+  ibu: {
+    title: "IBU 苦度计算器 - Tinseth 公式 | 云览",
+    description:
+      "免费在线 IBU 苦度计算器，按批次体积、OG、啤酒花重量、Alpha 酸与煮沸时间用 Tinseth 公式累加苦度，支持多组酒花。",
+  },
+  srm: {
+    title: "SRM / EBC 啤酒颜色计算器 - Morey 公式 | 云览",
+    description:
+      "免费在线啤酒色度计算器，按麦芽重量与 Lovibond 色值用 Morey 公式估算 SRM / EBC，并提供成品颜色预览。",
+  },
+  yeast: {
+    title: "酵母投放量计算器 - 细胞数与扩培建议 | 云览",
+    description:
+      "免费在线酵母投放量计算器，按麦汁体积、OG、干/液体酵母与生产日期估算所需细胞数、包装数量与是否需要 Starter。",
+  },
+  priming: {
+    title: "装瓶补糖计算器 - CO2 体积换算 | 云览",
+    description:
+      "免费在线啤酒装瓶补糖计算器，按体积、发酵温度与目标 CO2 体积计算葡萄糖、蔗糖与干麦芽精用量，附风格预设。",
+  },
+  keg: {
+    title: "生啤强制碳酸化计算器 - PSI 查表 | 云览",
+    description:
+      "免费在线桶装啤酒碳酸化计算器，按冷藏温度与目标 CO2 体积给出建议 PSI，并提供温度 × 体积查表矩阵。",
+  },
+  line: {
+    title: "生啤管路长度平衡计算器 | 云览",
+    description:
+      "免费在线酒管长度计算器，按酒桶压力、高度差与软管内径推荐管长，减少倒酒泡沫。",
+  },
+  calories: {
+    title: "啤酒热量计算器 - 酒精与碳水拆分 | 云览",
+    description:
+      "免费在线啤酒热量计算器，按 OG、FG 与饮用体积计算总热量，并拆分酒精与碳水化合物贡献。",
+  },
+  bac: {
+    title: "BAC 血液酒精浓度估算器 - Widmark 公式 | 云览",
+    description:
+      "免费在线 BAC 估算工具，按性别、体重、饮酒量与时长用 Widmark 公式估算峰值与当前血液酒精浓度，仅供了解代谢，不具法律效力。",
   },
 };
 
