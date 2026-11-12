@@ -1,5 +1,21 @@
 import React, { useEffect } from 'react';
-import { Binary, Braces, Clock, Fingerprint, Image as ImageIcon, KeyRound, Type, Wrench } from 'lucide-react';
+import {
+  Binary,
+  Braces,
+  CircleDot,
+  Clock,
+  Cog,
+  Fingerprint,
+  Gauge,
+  Image as ImageIcon,
+  KeyRound,
+  Link2,
+  Mountain,
+  Type,
+  Wind,
+  Wrench,
+  Zap,
+} from 'lucide-react';
 import { PageShell, yunlanCardClass } from '../PageShell';
 import { TextTool } from './TextTool';
 import { CodecTool } from './CodecTool';
@@ -8,6 +24,15 @@ import { ImageTool } from './ImageTool';
 import { TimestampTool } from './TimestampTool';
 import { HashTool } from './HashTool';
 import { PasswordTool } from './PasswordTool';
+import {
+  CadenceTool,
+  ChainLengthTool,
+  ClimbTool,
+  GearRatioTool,
+  PowerTool,
+  TirePressureTool,
+  WheelCircTool,
+} from './BikeTools';
 
 export const TOOL_DEFS = [
   {
@@ -51,6 +76,48 @@ export const TOOL_DEFS = [
     name: '图片转 Base64',
     desc: '本地图片转 Data URL，图片不上传服务器。',
     icon: ImageIcon,
+  },
+  {
+    slug: 'gear',
+    name: '齿比与行进距离',
+    desc: '齿比、Gear Inches 与每圈前进距离。',
+    icon: Cog,
+  },
+  {
+    slug: 'cadence',
+    name: '踏频与配速换算',
+    desc: '按踏频、齿比与轮周长估算车速。',
+    icon: Gauge,
+  },
+  {
+    slug: 'chain',
+    name: '链条节数计算器',
+    desc: '按牙盘、飞轮与后下叉估算链条节数。',
+    icon: Link2,
+  },
+  {
+    slug: 'wheel',
+    name: '轮组与外胎周长',
+    desc: '按 BSD 与胎宽计算真实周长与圈数。',
+    icon: CircleDot,
+  },
+  {
+    slug: 'pressure',
+    name: '轮胎最佳胎压',
+    desc: '按总重量与胎宽估算前后轮推荐胎压。',
+    icon: Wind,
+  },
+  {
+    slug: 'climb',
+    name: '爬坡坡度与等级',
+    desc: '计算平均坡度、倾角与爬坡等级。',
+    icon: Mountain,
+  },
+  {
+    slug: 'power',
+    name: '骑行功率估算',
+    desc: '按体重、速度与坡度估算 Watts 与 W/kg。',
+    icon: Zap,
   },
 ] as const;
 
@@ -108,11 +175,12 @@ export const ToolsPage: React.FC<ToolsPageProps> = ({ target }) => {
   return (
     <PageShell
       title="免费在线工具"
-      subtitle="文档资料检索、文本处理与格式转换工具，全部在浏览器本地运行，文件不上传、无需注册。"
+      subtitle="文档资料检索、文本处理、格式转换与骑行计算工具，全部在浏览器本地运行，文件不上传、无需注册。"
     >
       <ToolGrid onOpen={scrollTo} />
 
       <div className="mt-6 sm:mt-8 space-y-5 sm:space-y-6">
+        <p className="text-[11px] font-sans tracking-[0.22em] text-yunlan-muted">文本与开发工具</p>
         <TextTool />
         <TimestampTool />
         <CodecTool />
@@ -120,6 +188,15 @@ export const ToolsPage: React.FC<ToolsPageProps> = ({ target }) => {
         <HashTool />
         <PasswordTool />
         <ImageTool />
+
+        <p className="pt-2 text-[11px] font-sans tracking-[0.22em] text-yunlan-muted">骑行计算工具</p>
+        <GearRatioTool />
+        <CadenceTool />
+        <ChainLengthTool />
+        <WheelCircTool />
+        <TirePressureTool />
+        <ClimbTool />
+        <PowerTool />
       </div>
 
       <div className={`${yunlanCardClass()} mt-6 p-5 flex items-start gap-3`}>

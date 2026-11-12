@@ -115,7 +115,7 @@ export const Header: React.FC<HeaderProps> = ({
             {toolsOpen && (
               <div
                 role="menu"
-                className="absolute left-0 top-full mt-2 w-60 rounded-[2px] border border-yunlan-hairline bg-yunlan-paper shadow-ink-wash py-1 z-50"
+                className="absolute left-0 top-full mt-2 w-60 max-h-[70vh] overflow-y-auto rounded-[2px] border border-yunlan-hairline bg-yunlan-paper shadow-ink-wash py-1 z-50"
               >
                 {TOOL_DEFS.map((tool) => {
                   const Icon = tool.icon;
