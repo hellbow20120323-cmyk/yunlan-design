@@ -149,7 +149,7 @@ export function setOptIn(appId, optIn, now = Date.now()) {
   return app;
 }
 
-/** 创建一次性链接，明文只返回一次，落库仅保存哈希 */
+/** 创建临时凭证：24 小时内可重复访问，明文只返回一次，落库仅保存哈希 */
 export function createTempLink(appId, { ttlMs = supportLinkTtlMs(), now = Date.now() } = {}) {
   const token = generateLinkToken();
   const link = {
@@ -158,8 +158,7 @@ export function createTempLink(appId, { ttlMs = supportLinkTtlMs(), now = Date.n
     appId,
     createdAt: new Date(now).toISOString(),
     expireAt: new Date(now + ttlMs).toISOString(),
-    isUsed: false,
-    usedAt: null,
+    revoked: false,
     choice: null,
     choiceAt: null,
   };
@@ -170,13 +169,11 @@ export function createTempLink(appId, { ttlMs = supportLinkTtlMs(), now = Date.n
   return { token, link };
 }
 
-/** 重新发信前作废旧链接，避免多份链接长期有效 */
+/** 重新发信前作废旧凭证，避免多份凭证长期有效 */
 export function invalidateLinksForApp(appId) {
   let changed = false;
   for (const link of linksStore.read().links) {
-    if (link.appId === appId && !link.isUsed) {
-      link.isUsed = true;
-      link.usedAt = new Date().toISOString();
+    if (link.appId === appId && !link.revoked) {
       link.revoked = true;
       changed = true;
     }
@@ -190,19 +187,17 @@ export function findLinkByToken(token) {
 }
 
 /**
- * 消耗一次性链接。
- * @returns {{ status: 'ok'|'used'|'expired'|'invalid', link?: object, app?: object }}
+ * 校验临时凭证：不做消耗，24 小时内可重复访问。
+ * 兼容历史数据：早期记录的 isUsed/usedAt 字段一律忽略。
+ * @returns {{ status: 'ok'|'expired'|'invalid', link?: object, app?: object }}
  */
-export function consumeTempLink(token, now = Date.now()) {
+export function resolveTempLink(token, now = Date.now()) {
   const link = findLinkByToken(token);
   if (!link) return { status: "invalid" };
   const app = findApplication(link.appId);
   if (!app) return { status: "invalid" };
-  if (link.isUsed) return { status: "used", link, app };
+  if (link.revoked) return { status: "expired", link, app };
   if (new Date(link.expireAt).getTime() <= now) return { status: "expired", link, app };
-  link.isUsed = true;
-  link.usedAt = new Date(now).toISOString();
-  linksStore.write();
   return { status: "ok", link, app };
 }
 
@@ -210,8 +205,8 @@ export function setChoice(appId, choice, now = Date.now()) {
   const value = choice === "support" ? "support" : choice === "skip" ? "skip" : "";
   if (!value) throw new Error("无效选项");
   const data = linksStore.read();
-  const link = data.links.find((l) => l.appId === appId && l.isUsed && !l.choice);
-  const target = link || data.links.find((l) => l.appId === appId && l.choice);
+  const candidates = data.links.filter((l) => l.appId === appId && !l.revoked);
+  const target = candidates.find((l) => !l.choice) || candidates.find((l) => l.choice);
   if (!target) return null;
   if (!target.choice) {
     target.choice = value;

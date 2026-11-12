@@ -39,10 +39,10 @@ function env(name, fallback = "") {
 }
 
 export function mailConfig() {
-  const port = Number(env("ZEPTOMAIL_SMTP_PORT", "465"));
+  const port = Number(env("ZEPTOMAIL_SMTP_PORT", "587"));
   return {
     host: env("ZEPTOMAIL_SMTP_HOST", "smtp.zeptomail.com.cn"),
-    port: Number.isFinite(port) ? port : 465,
+    port: Number.isFinite(port) ? port : 587,
     secure: env("ZEPTOMAIL_SMTP_SECURE", "") === ""
       ? port === 465
       : ["1", "true", "yes"].includes(env("ZEPTOMAIL_SMTP_SECURE", "").toLowerCase()),
@@ -54,10 +54,10 @@ export function mailConfig() {
 }
 
 export function intlMailConfig() {
-  const port = Number(env("ZEPTOMAIL_INTL_SMTP_PORT", "465"));
+  const port = Number(env("ZEPTOMAIL_INTL_SMTP_PORT", "587"));
   return {
     host: env("ZEPTOMAIL_INTL_SMTP_HOST", ""),
-    port: Number.isFinite(port) ? port : 465,
+    port: Number.isFinite(port) ? port : 587,
     secure: env("ZEPTOMAIL_INTL_SMTP_SECURE", "") === ""
       ? port === 465
       : ["1", "true", "yes"].includes(env("ZEPTOMAIL_INTL_SMTP_SECURE", "").toLowerCase()),
@@ -125,7 +125,7 @@ function htmlShell({ title, intro, body, unsub }) {
 </body></html>`;
 }
 
-export function renderApplicationEmail(app, relayUrl) {
+export function renderApplicationEmail(app, retrieveUrl) {
   const subject = "云览 · 支持申请已收到";
   const text = [
     "你好：",
@@ -135,10 +135,10 @@ export function renderApplicationEmail(app, relayUrl) {
     `认领口令：${app.code}`,
     "口令仅用于账单备注辅助核对，不是审核通过的必要条件。",
     "",
-    "一次性中转链接（24 小时内有效，仅可访问一次）：",
-    relayUrl,
+    "找回链接（24 小时内可重复打开，用于重新查看口令与选项）：",
+    retrieveUrl,
     "",
-    "你可以选择自愿支持站点维护，也可以直接等待人工审核。是否支持与审核结果、权限发放没有任何绑定。",
+    "你可以选择自愿支持站点维护，也可以直接等待人工审核。自愿捐助不代表审核优先，也不保证通过，与权限发放没有任何绑定。",
     "",
     "—— 云览",
     `退订：${unsubscribeUrl(app.id)}`,
@@ -149,9 +149,9 @@ export function renderApplicationEmail(app, relayUrl) {
       <p style="margin:0;font-size:28px;letter-spacing:6px;font-weight:700;font-family:ui-monospace,Menlo,monospace;">${escapeHtml(app.code)}</p>
       <p style="margin:8px 0 0;font-size:12px;line-height:1.6;color:#7a766f;">口令仅用于账单备注辅助核对，不是审核通过的必要条件。</p>
     </div>
-    <p style="margin:0 0 12px;font-size:14px;line-height:1.7;color:#4b4844;">一次性中转链接（24 小时内有效，仅可访问一次）：</p>
-    <p style="margin:0 0 16px;"><a href="${escapeHtml(relayUrl)}" style="display:inline-block;padding:10px 16px;border-radius:8px;background:#1661ab;color:#fff;text-decoration:none;font-size:14px;">打开中转页</a></p>
-    <p style="margin:0;font-size:12px;line-height:1.7;color:#7a766f;">你可以选择自愿支持站点维护，也可以直接等待人工审核。是否支持与审核结果、权限发放没有任何绑定。</p>
+    <p style="margin:0 0 12px;font-size:14px;line-height:1.7;color:#4b4844;">找回链接（24 小时内可重复打开）：</p>
+    <p style="margin:0 0 16px;"><a href="${escapeHtml(retrieveUrl)}" style="display:inline-block;padding:10px 16px;border-radius:8px;background:#1661ab;color:#fff;text-decoration:none;font-size:14px;">打开申请页</a></p>
+    <p style="margin:0;font-size:12px;line-height:1.7;color:#7a766f;">你可以选择自愿支持站点维护，也可以直接等待人工审核。自愿捐助不代表审核优先，也不保证通过，与权限发放没有任何绑定。</p>
   `;
   return { subject, text, html: htmlShell({ title: subject, intro: "申请已进入人工审核队列。", body, unsub: unsubscribeUrl(app.id) }) };
 }
@@ -490,8 +490,8 @@ export async function sendApplicationNotice(app, token) {
   if (!canSendNotice(app)) return { sent: false, reason: "opt_out" };
   const route = pickMailRoute(app.email);
   if (!isRouteConfigured(route.config)) return { sent: false, reason: "mail_not_configured" };
-  const relayUrl = `${PUBLIC_ORIGIN}/relay/${token}`;
-  const mail = renderApplicationEmail(app, relayUrl);
+  const retrieveUrl = `${PUBLIC_ORIGIN}/support?token=${token}`;
+  const mail = renderApplicationEmail(app, retrieveUrl);
   await deliverMail({
     to: app.email,
     subject: mail.subject,

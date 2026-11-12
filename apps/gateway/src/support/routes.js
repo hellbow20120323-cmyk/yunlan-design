@@ -3,10 +3,10 @@
  *
  * 风控硬性规则（写死）：
  * 1. 不存在到账自动放行；所有结论必须人工提交
- * 2. 赞赏码只在一次性中转页之后的「自愿支持」页面展示
- * 3. 中转链接 24 小时过期、单次访问失效
+ * 2. 赞赏码只在申请浮层内、且用户选择「自愿支持」后才加载，不进入邮件与公网静态资源
+ * 3. 临时凭证 24 小时过期，可重复访问（不做单次消耗）
  * 4. 口令仅辅助匹配，不是审核必要条件
- * 5. 未勾选邮件许可绝不调用邮件接口
+ * 5. 未勾选邮件许可绝不调用邮件接口；邮件只放口令与找回链接，不放赞赏码
  */
 import crypto from "node:crypto";
 import fs from "node:fs";
@@ -34,11 +34,10 @@ import {
 } from "./mailer.js";
 import {
   addUpload,
-  consumeTempLink,
   createOrReapplyApplication,
   createTempLink,
   findApplication,
-  findLinkByToken,
+  findApplicationByEmail,
   findUpload,
   getChoice,
   importDonations,
@@ -51,6 +50,7 @@ import {
   markCandidatesForAppReviewed,
   parseDonationCsv,
   recordReview,
+  resolveTempLink,
   setApplicationMailStatus,
   setChoice,
   setOptIn,
@@ -62,9 +62,6 @@ import {
   renderAdminPage,
   renderExpiredPage,
   renderMessagePage,
-  renderRelayPage,
-  renderResultPage,
-  renderUsedPage,
 } from "./pages.js";
 
 const APP_COOKIE = "yl_app";
@@ -89,15 +86,6 @@ function isSecureRequest(req) {
   const xfp = String(req.headers["x-forwarded-proto"] || "").split(",")[0].trim().toLowerCase();
   if (xfp === "https") return true;
   return /"scheme"\s*:\s*"https"/i.test(String(req.headers["cf-visitor"] || ""));
-}
-
-function setAppCookie(req, res, appId) {
-  const token = signAppSession(appId, APP_SESSION_MS);
-  const secure = isSecureRequest(req) ? "; Secure" : "";
-  res.append(
-    "Set-Cookie",
-    `${APP_COOKIE}=${encodeURIComponent(token)}; Path=/; Max-Age=${Math.floor(APP_SESSION_MS / 1000)}; SameSite=Lax; HttpOnly${secure}`
-  );
 }
 
 function getAppFromRequest(req) {
@@ -170,9 +158,42 @@ export function createSupportRouter() {
     key: (req) => normalizeEmail(req.body?.email).slice(0, 254) || clientIp(req),
   });
   const uploadLimiter = rateLimit({ windowMs: 60 * 60_000, max: 30, message: "上传过于频繁" });
+  const retrieveLimiter = rateLimit({
+    windowMs: 10 * 60_000,
+    max: 10,
+    message: "查找过于频繁，请稍后再试",
+    key: (req) => normalizeEmail(req.body?.email).slice(0, 254) || clientIp(req),
+  });
+
+  function credentialPayload(app, token, link) {
+    return {
+      code: app.code,
+      token,
+      expiresAt: link.expireAt,
+      email: maskEmail(app.email),
+      status: app.status,
+      choice: getChoice(app.id),
+      qrAvailable: Boolean(qrFilePath()),
+    };
+  }
+
+  /** 提交/找回接口都返回同一份凭证结构，前端浮层复用 */
+  function issueCredential(app) {
+    const { token, link } = createTempLink(app.id);
+    return credentialPayload(app, token, link);
+  }
+
+  function appFromTokenOrCookie(req) {
+    const token = String(req.query.token || req.headers["x-support-token"] || "").trim();
+    if (token) {
+      const result = resolveTempLink(token);
+      return result.status === "ok" ? result.app : null;
+    }
+    return getAppFromRequest(req);
+  }
 
   /**
-   * 提交申请。响应不包含口令、不透露邮箱是否已申请，避免枚举。
+   * 提交申请。口令与临时凭证直接由响应返回给当前页面，邮件只作为兜底。
    */
   router.post("/applications", submitIpLimiter, submitEmailLimiter, async (req, res) => {
     const email = normalizeEmail(req.body?.email);
@@ -204,6 +225,9 @@ export function createSupportRouter() {
       shouldSend = true;
     }
 
+    const { token, link } = createTempLink(app.id);
+
+    // 异步兜底邮件：不阻塞页面渲染，失败只记录状态
     if (shouldSend) {
       if (!app.optInEmail) {
         setApplicationMailStatus(app.id, "skipped_opt_out");
@@ -211,30 +235,28 @@ export function createSupportRouter() {
         setApplicationMailStatus(app.id, "not_configured");
         console.warn("[support] 未配置 ZeptoMail，申请已入库但未发送邮件");
       } else {
-        const { token } = createTempLink(app.id);
-        try {
-          const info = await sendApplicationNotice(app, token);
-          setApplicationMailStatus(app.id, info.sent ? "sent" : info.reason || "skipped");
-        } catch (err) {
-          const message = err instanceof Error ? err.message : String(err);
-          console.warn("[support] 申请通知邮件发送失败:", message);
-          setApplicationMailStatus(app.id, "failed", message);
-        }
+        setApplicationMailStatus(app.id, "pending");
+        sendApplicationNotice(app, token)
+          .then((info) => setApplicationMailStatus(app.id, info.sent ? "sent" : info.reason || "skipped"))
+          .catch((err) => {
+            const message = err instanceof Error ? err.message : String(err);
+            console.warn("[support] 申请通知邮件发送失败:", message);
+            setApplicationMailStatus(app.id, "failed", message);
+          });
       }
     }
 
     res.json({
       ok: true,
       status: app.status,
-      message: app.optInEmail
-        ? "申请已提交。若勾选了邮件通知，口令与中转链接将发送到你的邮箱。"
-        : "申请已提交并进入人工审核队列。你未勾选邮件通知，因此不会收到邮件。",
+      credential: credentialPayload(app, token, link),
+      message: "申请已提交并进入人工审核队列。",
     });
   });
 
   router.get("/status", (req, res) => {
-    const app = getAppFromRequest(req);
-    if (!app) return res.status(401).json({ ok: false, error: "无法识别申请，请使用邮件中的链接" });
+    const app = appFromTokenOrCookie(req);
+    if (!app) return res.status(401).json({ ok: false, error: "无法识别申请，请使用邮箱找回" });
     const uploads = listUploads(app.id).map((u) => ({
       id: u.id,
       tradeNo: u.tradeNo,
@@ -255,12 +277,67 @@ export function createSupportRouter() {
     });
   });
 
+  /** 校验临时凭证：24h 内可重复调用，用于页面刷新或从邮件链接恢复浮层 */
+  router.get("/credential", (req, res) => {
+    const token = String(req.query.token || "").trim();
+    const result = resolveTempLink(token);
+    if (result.status !== "ok") {
+      return res.status(410).json({
+        ok: false,
+        error: result.status === "expired" ? "凭证已过期，请用邮箱重新找回" : "凭证无效",
+      });
+    }
+    res.json({ ok: true, credential: credentialPayload(result.app, token, result.link) });
+  });
+
+  /** 通过邮箱找回：命中即签发新的 24h 凭证，不依赖邮件 */
+  router.post("/retrieve", retrieveLimiter, (req, res) => {
+    const email = normalizeEmail(req.body?.email);
+    if (!isValidEmail(email)) {
+      return res.status(400).json({ ok: false, error: "邮箱格式不正确" });
+    }
+    const app = findApplicationByEmail(email);
+    if (!app) {
+      return res.status(404).json({ ok: false, error: "未找到该邮箱的申请，请先提交申请" });
+    }
+    res.json({ ok: true, credential: issueCredential(app) });
+  });
+
+  /** 页面内浮层选择：support（自愿支持）/ skip（等待人工审核） */
+  router.post("/choice", (req, res) => {
+    const token = String(req.body?.token || req.query.token || "").trim();
+    const result = resolveTempLink(token);
+    if (result.status !== "ok") {
+      return res.status(410).json({ ok: false, error: "凭证已失效，请重新找回" });
+    }
+    const value = String(req.body?.choice || "");
+    try {
+      setChoice(result.app.id, value);
+    } catch {
+      return res.status(400).json({ ok: false, error: "无效选项" });
+    }
+    res.json({ ok: true, choice: value });
+  });
+
+  /** 赞赏码：仅在凭证有效且已选择「自愿支持」后返回，禁止缓存与索引 */
+  router.get("/qr", (req, res) => {
+    noStore(res);
+    const result = resolveTempLink(String(req.query.token || "").trim());
+    if (result.status !== "ok" || getChoice(result.app.id) !== "support") {
+      return res.status(404).send("not found");
+    }
+    const qr = qrFilePath();
+    if (!qr) return res.status(404).send("not found");
+    res.setHeader("Content-Type", qr.mime);
+    res.send(fs.readFileSync(qr.file));
+  });
+
   /**
    * 上传兜底凭证：支持图片原样上传或仅 JSON 交易单号。
    * 仅允许待审核申请补充凭证。
    */
   router.post("/uploads", uploadLimiter, rawImage, (req, res) => {
-    const app = getAppFromRequest(req);
+    const app = appFromTokenOrCookie(req);
     if (!app) return res.status(401).json({ ok: false, error: "无法识别申请" });
     if (app.status !== "pending_review") {
       return res.status(400).json({ ok: false, error: "申请已结束，无需再补充凭证" });
@@ -522,40 +599,13 @@ export function registerSupportPages(app) {
     res.type("html").send(renderAdminPage());
   });
 
+  // 旧版中转页入口一律回到申请页，由页面内浮层展示口令与选项
   app.get("/relay/status", (req, res) => {
     noStore(res);
-    const appRecord = getAppFromRequest(req);
-    if (!appRecord) {
-      return res
-        .status(401)
-        .type("html")
-        .send(renderMessagePage("无法识别申请", "请使用邮件中的一次性链接打开中转页，或通过同一浏览器再次访问。"));
-    }
-    const choice = getChoice(appRecord.id);
-    res.type("html").send(
-      renderResultPage({
-        app: appRecord,
-        choice,
-        uploads: listUploads(appRecord.id),
-        qrAvailable: Boolean(qrFilePath()),
-      })
-    );
+    res.redirect(302, "/support");
   });
 
-  app.post("/relay/choice", formBody, (req, res) => {
-    noStore(res);
-    const appRecord = getAppFromRequest(req);
-    if (!appRecord) {
-      return res.status(401).type("html").send(renderMessagePage("无法识别申请", "请重新使用邮件中的链接。"));
-    }
-    try {
-      setChoice(appRecord.id, String(req.body?.choice || ""));
-    } catch (err) {
-      return res.status(400).type("html").send(renderMessagePage("选项无效", "请返回中转页重新选择。"));
-    }
-    res.redirect(303, "/relay/status");
-  });
-
+  // 旧版赞赏码路由：仅保留给已打开过旧页面的浏览器 Cookie
   app.get("/relay/qr", (req, res) => {
     noStore(res);
     const appRecord = getAppFromRequest(req);
@@ -567,43 +617,15 @@ export function registerSupportPages(app) {
     res.send(fs.readFileSync(qr.file));
   });
 
-  app.post("/relay/:token/choice", formBody, (req, res) => {
-    noStore(res);
-    const link = findLinkByToken(req.params.token);
-    const appRecord = link ? findApplication(link.appId) : null;
-    const cookieApp = getAppFromRequest(req);
-    if (!link || !link.isUsed || !appRecord || !cookieApp || cookieApp.id !== appRecord.id) {
-      return res.status(403).type("html").send(renderMessagePage("链接不可用", "该链接已失效或不属于当前浏览器。"));
-    }
-    try {
-      setChoice(appRecord.id, String(req.body?.choice || ""));
-    } catch {
-      return res.status(400).type("html").send(renderMessagePage("选项无效", "请返回中转页重新选择。"));
-    }
-    res.redirect(303, "/relay/status");
-  });
-
+  // 旧邮件中的 /relay/<token> 链接兼容：凭证未过期则跳到申请页并带 token
   app.get("/relay/:token", (req, res) => {
     noStore(res);
     const token = String(req.params.token || "");
-    // 先判断已使用，避免再次消耗
-    const existing = findLinkByToken(token);
-    if (existing?.isUsed) {
-      const appRecord = getAppFromRequest(req);
-      if (appRecord?.id === existing.appId) {
-        return res.redirect(303, "/relay/status");
-      }
-      return res.status(410).type("html").send(renderUsedPage());
-    }
-    const result = consumeTempLink(token);
-    if (result.status === "ok") {
-      setAppCookie(req, res, result.app.id);
-      return res.type("html").send(renderRelayPage({ token, app: result.app }));
-    }
-    if (result.status === "expired") {
+    const result = resolveTempLink(token);
+    if (result.status !== "ok") {
       return res.status(410).type("html").send(renderExpiredPage());
     }
-    return res.status(410).type("html").send(renderExpiredPage());
+    res.redirect(302, `/support?token=${encodeURIComponent(token)}`);
   });
 
   const unsubscribe = (req, res) => {

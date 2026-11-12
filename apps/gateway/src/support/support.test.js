@@ -62,7 +62,7 @@ test("申请状态 Cookie 与退订令牌都可校验且拒绝篡改", () => {
   assert.equal(codes.verifyUnsubscribeToken(tampered), null);
 });
 
-test("一次性链接：可用一次、重复使用被拒绝、过期被拒绝", () => {
+test("临时凭证：24h 内可重复访问，过期拒绝", () => {
   const { application } = store.createOrReapplyApplication({
     email: "link@example.com",
     optInEmail: true,
@@ -70,15 +70,14 @@ test("一次性链接：可用一次、重复使用被拒绝、过期被拒绝",
   });
   const { token } = store.createTempLink(application.id, { ttlMs: 1000, now: 10_000 });
 
-  const first = store.consumeTempLink(token, 10_500);
+  const first = store.resolveTempLink(token, 10_500);
   assert.equal(first.status, "ok");
-  assert.equal(first.link.isUsed, true);
 
-  const second = store.consumeTempLink(token, 10_600);
-  assert.equal(second.status, "used");
+  const second = store.resolveTempLink(token, 10_900);
+  assert.equal(second.status, "ok");
 
   const expiredLink = store.createTempLink(application.id, { ttlMs: 1000, now: 20_000 });
-  const expired = store.consumeTempLink(expiredLink.token, 22_000);
+  const expired = store.resolveTempLink(expiredLink.token, 22_000);
   assert.equal(expired.status, "expired");
 });
 
@@ -165,9 +164,9 @@ test("opt-in 未勾选时不发信；模板包含口令、中转链接与退订�
   const notConfigured = await mailer.sendApplicationNotice(application, "token");
   assert.deepEqual(notConfigured, { sent: false, reason: "mail_not_configured" });
 
-  const mail = mailer.renderApplicationEmail(application, "https://panso.hellbow.xyz/relay/token-1");
+  const mail = mailer.renderApplicationEmail(application, "https://panso.hellbow.xyz/support?token=token-1");
   assert.match(mail.text, new RegExp(application.code));
-  assert.match(mail.text, /https:\/\/panso\.hellbow\.xyz\/relay\/token-1/);
+  assert.match(mail.text, /https:\/\/panso\.hellbow\.xyz\/support\?token=token-1/);
   assert.match(mail.text, /退订/);
   assert.doesNotMatch(mail.text, /赞赏码/);
   assert.doesNotMatch(mail.text, /购买|付费|解锁|换取权限/);
