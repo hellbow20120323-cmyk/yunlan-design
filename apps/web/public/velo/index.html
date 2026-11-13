@@ -655,7 +655,7 @@
       </div>
 
       <!-- Filtered Tools Card Grid -->
-      <div id="portal-tools-section" class="space-y-4 pt-2">
+      <div id="portal-tools-section" class="space-y-4 pt-2 scroll-mt-24">
         <div class="flex items-center justify-between pb-2 border-b border-slate-200/80">
           <h2 id="portal-grid-heading" class="text-sm font-bold uppercase tracking-wider text-slate-700 flex items-center space-x-2">
             <span>全部可用工具清单</span>
@@ -7435,7 +7435,9 @@ Finish:      ${paintState.finish.toUpperCase()}`;
     let currentCategoryFilter = 'all';
 
     function setCategoryFilter(category) {
-      currentCategoryFilter = category;
+      // 工具目录里家酿分类为 brew，这里兼容按钮上的 beer 命名
+      const normalized = category === 'beer' ? 'brew' : category;
+      currentCategoryFilter = normalized;
       document.querySelectorAll('.cat-tab-btn, .cat-pill-btn').forEach(btn => {
         const btnId = btn.id || '';
         const match = (category === 'all' && btnId === 'cat-tab-all') ||
@@ -7448,7 +7450,8 @@ Finish:      ${paintState.finish.toUpperCase()}`;
         }
       });
       const searchVal = document.getElementById('portal-search-input')?.value || '';
-      renderPortalTools(category, searchVal);
+      renderPortalTools(normalized, searchVal);
+      document.getElementById('portal-tools-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
     function handlePortalSearch(query) {
@@ -7479,6 +7482,8 @@ Finish:      ${paintState.finish.toUpperCase()}`;
       });
 
       if (filtered.length === 0) {
+        const emptyCount = document.getElementById('portal-tool-count');
+        if (emptyCount) emptyCount.textContent = '0 款工具';
         container.innerHTML = `
           <div class="col-span-full py-16 text-center text-stone-400 bg-white rounded-2xl border border-dashed border-[#E8DEC8]">
             <p class="text-base font-medium text-stone-600">未找到符合「${escapeHtml(query)}」的工坊工具</p>
@@ -7490,6 +7495,9 @@ Finish:      ${paintState.finish.toUpperCase()}`;
         `;
         return;
       }
+
+      const countEl = document.getElementById('portal-tool-count');
+      if (countEl) countEl.textContent = `${filtered.length} 款工具`;
 
       container.innerHTML = filtered.map(t => `
         <div onclick="navigateTo('${t.id}')" class="group relative bg-white rounded-2xl p-6 border border-[#E8DEC8] hover:border-[#C86D28]/60 hover:shadow-xl transition-all duration-200 cursor-pointer flex flex-col justify-between">
